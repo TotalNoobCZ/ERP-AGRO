@@ -65,9 +65,9 @@ export default function ZakazkaForm({
 
         {/* Původ z poptávky – propojení modulů */}
         {inquiry && (
-          <div className="rounded-md border border-user-0/40 bg-user-0/10 p-3 text-sm">
+          <div className="rounded-md border border-link/40 bg-user-0/10 p-3 text-sm">
             Zakázka vznikne z poptávky{" "}
-            <Link href={`/poptavky/${inquiry.id}`} className="font-medium text-user-0 hover:underline">
+            <Link href={`/poptavky/${inquiry.id}`} className="font-medium text-link hover:underline">
               #{inquiry.number} · {inquiry.subject}
             </Link>
             {inquiry.customerName && (
@@ -134,13 +134,13 @@ export default function ZakazkaForm({
           {ch.prirazeni && <p className="err">{ch.prirazeni}</p>}
           <div className="space-y-3">
             {radky.map((r) => (
-              <div key={r.key} className="rounded-md border border-white/10 p-3">
+              <div key={r.key} className="rounded-md border border-line p-3">
                 <div className="flex items-center gap-2">
                   <OsobaSelect osoby={osoby} value={r.osobaId} onChange={(id) => zmenit(r.key, { osobaId: id })} />
                   <button
                     type="button"
                     onClick={() => odebrat(r.key)}
-                    className="px-2 text-text-muted hover:text-red-400"
+                    className="px-2 text-text-muted hover:text-red-500"
                     aria-label="Odebrat"
                   >
                     ×
@@ -200,7 +200,7 @@ function KolizeDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="card max-h-[85vh] w-full max-w-lg overflow-auto p-6">
         <div className="flex items-start justify-between">
-          <h2 className="text-base font-semibold text-red-400">Kolize v přiřazení</h2>
+          <h2 className="text-base font-semibold text-red-500">Kolize v přiřazení</h2>
           <button type="button" onClick={onClose} className="text-text-muted hover:text-text" aria-label="Zavřít">✕</button>
         </div>
         <p className="mt-1 text-sm text-text-muted">
@@ -212,7 +212,7 @@ function KolizeDialog({
 
         <div className="mt-4 space-y-4">
           {kolize.map((k) => (
-            <div key={k.prirazeniId} className="rounded-md border border-white/10 p-3">
+            <div key={k.prirazeniId} className="rounded-md border border-line p-3">
               <p className="text-sm">
                 <strong>{k.osobaJmeno}</strong> už je v období {k.od} – {k.do} na akci{" "}
                 <span className="font-mono">{k.zakazkaKod}</span>.
@@ -233,7 +233,7 @@ function KolizeDialog({
               </p>
 
               {vyreseno[k.prirazeniId] ? (
-                <p className="mt-2 text-sm font-medium text-user-1">
+                <p className="mt-2 text-sm font-medium text-green-500">
                   ✓ Náhradník dosazen na akci {k.zakazkaKod}.
                 </p>
               ) : (
@@ -247,7 +247,7 @@ function KolizeDialog({
           ))}
         </div>
 
-        <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
+        <div className="mt-5 flex items-center justify-between gap-3 border-t border-line pt-4">
           <span className="text-xs text-text-muted">
             {vseVyreseno
               ? "Vše vyřešeno. Zavřete okno a klikněte znovu na „Vytvořit akci“."
@@ -302,7 +302,7 @@ function ResitPolozka({
 
   if (osoby.length === 0) {
     return (
-      <p className="mt-2 text-sm text-amber-400">
+      <p className="mt-2 text-sm text-amber-500">
         Není k dispozici žádná osoba (z Dílny/Elektra) jako náhradník. Zavřete okno a upravte
         termíny nebo přiřazenou osobu.
       </p>

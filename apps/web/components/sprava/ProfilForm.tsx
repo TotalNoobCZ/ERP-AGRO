@@ -186,7 +186,7 @@ export function ZmenaHesla() {
         <label className="label">Nové heslo znovu</label>
         <input type="password" className="field" value={passwordAgain} onChange={(e) => setPasswordAgain(e.target.value)} autoComplete="new-password" />
       </div>
-      {msg && <p className={msg.ok ? "text-sm text-user-1" : "err"}>{msg.text}</p>}
+      {msg && <p className={msg.ok ? "text-sm text-green-500" : "err"}>{msg.text}</p>}
       <button className="btn-primary" type="submit" disabled={busy || !password}>
         {busy ? "Ukládám…" : "Změnit heslo"}
       </button>

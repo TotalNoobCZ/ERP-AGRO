@@ -182,7 +182,7 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
             {z.inquiry && (
               <>
                 vznikla z poptávky{" "}
-                <Link href={`/poptavky/${z.inquiry.id}`} className="text-user-0 hover:underline">
+                <Link href={`/poptavky/${z.inquiry.id}`} className="text-link hover:underline">
                   #{z.inquiry.number} · {z.inquiry.subject}
                 </Link>
               </>
@@ -216,7 +216,7 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
 
         {tlRadky.length > 0 && <Timeline start={tlStart} konec={tlKonec} radky={tlRadky} />}
 
-        <div className="card divide-y divide-white/5">
+        <div className="card divide-y divide-line">
           {prirazeni.map((p) => (
             <div key={p.id} className="flex items-center gap-3 px-4 py-2 text-sm">
               <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: barvaOsoby(p.osoba_id) }} />
@@ -246,7 +246,7 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-muted">Změna termínu (prodloužit / zkrátit)</h2>
         <ProdlouzeniForm akce={akceProdlouzit} />
         {prodlouzeni.length > 0 && (
-          <div className="mt-4 space-y-2 border-t border-white/10 pt-4 text-sm">
+          <div className="mt-4 space-y-2 border-t border-line pt-4 text-sm">
             {prodlouzeni.map((p) => (
               <div key={p.id} className="text-text-muted">
                 <span>{formatCz(parseDay(p.stary_konec))} → </span>
@@ -262,7 +262,7 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-muted">Přerušení akce</h2>
         {otevrenePreruseni ? (
           <div className="space-y-3">
-            <div className="rounded-md border border-amber-400/40 bg-amber-400/10 p-3 text-sm text-amber-300">
+            <div className="rounded-md border border-amber-400/40 bg-amber-400/10 p-3 text-sm text-amber-500">
               Akce je přerušená od {formatCz(parseDay(otevrenePreruseni.datum_od))} — zbývá{" "}
               <strong>{otevrenePreruseni.zbyvajici_dny} dnů</strong> práce. Důvod: {otevrenePreruseni.duvod}.{" "}
               Přerušil: {otevrenePreruseni.prerusil?.name ?? "?"}.
@@ -273,7 +273,7 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
           <PreruseniForm mode="prerusit" akce={akcePrerusit} />
         )}
         {preruseni.length > 0 && (
-          <div className="mt-4 space-y-2 border-t border-white/10 pt-4 text-sm">
+          <div className="mt-4 space-y-2 border-t border-line pt-4 text-sm">
             {preruseni.map((p) => (
               <div key={p.id} className="text-text-muted">
                 <span>{formatCz(parseDay(p.datum_od))}</span>
@@ -301,7 +301,7 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
 
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-muted">Historie změn</h2>
-        <div className="card divide-y divide-white/5 text-sm">
+        <div className="card divide-y divide-line text-sm">
           {audit.map((a) => {
             const popis = a.nova_hodnota && typeof a.nova_hodnota === "object" && a.nova_hodnota.popis
               ? String(a.nova_hodnota.popis)
@@ -321,7 +321,7 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
         </div>
       </section>
 
-      <section className="border-t border-white/10 pt-4">
+      <section className="border-t border-line pt-4">
         <SmazatButton akce={akceSmazat} />
       </section>
     </div>

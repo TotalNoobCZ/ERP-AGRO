@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { ThemeToggle } from "@/components/theme";
 
 type Mode = "login" | "first-time";
 
@@ -60,8 +61,11 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
-      <div className="w-full max-w-sm rounded-xl border border-border/30 bg-surface p-8 shadow-xl">
-        <h1 className="mb-1 text-2xl font-bold">ERP AGRO</h1>
+      <div className="w-full max-w-sm rounded-xl border border-line bg-surface p-8 shadow-xl">
+        <div className="mb-1 flex items-center justify-between">
+          <h1 className="text-2xl font-bold">ERP AGRO</h1>
+          <ThemeToggle />
+        </div>
         <p className="mb-6 text-sm text-text-muted">
           Poptávky · Zakázky · Konstrukce
         </p>
@@ -78,7 +82,7 @@ export default function LoginPage() {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-md border border-border/40 bg-bg px-3 py-2 outline-none focus:border-user-0"
+              className="w-full rounded-md border border-border/40 bg-bg px-3 py-2 outline-none focus:border-link"
             />
           </div>
 
@@ -94,7 +98,7 @@ export default function LoginPage() {
               autoComplete={mode === "login" ? "current-password" : "new-password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-md border border-border/40 bg-bg px-3 py-2 outline-none focus:border-user-0"
+              className="w-full rounded-md border border-border/40 bg-bg px-3 py-2 outline-none focus:border-link"
             />
           </div>
 
@@ -111,7 +115,7 @@ export default function LoginPage() {
                 autoComplete="new-password"
                 value={passwordAgain}
                 onChange={(e) => setPasswordAgain(e.target.value)}
-                className="w-full rounded-md border border-border/40 bg-bg px-3 py-2 outline-none focus:border-user-0"
+                className="w-full rounded-md border border-border/40 bg-bg px-3 py-2 outline-none focus:border-link"
               />
             </div>
           )}
@@ -127,12 +131,12 @@ export default function LoginPage() {
             </label>
           )}
 
-          {error && <p className="text-sm text-user-7">{error}</p>}
+          {error && <p className="text-sm text-red-500">{error}</p>}
 
           <button
             type="submit"
             disabled={busy}
-            className="w-full rounded-md bg-user-0 px-3 py-2 font-semibold text-bg transition hover:opacity-90 disabled:opacity-50"
+            className="w-full rounded-md bg-user-0 px-3 py-2 font-semibold text-on-accent transition hover:opacity-90 disabled:opacity-50"
           >
             {busy ? "Pracuji…" : mode === "login" ? "Přihlásit se" : "Nastavit heslo a přihlásit"}
           </button>

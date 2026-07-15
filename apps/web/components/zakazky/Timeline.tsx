@@ -56,12 +56,12 @@ export default function Timeline({
     return (
       <>
         {dny.filter((x) => x.weekend).map((x, i) => (
-          <div key={`w${i}`} className="absolute top-0 h-full bg-white/[0.03]" style={{ left: x.offset, width: PX_ZA_DEN }} />
+          <div key={`w${i}`} className="absolute top-0 h-full bg-overlay" style={{ left: x.offset, width: PX_ZA_DEN }} />
         ))}
         {dny.filter((x) => x.mon).map((x, i) => (
-          <div key={`g${i}`} className="absolute top-0 h-full border-l border-white/5" style={{ left: x.offset }} />
+          <div key={`g${i}`} className="absolute top-0 h-full border-l border-line" style={{ left: x.offset }} />
         ))}
-        {dnesViditelny && <div className="absolute top-0 h-full border-l border-user-0/40" style={{ left: dnesOff }} />}
+        {dnesViditelny && <div className="absolute top-0 h-full border-l border-link/40" style={{ left: dnesOff }} />}
       </>
     );
   }
@@ -71,7 +71,7 @@ export default function Timeline({
     const maPodradky = !!r.podradky?.length;
     const otevreno = otevrene.has(r.id);
     return (
-      <div key={r.id + (podradek ? "-p" : "")} className="flex border-b border-white/5">
+      <div key={r.id + (podradek ? "-p" : "")} className="flex border-b border-line">
         <div style={{ width: LABEL_W }} className={`sticky left-0 z-10 shrink-0 bg-surface px-3 py-2 ${podradek ? "pl-7" : ""}`}>
           <div className="flex items-center gap-1">
             {maPodradky && (
@@ -80,7 +80,7 @@ export default function Timeline({
               </button>
             )}
             {r.href ? (
-              <Link href={r.href} className="text-sm font-medium text-user-0 hover:underline">{r.label}</Link>
+              <Link href={r.href} className="text-sm font-medium text-link hover:underline">{r.label}</Link>
             ) : (
               <span className={`text-sm ${podradek ? "text-text-muted" : "font-medium"}`}>{r.label}</span>
             )}
@@ -121,19 +121,19 @@ export default function Timeline({
     <div className="card overflow-x-auto">
       <div style={{ minWidth: LABEL_W + sirka }}>
         {/* Hlavička */}
-        <div className="flex border-b border-white/10 bg-muted">
+        <div className="flex border-b border-line bg-muted">
           <div style={{ width: LABEL_W }} className="sticky left-0 z-20 shrink-0 bg-muted px-3 py-2 text-xs font-medium text-text-muted">Období</div>
           <div className="relative" style={{ width: sirka, height: 46 }}>
             {dny.filter((x) => x.weekend).map((x, i) => (
-              <div key={`hw${i}`} className="absolute top-0 h-full bg-white/[0.04]" style={{ left: x.offset, width: PX_ZA_DEN }} />
+              <div key={`hw${i}`} className="absolute top-0 h-full bg-overlay" style={{ left: x.offset, width: PX_ZA_DEN }} />
             ))}
             {znacky.map((z, i) => (
-              <div key={i} className="absolute top-0 border-l border-white/10 pl-1 pt-1 text-xs font-medium text-text-muted" style={{ left: z.offset }}>{z.label}</div>
+              <div key={i} className="absolute top-0 border-l border-line pl-1 pt-1 text-xs font-medium text-text-muted" style={{ left: z.offset }}>{z.label}</div>
             ))}
             {dny.map((x, i) => (
               <div key={`d${i}`} className={`absolute text-center text-[10px] ${x.weekend ? "text-text-muted/50" : "text-text-muted"}`} style={{ left: x.offset, width: PX_ZA_DEN, top: 26 }}>{x.cislo}</div>
             ))}
-            {dnesViditelny && <div className="absolute top-0 h-full border-l-2 border-user-0" style={{ left: dnesOff }} />}
+            {dnesViditelny && <div className="absolute top-0 h-full border-l-2 border-link" style={{ left: dnesOff }} />}
           </div>
         </div>
 

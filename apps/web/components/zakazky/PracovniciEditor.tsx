@@ -73,7 +73,7 @@ export default function PracovniciEditor({
       <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-muted">Pracovníci</h2>
       {chyba && <p className="err mb-2">{chyba}</p>}
 
-      <div className="divide-y divide-white/5 rounded-md border border-white/10">
+      <div className="divide-y divide-line rounded-md border border-line">
         {prirazeni.length === 0 && <p className="px-3 py-2 text-sm text-text-muted">Žádní pracovníci.</p>}
         {prirazeni.map((p) => (
           <div key={p.id} className="px-3 py-2 text-sm">
@@ -81,9 +81,9 @@ export default function PracovniciEditor({
               <span className="font-medium">{p.jmeno}</span>
               <span className="text-text-muted">{p.od} – {p.do}</span>
               <span className="ml-auto flex gap-2">
-                <button type="button" className="text-user-0 hover:underline" onClick={() => otevri(p, "termin")}>Termín</button>
-                <button type="button" className="text-user-0 hover:underline" onClick={() => otevri(p, "nahradit")}>Nahradit</button>
-                <button type="button" className="text-red-400 hover:underline" onClick={() => otevri(p, "odebrat")}>Odebrat</button>
+                <button type="button" className="text-link hover:underline" onClick={() => otevri(p, "termin")}>Termín</button>
+                <button type="button" className="text-link hover:underline" onClick={() => otevri(p, "nahradit")}>Nahradit</button>
+                <button type="button" className="text-red-500 hover:underline" onClick={() => otevri(p, "odebrat")}>Odebrat</button>
               </span>
             </div>
 
@@ -133,7 +133,7 @@ export default function PracovniciEditor({
       </div>
 
       {/* Přidat pracovníka */}
-      <div className="mt-3 space-y-2 rounded-md border border-white/10 p-3">
+      <div className="mt-3 space-y-2 rounded-md border border-line p-3">
         <p className="text-sm font-medium text-text-muted">Přidat pracovníka</p>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <OsobaSelect osoby={pracovnici} value={addOsoba} onChange={setAddOsoba} name="_pridat" />

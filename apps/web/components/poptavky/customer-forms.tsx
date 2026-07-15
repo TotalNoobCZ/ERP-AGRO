@@ -175,7 +175,7 @@ export function CustomerForm({ customer, inquiryCount }: { customer: Customer; i
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
-      {saved && <p className="text-sm text-green-400">Uloženo.</p>}
+      {saved && <p className="text-sm text-green-500">Uloženo.</p>}
 
       <div className="flex items-center justify-between">
         <div className="flex gap-2">

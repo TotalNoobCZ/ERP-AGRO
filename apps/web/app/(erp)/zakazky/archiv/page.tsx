@@ -34,7 +34,7 @@ export default async function ArchivPage() {
       {zakazky.length === 0 ? (
         <p className="text-sm text-text-muted">Archiv je prázdný.</p>
       ) : (
-        <div className="card divide-y divide-white/5">
+        <div className="card divide-y divide-line">
           {zakazky.map((z) => (
             <Link key={z.id} href={`/zakazky/${z.id}`} className="flex items-center gap-4 px-4 py-3 hover:bg-accent">
               <span className="font-mono text-sm font-semibold">{z.kod}</span>

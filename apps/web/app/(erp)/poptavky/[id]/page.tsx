@@ -120,7 +120,7 @@ export default async function InquiryDetailPage({ params }: { params: Promise<{ 
           {zakazkaZPoptavky ? (
             <span>
               Z této poptávky vznikla zakázka{" "}
-              <Link href={`/zakazky/${zakazkaZPoptavky.id}`} className="font-mono font-semibold text-user-0 hover:underline">
+              <Link href={`/zakazky/${zakazkaZPoptavky.id}`} className="font-mono font-semibold text-link hover:underline">
                 {zakazkaZPoptavky.kod}
               </Link>
               .
@@ -130,7 +130,7 @@ export default async function InquiryDetailPage({ params }: { params: Promise<{ 
               <span>Poptávka je objednaná — je čas založit výrobní zakázku.</span>
               <Link
                 href={`/zakazky/nova?inquiry=${inquiry.id}`}
-                className="rounded-md bg-user-1 px-3 py-1.5 font-semibold text-bg hover:opacity-90"
+                className="rounded-md bg-user-1 px-3 py-1.5 font-semibold text-on-accent hover:opacity-90"
               >
                 Vytvořit zakázku
               </Link>

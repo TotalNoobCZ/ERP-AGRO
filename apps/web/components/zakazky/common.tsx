@@ -97,7 +97,7 @@ export function OsobaSelect({
         onBlur={() => setTimeout(() => setOpen(false), 150)}
       />
       {open && (
-        <ul className="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border border-white/10 bg-surface shadow-lg">
+        <ul className="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border border-line bg-surface shadow-lg">
           {nalezene.length === 0 && <li className="px-3 py-2 text-sm text-text-muted">Nic nenalezeno</li>}
           {nalezene.map((o) => (
             <li

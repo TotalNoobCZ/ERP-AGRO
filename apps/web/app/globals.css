@@ -1,34 +1,72 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------------
-   Barevné tokeny (ZADANI.md kap. 5) – zdroj pravdy je packages/ui/src/tokens.ts,
-   tady jsou promítnuté do Tailwind v4 @theme, ať fungují třídy bg-bg apod.
+   Témata: tmavé (výchozí, dle ZADANI.md kap. 5) a světlé.
+   Sémantické proměnné se přepínají atributem data-theme na <html>
+   (nastavuje components/theme.tsx, volba se pamatuje v localStorage).
 --------------------------------------------------------------------------- */
-@theme {
-  --color-bg: #0e0f11;
-  --color-surface: #16181b;
-  --color-border: #7c828b;
-  --color-text: #e8e9eb;
-  --color-text-muted: #9aa0a8;
-  --color-neutral: #8a8f98;
+:root,
+[data-theme="dark"] {
+  --t-bg: #0e0f11;            /* pozadí */
+  --t-surface: #16181b;       /* panely, dialogy */
+  --t-border: #7c828b;        /* výrazné hranice */
+  --t-line: #2e3238;          /* jemné dělící čáry / rámečky */
+  --t-input: #33373d;         /* rámečky polí */
+  --t-text: #e8e9eb;
+  --t-text-muted: #9aa0a8;
+  --t-muted: #1e2126;         /* tlumené plochy (hover, pozadí bloků) */
+  --t-accent: #1e2126;        /* hover ploch */
+  --t-overlay: rgba(255, 255, 255, 0.04); /* víkendy v timeline apod. */
+  --t-link: #8fb8e0;          /* odkazy/zvýraznění */
+}
 
-  /* mapování rolí shadcn-stylu tříd z původních aplikací na tmavé téma
-     (bg-card, text-muted-foreground, bg-accent, border-input, bg-primary…) */
-  --color-background: #0e0f11;
-  --color-foreground: #e8e9eb;
-  --color-card: #16181b;
-  --color-card-foreground: #e8e9eb;
-  --color-muted: #1e2126;
-  --color-muted-foreground: #9aa0a8;
-  --color-accent: #1e2126;
-  --color-accent-foreground: #e8e9eb;
+[data-theme="light"] {
+  --t-bg: #f4f5f7;
+  --t-surface: #ffffff;
+  --t-border: #9aa0a8;
+  --t-line: #dfe2e7;
+  --t-input: #c9cdd4;
+  --t-text: #1b1e22;
+  --t-text-muted: #5b626b;
+  --t-muted: #eceef1;
+  --t-accent: #e8ebef;
+  --t-overlay: rgba(0, 0, 0, 0.045);
+  --t-link: #34669e;
+}
+
+/* Tailwind tokeny – "inline", aby třídy odkazovaly na runtime proměnné. */
+@theme inline {
+  --color-bg: var(--t-bg);
+  --color-surface: var(--t-surface);
+  --color-border: var(--t-border);
+  --color-line: var(--t-line);
+  --color-overlay: var(--t-overlay);
+  --color-text: var(--t-text);
+  --color-text-muted: var(--t-text-muted);
+
+  /* mapování shadcn-stylu tříd z původních aplikací */
+  --color-background: var(--t-bg);
+  --color-foreground: var(--t-text);
+  --color-card: var(--t-surface);
+  --color-card-foreground: var(--t-text);
+  --color-muted: var(--t-muted);
+  --color-muted-foreground: var(--t-text-muted);
+  --color-accent: var(--t-accent);
+  --color-accent-foreground: var(--t-text);
+  --color-secondary: var(--t-muted);
+  --color-secondary-foreground: var(--t-text);
+  --color-input: var(--t-input);
+  --color-link: var(--t-link);
+}
+
+/* Statické tokeny (stejné v obou tématech): pastelová paleta a texty na ní. */
+@theme {
+  --color-neutral: #8a8f98;
   --color-primary: #a8c7e7;
-  --color-primary-foreground: #0e0f11;
-  --color-secondary: #1e2126;
-  --color-secondary-foreground: #e8e9eb;
+  --color-primary-foreground: #16181b; /* tmavý text na pastelové ploše */
+  --color-on-accent: #16181b;
   --color-destructive: #f0a8a8;
-  --color-destructive-foreground: #0e0f11;
-  --color-input: #33373d;
+  --color-destructive-foreground: #16181b;
   --color-ring: #a8c7e7;
 
   /* paleta uživatelů 0–9 */
@@ -44,49 +82,48 @@
   --color-user-9: #b0bee8;
 }
 
-/* Výchozí barva rámečků (shadcn styl `border` bez barvy) – tlumená tmavá. */
+/* Výchozí barva rámečků (shadcn styl `border` bez barvy). */
 *,
 ::before,
 ::after {
-  border-color: #2e3238;
+  border-color: var(--t-line);
 }
 
 body {
-  background-color: var(--color-bg);
-  color: var(--color-text);
+  background-color: var(--t-bg);
+  color: var(--t-text);
 }
 
-/* Nativní <select>: tmavé pozadí i pro rozbalené options. */
+/* Nativní <select>: pozadí dle tématu i pro rozbalené options. */
 select {
-  background-color: var(--color-surface);
-  color: var(--color-text);
+  background-color: var(--t-surface);
+  color: var(--t-text);
 }
 
 /* ---------------------------------------------------------------------------
-   Třídy převzaté z aplikace Planovani (globals.css) – tmavá varianta.
-   Používají je komponenty modulu Zakázky (card, field, btn-*, badge, err).
+   Třídy převzaté z aplikace Planovani (globals.css) – přes proměnné tématu.
 --------------------------------------------------------------------------- */
 .card {
   border-radius: 0.75rem;
-  border: 1px solid #2e3238;
-  background-color: var(--color-surface);
+  border: 1px solid var(--t-line);
+  background-color: var(--t-surface);
 }
 .label {
   display: block;
   margin-bottom: 0.25rem;
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--color-text-muted);
+  color: var(--t-text-muted);
 }
 .field {
   width: 100%;
   height: 2.25rem;
   border-radius: 0.375rem;
-  border: 1px solid #33373d;
+  border: 1px solid var(--t-input);
   background-color: transparent;
   padding: 0.25rem 0.75rem;
   font-size: 0.875rem;
-  color: var(--color-text);
+  color: var(--t-text);
 }
 textarea.field {
   height: auto;
@@ -95,7 +132,7 @@ textarea.field {
 }
 .field:focus {
   outline: none;
-  border-color: var(--color-user-0);
+  border-color: var(--t-link);
 }
 .btn-primary {
   display: inline-flex;
@@ -106,7 +143,7 @@ textarea.field {
   padding: 0.375rem 0.75rem;
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--color-bg);
+  color: #16181b;
 }
 .btn-primary:hover { opacity: 0.9; }
 .btn-primary:disabled { opacity: 0.5; pointer-events: none; }
@@ -115,13 +152,13 @@ textarea.field {
   align-items: center;
   gap: 0.375rem;
   border-radius: 0.375rem;
-  border: 1px solid #33373d;
+  border: 1px solid var(--t-input);
   padding: 0.375rem 0.75rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--color-text);
+  color: var(--t-text);
 }
-.btn-ghost:hover { background-color: #1e2126; }
+.btn-ghost:hover { background-color: var(--t-accent); }
 .btn-ghost:disabled { opacity: 0.5; pointer-events: none; }
 .btn-danger {
   display: inline-flex;
@@ -132,7 +169,7 @@ textarea.field {
   padding: 0.375rem 0.75rem;
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--color-bg);
+  color: #16181b;
 }
 .btn-danger:hover { opacity: 0.9; }
 .btn-danger:disabled { opacity: 0.5; pointer-events: none; }
@@ -146,7 +183,7 @@ textarea.field {
 }
 .err {
   font-size: 0.875rem;
-  color: #f0a8a8;
+  color: #e07a7a;
 }
 
 /* Tiskové stránky jsou světlé – viz route group (tisk). */

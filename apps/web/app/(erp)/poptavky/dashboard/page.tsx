@@ -145,7 +145,7 @@ export default async function DashboardPage() {
         <CardHeader>
           <Link href="/poptavky?deadline=overdue" className="flex items-center justify-between gap-2 hover:underline">
             <CardTitle className="flex items-center gap-2">
-              <span className={nOverdue > 0 ? "text-red-400" : "text-muted-foreground"}>⚠️</span>
+              <span className={nOverdue > 0 ? "text-red-500" : "text-muted-foreground"}>⚠️</span>
               Po termínu: {nOverdue}
             </CardTitle>
             <span className="flex items-center text-sm text-muted-foreground">zobrazit všechny ›</span>
@@ -157,7 +157,7 @@ export default async function DashboardPage() {
           )}
           {overdueRows.map((inq) => <InquiryRow key={inq.id} inq={inq} />)}
           {nOverdue > overdueRows.length && (
-            <Link href="/poptavky?deadline=overdue" className="block pt-1 text-sm text-red-400 hover:underline">
+            <Link href="/poptavky?deadline=overdue" className="block pt-1 text-sm text-red-500 hover:underline">
               … a dalších {nOverdue - overdueRows.length} – zobrazit všechny
             </Link>
           )}
@@ -169,7 +169,7 @@ export default async function DashboardPage() {
         <CardHeader>
           <Link href="/poptavky?contact=1" className="flex items-center justify-between gap-2 hover:underline">
             <CardTitle className="flex items-center gap-2">
-              <span className={nContact > 0 ? "text-orange-400" : "text-muted-foreground"}>📞</span>
+              <span className={nContact > 0 ? "text-orange-500" : "text-muted-foreground"}>📞</span>
               Ke kontaktování: {nContact}
             </CardTitle>
             <span className="flex items-center text-sm text-muted-foreground">zobrazit všechny ›</span>
@@ -181,7 +181,7 @@ export default async function DashboardPage() {
           )}
           {toContactRows.map((inq) => <InquiryRow key={inq.id} inq={inq} />)}
           {nContact > toContactRows.length && (
-            <Link href="/poptavky?contact=1" className="block pt-1 text-sm text-orange-400 hover:underline">
+            <Link href="/poptavky?contact=1" className="block pt-1 text-sm text-orange-500 hover:underline">
               … a dalších {nContact - toContactRows.length} – zobrazit všechny
             </Link>
           )}

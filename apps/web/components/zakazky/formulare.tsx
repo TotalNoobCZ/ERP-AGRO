@@ -205,14 +205,14 @@ export function PoznamkyAkce({ zakazkaId, poznamky }: { zakazkaId: string; pozna
       <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-muted">Poznámky</h2>
       {chyba && <p className="err mb-2">{chyba}</p>}
 
-      <div className="card divide-y divide-white/5">
+      <div className="card divide-y divide-line">
         {poznamky.length === 0 && <p className="px-4 py-3 text-sm text-text-muted">Zatím žádné poznámky.</p>}
         {poznamky.map((p) => (
           <div key={p.id} className="px-4 py-3">
             <div className="flex items-center justify-between text-xs text-text-muted">
               <span>{p.autor} · {p.kdy}</span>
               {p.muzeSmazat && (
-                <button type="button" onClick={() => smazat(p.id)} className="text-red-400 hover:underline">
+                <button type="button" onClick={() => smazat(p.id)} className="text-red-500 hover:underline">
                   Smazat
                 </button>
               )}
@@ -233,7 +233,7 @@ export function PoznamkyAkce({ zakazkaId, poznamky }: { zakazkaId: string; pozna
 }
 
 // ---------- Milníky ----------
-const barva = (t: string) => (t.includes("LAKOVANI") ? "text-purple-300" : "text-orange-300");
+const barva = (t: string) => (t.includes("LAKOVANI") ? "text-purple-500" : "text-orange-500");
 
 type Milnik = { id: string; typ: string; datum: string; cas: string | null; poznamka: string | null };
 type MilnikFormData = { typ: string; datum: string; cas: string; poznamka: string };
@@ -301,7 +301,7 @@ export function MilnikyEditor({ zakazkaId, milniky }: { zakazkaId: string; milni
 
       {chyba && <p className="err mb-2">{chyba}</p>}
 
-      <div className="card divide-y divide-white/5">
+      <div className="card divide-y divide-line">
         {milniky.length === 0 && <p className="px-4 py-3 text-sm text-text-muted">Zatím žádné milníky.</p>}
 
         {milniky.map((m) =>
@@ -321,8 +321,8 @@ export function MilnikyEditor({ zakazkaId, milniky }: { zakazkaId: string; milni
               <span className="text-text-muted">{m.datum}{m.cas ? ` ${m.cas}` : ""}</span>
               {m.poznamka && <span className="text-text-muted">— {m.poznamka}</span>}
               <span className="ml-auto flex gap-2">
-                <button className="text-user-0 hover:underline" onClick={() => zacitUpravu(m)}>Upravit</button>
-                <button className="text-red-400 hover:underline" onClick={() => smazat(m.id)}>Smazat</button>
+                <button className="text-link hover:underline" onClick={() => zacitUpravu(m)}>Upravit</button>
+                <button className="text-red-500 hover:underline" onClick={() => smazat(m.id)}>Smazat</button>
               </span>
             </div>
           ),

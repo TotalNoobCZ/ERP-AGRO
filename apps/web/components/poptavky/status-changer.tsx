@@ -160,7 +160,7 @@ export function ContactToggle({ inquiryId, initial }: { inquiryId: string; initi
         <input type="checkbox" className="h-4 w-4" checked={checked} onChange={onToggle} disabled={loading} />
         <span>📞</span>
         <span className="font-medium">Kontaktovat</span>
-        {checked && <span className="text-xs text-orange-400">(vyžaduje zpětný kontakt)</span>}
+        {checked && <span className="text-xs text-orange-500">(vyžaduje zpětný kontakt)</span>}
       </label>
 
       {showForm && (

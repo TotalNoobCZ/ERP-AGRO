@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { userColor } from "@erp/ui";
 import { ROLE_LABELS, type Role } from "@erp/core";
+import { ThemeToggle } from "@/components/theme";
 
 const MODULES = [
   { href: "/poptavky", label: "Poptávky" },
@@ -44,7 +45,7 @@ export function Nav({ name, role, colorIndex }: NavProps) {
               href={m.href}
               className={
                 "rounded-md px-3 py-1.5 text-sm font-medium transition " +
-                (active ? "bg-bg text-text" : "text-text-muted hover:text-text")
+                (active ? "bg-accent text-text" : "text-text-muted hover:text-text")
               }
             >
               {m.label}
@@ -54,8 +55,9 @@ export function Nav({ name, role, colorIndex }: NavProps) {
       </nav>
 
       <div className="flex items-center gap-3">
+        <ThemeToggle />
         <span
-          className="inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-bg"
+          className="inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-on-accent"
           style={{ backgroundColor: userColor(colorIndex) }}
           title={`${name} · ${ROLE_LABELS[role]}`}
         >

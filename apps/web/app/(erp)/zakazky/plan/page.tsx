@@ -209,10 +209,10 @@ export default async function PlanPage({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-1">
-          <Link href={odkaz("zakazky", refStr)} className={`btn-ghost ${mode === "zakazky" ? "border-user-0 text-user-0" : "border-transparent"}`}>
+          <Link href={odkaz("zakazky", refStr)} className={`btn-ghost ${mode === "zakazky" ? "border-link text-link" : "border-transparent"}`}>
             Podle akcí
           </Link>
-          <Link href={odkaz("osoby", refStr)} className={`btn-ghost ${mode === "osoby" ? "border-user-0 text-user-0" : "border-transparent"}`}>
+          <Link href={odkaz("osoby", refStr)} className={`btn-ghost ${mode === "osoby" ? "border-link text-link" : "border-transparent"}`}>
             Podle zaměstnance
           </Link>
         </div>
