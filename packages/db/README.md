@@ -12,6 +12,7 @@ migrations/
   0003_poptavky.sql          # modul Poptávky (inquiries, comments, status_logs)
   0004_zakazky.sql           # modul Zakázky/plánování (páteř) + cross-module FK
   0005_konstrukce.sql        # modul Konstrukce (projects, tasks, gantt data, absences)
+  0006_rls.sql               # Row Level Security: role viewer/editor/admin
 seed/
   0001_first_admin.sql       # první uživatel (Jakub Roháč) – ručně
 DESIGN.md                    # rozhodnutí, mapování rolí a body [POTVRDIT]
@@ -38,6 +39,6 @@ psql "$DATABASE_URL" -f seed/0001_first_admin.sql
 
 ## Stav
 
-- [x] Krok 1 – sjednocené schéma (tabulky, indexy, FK). **K revizi.**
-- [ ] Krok 2 – RLS politiky + `enable row level security`.
-- [ ] Krok 3 – generované TS typy (`supabase gen types`).
+- [x] Krok 1 – sjednocené schéma (tabulky, indexy, FK).
+- [x] Krok 2 – RLS politiky + `enable row level security`. Ověřeno testy.
+- [ ] Krok 3 – monorepo skelet (`apps/web`) + generované TS typy (`supabase gen types`).

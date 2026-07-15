@@ -39,43 +39,35 @@ aplikacích).
 
 ---
 
-## 2. Body k potvrzení [POTVRDIT]
+## 2. Rozhodnuté body (potvrzeno)
 
-### 2.1 Identita profilu: `id` vs `auth_user_id`  ⭐ nejdůležitější
-`ERP_datovy_model.md` navrhoval `profiles.id = auth.users.id`. **Zvolil jsem ale
-nezávislé `profiles.id` + nullable `auth_user_id`.**
+### 2.1 Identita profilu: `id` vs `auth_user_id`  ✅ potvrzeno
+Místo `profiles.id = auth.users.id` (návrh v modelu) se používá **nezávislé
+`profiles.id` + nullable `auth_user_id`**.
 Důvod: všechny tři aplikace zakládají účet **před** prvním přihlášením (vedoucí
 založí profil bez hesla → člověk si při 1. loginu nastaví heslo). Kdyby `id` bylo
 rovno `auth.users.id`, nešel by profil vytvořit dřív, než existuje auth uživatel.
-- **Návrh:** ponechat nezávislé `id`, vazba přes `auth_user_id` (doplní se při 1. loginu).
-- **Dopad:** RLS politiky porovnávají `auth.uid() = profiles.auth_user_id`.
+- Vazba přes `auth_user_id` (doplní se při 1. loginu, server-side / service_role).
+- **Dopad:** RLS porovnává `auth.uid() = profiles.auth_user_id`.
 
-### 2.2 Kdo je `admin`?
-Sjednocený model má `admin` (správa uživatelů), který Konstrukce ani Poptávky
-původně neznaly (tam měl „plný přístup" i běžný zapisovatel).
-- **Návrh:** `write`/`Person`/`NADRIZENY` → `editor`; správa uživatelů jen `admin`.
-  Vedoucí týmů, kteří dnes spravují uživatele (např. konstrukční vedoucí
-  **Jakub Roháč**), dostanou `admin`.
-- Alternativa: nechat správu uživatelů i pro `editor` (blíž původní Konstrukci).
+### 2.2 Role a admini  ✅ potvrzeno
+`write`/`Person`/`NADRIZENY` → `editor`; **správu uživatelů má jen `admin`**.
+- Adminové: **Jakub Roháč** a **Kryštof Harant**.
+- Ostatní uživatelé: `editor` (zápis) nebo `viewer` (jen čtení), zakládají se v UI.
 
-### 2.3 Typy identifikátorů (uuid vs cuid)
-Poptávky i Plánování používaly `cuid` (text). Nové schéma sjednocuje na **`uuid`**
-(`gen_random_uuid()`), což je pro Supabase idiomatické.
-- **Dopad na migraci dat:** stará `cuid` id se při importu **přemapují** na nová
-  `uuid` (mapa staré→nové id), FK se dopočtou. Migrace dat je až poslední krok.
-- Alternativa: ponechat text id a kopírovat 1:1 (jednodušší import, méně čisté).
+### 2.3 Typy identifikátorů (uuid vs cuid)  ✅ potvrzeno
+Sjednoceno na **`uuid`** (`gen_random_uuid()`). Stará `cuid` id z Poptávek/Plánování
+se při migraci dat **přemapují** na nová `uuid` (mapa staré→nové id). Migrace dat
+je až poslední krok.
 
-### 2.4 Rozdělené jméno v Plánování
-`Osoba` mělo `jmeno` + `prijmeni` (+ `pozice`, `vlastnost`, `osobniCislo`,
-`jeNadrizeny`). `profiles` má jedno `name`.
-- **Návrh:** `name = "jmeno prijmeni"`; `pozice`, `osobni_cislo`, `poznamka`
-  ponechány jako volitelné sloupce; `vlastnost` (jen Dílna) a `jeNadrizeny`
-  (nahrazeno rolí) se **zahazují**. Potvrdit, že o `vlastnost` nikdo nestojí.
+### 2.4 Rozdělené jméno v Plánování  ✅ potvrzeno (řešíme později)
+`name = "jmeno prijmeni"`; `pozice`, `osobni_cislo`, `poznamka` ponechány jako
+volitelné sloupce. `vlastnost` (jen Dílna) a `jeNadrizeny` (nahrazeno rolí) se
+**zatím zahazují** – případně se doplní později.
 
-### 2.5 Autor u volných textů (Poptávky)
-`Comment.author` a `StatusLog.changedBy` byly **volný text** (Poptávky neměly
-účty). Ponechávám je jako text kvůli 1:1 migraci; volitelně lze později přidat
-`author_id → profiles(id)`.
+### 2.5 Autor u volných textů (Poptávky)  ✅ potvrzeno
+`comments.author` a `status_logs.changed_by` zůstávají **volný text** (kvůli 1:1
+migraci historie). Volitelně lze později přidat `author_id → profiles(id)`.
 
 ---
 
@@ -95,8 +87,8 @@ Tok dat: **Zákazník → Poptávka → (OBJEDNANO) → Zakázka → Projekt →
 ## 4. Co je a není v tomto kroku
 
 - ✅ Krok 1: tabulky, indexy, cizí klíče, `updated_at` triggery.
-- ⏭️ Krok 2 (další): **RLS politiky** podle rolí (`viewer` = SELECT + vlastní heslo;
-  `editor` = zápis; `admin` = vše + správa uživatelů) + `enable row level security`.
+- ✅ Krok 2: **RLS** (`0006_rls.sql`) – `viewer` = SELECT; `editor` = zápis;
+  `admin` = vše + správa uživatelů (`profiles`). Ověřeno funkčními testy.
 - ⏭️ Krok 3+: monorepo skelet `apps/web`, přenos modulů, `supabase-js` klient.
 
 Seed prvního admina (Jakub Roháč) je v `packages/db/seed/` – spustí se ručně.
