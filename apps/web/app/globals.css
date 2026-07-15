@@ -101,8 +101,10 @@ select {
 }
 
 /* ---------------------------------------------------------------------------
-   Třídy převzaté z aplikace Planovani (globals.css) – přes proměnné tématu.
+   Sdílené třídy (card/field/btn/badge/label) – přes proměnné tématu.
+   V @layer components, aby je Tailwind utility (např. w-auto) mohly přebít.
 --------------------------------------------------------------------------- */
+@layer components {
 .card {
   border-radius: 0.75rem;
   border: 1px solid var(--t-line);
@@ -184,6 +186,7 @@ textarea.field {
 .err {
   font-size: 0.875rem;
   color: #e07a7a;
+}
 }
 
 /* Tiskové stránky jsou světlé – viz route group (tisk). */

@@ -48,7 +48,7 @@ export function ArchivList({ radky, editable }: { radky: ArchivRadek[]; editable
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold">Archiv</h1>
+        <h1 className="text-2xl font-bold">Archiv</h1>
         {editable && radky.length > 0 && (
           <button className="btn-danger" onClick={smazatVse} disabled={busy}>
             {KONSTRUKCE_LABELS.deleteArchive}

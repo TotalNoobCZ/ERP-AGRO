@@ -45,7 +45,7 @@ export default async function NovaZakazkaPage({
 
   return (
     <div>
-      <h1 className="mb-4 text-lg font-semibold">Nová akce</h1>
+      <h1 className="mb-4 text-2xl font-bold">Nová akce</h1>
       {(osoby ?? []).length === 0 ? (
         <div className="card border-amber-400/40 bg-amber-400/10 p-4 text-sm text-amber-500">
           Zatím nemáte žádné přiřaditelné osoby a akce vyžaduje alespoň jednoho pracovníka.

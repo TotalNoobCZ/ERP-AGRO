@@ -161,7 +161,7 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
       <div>
         <Link href="/zakazky" className="text-sm text-text-muted hover:underline">← Akce</Link>
         <div className="mt-2 flex flex-wrap items-center gap-3">
-          <h1 className="font-mono text-xl font-semibold">{z.kod}</h1>
+          <h1 className="font-mono text-2xl font-bold">{z.kod}</h1>
           <StavBadge z={stavovaZakazka} />
           <span title="1 = nejvyšší, 5 = nejnižší" className="badge bg-slate-100 text-slate-500">Priorita {z.priorita}</span>
           <div className="ml-auto flex gap-2">

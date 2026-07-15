@@ -59,7 +59,7 @@ export default async function ZakazkyPage({
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-lg font-semibold">Akce</h1>
+        <h1 className="text-2xl font-bold">Akce</h1>
       </div>
 
       <form className="card mb-4 flex flex-wrap items-end gap-3 p-4" action="/zakazky">

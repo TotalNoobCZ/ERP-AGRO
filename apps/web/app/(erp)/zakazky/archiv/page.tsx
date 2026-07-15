@@ -28,7 +28,7 @@ export default async function ArchivPage() {
 
   return (
     <div>
-      <h1 className="mb-1 text-lg font-semibold">Archiv</h1>
+      <h1 className="mb-1 text-2xl font-bold">Archiv</h1>
       <p className="mb-4 text-sm text-text-muted">Archivované akce. Otevřením akce ji můžeš znovu aktivovat.</p>
 
       {zakazky.length === 0 ? (

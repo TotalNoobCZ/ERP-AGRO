@@ -52,7 +52,7 @@ export default async function UpravitZakazkuPage({ params }: { params: Promise<{
 
   return (
     <div className="space-y-6">
-      <h1 className="text-lg font-semibold">Úprava akce {z.kod}</h1>
+      <h1 className="text-2xl font-bold">Úprava akce {z.kod}</h1>
 
       <ZakazkaEditForm
         akce={akce}
