@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Barevné tokeny (ZADANI.md kap. 5) – zdroj pravdy je packages/ui/src/tokens.ts,
+   tady jsou promítnuté do Tailwind v4 @theme, ať fungují třídy bg-bg apod.
+--------------------------------------------------------------------------- */
+@theme {
+  --color-bg: #0e0f11;
+  --color-surface: #16181b;
+  --color-border: #7c828b;
+  --color-text: #e8e9eb;
+  --color-text-muted: #9aa0a8;
+  --color-neutral: #8a8f98;
+
+  /* paleta uživatelů 0–9 */
+  --color-user-0: #a8c7e7;
+  --color-user-1: #a8d8b9;
+  --color-user-2: #f0c9a0;
+  --color-user-3: #e8b4c0;
+  --color-user-4: #c9b8e0;
+  --color-user-5: #a0d2d2;
+  --color-user-6: #e8dba0;
+  --color-user-7: #eab0a0;
+  --color-user-8: #b8e0c8;
+  --color-user-9: #b0bee8;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}

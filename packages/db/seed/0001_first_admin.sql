@@ -10,7 +10,7 @@
 insert into profiles (email, name, role, oddeleni, assignable, color_index, active)
 values
   -- Jakub Roháč (ZADANI.md kap. 10)
-  ('rohac@agrocs.cz', 'Jakub Roháč', 'admin', 'konstrukce', true, 0, true)
-  -- Kryštof Harant – druhý admin. DOPLNIT E-MAIL a odkomentovat:
-  -- , ('<email>', 'Kryštof Harant', 'admin', 'konstrukce', true, 1, true)
+  ('rohac@agrocs.cz', 'Jakub Roháč', 'admin', 'konstrukce', true, 0, true),
+  -- Kryštof Harant – druhý admin
+  ('harantk@agrocs.cz', 'Kryštof Harant', 'admin', 'konstrukce', true, 1, true)
 on conflict (email) do nothing;

@@ -1,0 +1,19 @@
+{
+  "name": "erp-agro",
+  "private": true,
+  "description": "ERP AGRO – jeden systém ze tří aplikací (Poptávky, Zakázky/Plánování, Konstrukce)",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @erp/web",
+    "build": "npm run build -w @erp/web",
+    "start": "npm run start -w @erp/web",
+    "lint": "npm run lint -w @erp/web",
+    "typecheck": "npm run typecheck -w @erp/web"
+  },
+  "engines": {
+    "node": ">=20.9"
+  }
+}
