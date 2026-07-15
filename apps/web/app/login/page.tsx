@@ -41,6 +41,15 @@ export default function LoginPage() {
         }
       }
 
+      // „Zapamatovat přihlášení": příznak čte proxy.ts a podle něj ponechá /
+      // zkrátí životnost auth cookies. Nastavit MUSÍ být před přihlášením,
+      // aby ho proxy viděl už při první session cookie.
+      //  - zapnuto  → erp_remember=1, trvalá cookie (~13 měsíců)
+      //  - vypnuto  → erp_remember=0, session cookie (zmizí po zavření prohlížeče)
+      document.cookie = remember
+        ? "erp_remember=1; path=/; max-age=34560000; samesite=lax"
+        : "erp_remember=0; path=/; samesite=lax";
+
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password,
@@ -49,9 +58,6 @@ export default function LoginPage() {
         setError("Nesprávný e-mail nebo heslo.");
         return;
       }
-      // TODO(remember): vypnuté „Zapamatovat přihlášení" = session jen do
-      // zavření prohlížeče – doladí se nastavením cookie lifetime.
-      void remember;
       router.push("/");
       router.refresh();
     } finally {

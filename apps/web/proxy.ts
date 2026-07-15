@@ -17,6 +17,10 @@ export default async function proxy(request: NextRequest) {
 
   let response = NextResponse.next({ request });
 
+  // „Zapamatovat přihlášení" = vypnuto → z auth cookies odstraníme trvalou
+  // životnost, takže se stanou session cookies a po zavření prohlížeče zmizí.
+  const rememberOff = request.cookies.get("erp_remember")?.value === "0";
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -28,9 +32,12 @@ export default async function proxy(request: NextRequest) {
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           response = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options),
-          );
+          cookiesToSet.forEach(({ name, value, options }) => {
+            const opts = rememberOff
+              ? { ...options, maxAge: undefined, expires: undefined }
+              : options;
+            response.cookies.set(name, value, opts);
+          });
         },
       },
     },
