@@ -92,6 +92,11 @@ Každý další push do produkční větve se nasadí automaticky.
 - [x] Krok 2 – Supabase Auth + RLS (`admin`/`editor`/`viewer`) – ověřeno testy
 - [x] Krok 3 – monorepo skelet (Next.js 16, React 19, Tailwind v4, @supabase/ssr),
       login + „Jsem tu poprvé", sdílená navigace, produkční build prochází
-- [ ] Krok 4 – přenos modulů: Konstrukce → Poptávky → Plánování
+- [ ] Krok 4 – přenos modulů:
+  - [x] **Poptávky** – dashboard, seznam s filtry, detail (stavy, komentáře,
+        historie, „Kontaktovat"), nová/editace, zákazníci + kontakty, tiskové
+        exporty. Data přes supabase-js + server actions, autor = přihlášený profil.
+  - [ ] Konstrukce (čeká na zdrojový kód, případně stavba dle ZADANI.md)
+  - [ ] Plánování
 - [ ] Krok 5 – tok mezi moduly (poptávka „Objednáno" → zakázka → projekty)
 - [ ] Krok 6 – migrace ostrých dat (deduplikace lidí podle e-mailu)

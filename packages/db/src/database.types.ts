@@ -8,11 +8,28 @@
 type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 // Pomocný tvar tabulky: Insert/Update odvozené z Row.
-type TableShape<Row, Required extends keyof Row = never> = {
+type Rel = {
+  foreignKeyName: string;
+  columns: string[];
+  isOneToOne: boolean;
+  referencedRelation: string;
+  referencedColumns: string[];
+};
+
+type TableShape<Row, Required extends keyof Row = never, Rels extends Rel[] = []> = {
   Row: Row;
   Insert: Partial<Row> & Pick<Row, Required>;
   Update: Partial<Row>;
-  Relationships: [];
+  Relationships: Rels;
+};
+
+// Zkratka pro běžný FK vztah (embed přes sloupec → cizí tabulka.id).
+type Fk<Col extends string, Table extends string> = {
+  foreignKeyName: `${string}_${Col}_fkey`;
+  columns: [Col];
+  isOneToOne: false;
+  referencedRelation: Table;
+  referencedColumns: ["id"];
 };
 
 // ---------- Row typy (sloupce 1:1 dle migrací) ----------
@@ -281,28 +298,79 @@ export type Database = {
     Tables: {
       profiles: TableShape<ProfileRow, "email" | "name">;
       customers: TableShape<CustomerRow, "name">;
-      contacts: TableShape<ContactRow, "customer_id" | "name">;
-      inquiries: TableShape<InquiryRow, "subject" | "customer_id" | "person_id">;
-      comments: TableShape<CommentRow, "inquiry_id" | "text" | "author">;
-      status_logs: TableShape<StatusLogRow, "inquiry_id" | "to_status" | "changed_by">;
+      contacts: TableShape<ContactRow, "customer_id" | "name", [Fk<"customer_id", "customers">]>;
+      inquiries: TableShape<
+        InquiryRow,
+        "subject" | "customer_id" | "person_id",
+        [Fk<"customer_id", "customers">, Fk<"person_id", "profiles">]
+      >;
+      comments: TableShape<CommentRow, "inquiry_id" | "text" | "author", [Fk<"inquiry_id", "inquiries">]>;
+      status_logs: TableShape<
+        StatusLogRow,
+        "inquiry_id" | "to_status" | "changed_by",
+        [Fk<"inquiry_id", "inquiries">]
+      >;
       zakazky: TableShape<
         ZakazkaRow,
-        "kod" | "misto_plneni" | "priorita" | "zacatek" | "konec_puvodni" | "konec_aktualni" | "zalozil_id"
+        "kod" | "misto_plneni" | "priorita" | "zacatek" | "konec_puvodni" | "konec_aktualni" | "zalozil_id",
+        [
+          Fk<"zalozil_id", "profiles">,
+          Fk<"archivoval_id", "profiles">,
+          Fk<"odpovedna_osoba_id", "profiles">,
+          Fk<"inquiry_id", "inquiries">,
+          Fk<"customer_id", "customers">,
+        ]
       >;
-      milniky: TableShape<MilnikRow, "zakazka_id" | "typ" | "datum">;
-      prirazeni_zakazka: TableShape<PrirazeniZakazkaRow, "zakazka_id" | "osoba_id" | "datum_od" | "datum_do">;
-      prirazeni_milnik: TableShape<PrirazeniMilnikRow, "milnik_id" | "osoba_id">;
-      preruseni: TableShape<PreruseniRow, "zakazka_id" | "datum_od" | "zbyvajici_dny" | "duvod" | "prerusil_id">;
-      prodlouzeni: TableShape<ProdlouzeniRow, "zakazka_id" | "stary_konec" | "novy_konec" | "duvod" | "provedl_id">;
-      akce_poznamky: TableShape<AkcePoznamkaRow, "zakazka_id" | "uzivatel_id" | "text">;
-      audit_log: TableShape<AuditLogRow, "entita" | "entita_id" | "typ_zmeny" | "uzivatel_id">;
-      projects: TableShape<ProjectRow, "zakazka_id" | "name">;
-      tasks: TableShape<TaskRow, "project_id" | "name">;
-      task_notes: TableShape<TaskNoteRow, "task_id" | "body">;
-      task_todos: TableShape<TaskTodoRow, "task_id" | "body">;
-      project_notes: TableShape<ProjectNoteRow, "project_id" | "body">;
-      project_todos: TableShape<ProjectTodoRow, "project_id" | "body">;
-      absences: TableShape<AbsenceRow, "profile_id" | "type" | "start_date" | "end_date">;
+      milniky: TableShape<MilnikRow, "zakazka_id" | "typ" | "datum", [Fk<"zakazka_id", "zakazky">]>;
+      prirazeni_zakazka: TableShape<
+        PrirazeniZakazkaRow,
+        "zakazka_id" | "osoba_id" | "datum_od" | "datum_do",
+        [Fk<"zakazka_id", "zakazky">, Fk<"osoba_id", "profiles">]
+      >;
+      prirazeni_milnik: TableShape<
+        PrirazeniMilnikRow,
+        "milnik_id" | "osoba_id",
+        [Fk<"milnik_id", "milniky">, Fk<"osoba_id", "profiles">]
+      >;
+      preruseni: TableShape<
+        PreruseniRow,
+        "zakazka_id" | "datum_od" | "zbyvajici_dny" | "duvod" | "prerusil_id",
+        [Fk<"zakazka_id", "zakazky">, Fk<"prerusil_id", "profiles">, Fk<"obnovil_id", "profiles">]
+      >;
+      prodlouzeni: TableShape<
+        ProdlouzeniRow,
+        "zakazka_id" | "stary_konec" | "novy_konec" | "duvod" | "provedl_id",
+        [Fk<"zakazka_id", "zakazky">, Fk<"provedl_id", "profiles">]
+      >;
+      akce_poznamky: TableShape<
+        AkcePoznamkaRow,
+        "zakazka_id" | "uzivatel_id" | "text",
+        [Fk<"zakazka_id", "zakazky">, Fk<"uzivatel_id", "profiles">]
+      >;
+      audit_log: TableShape<
+        AuditLogRow,
+        "entita" | "entita_id" | "typ_zmeny" | "uzivatel_id",
+        [Fk<"uzivatel_id", "profiles">]
+      >;
+      projects: TableShape<
+        ProjectRow,
+        "zakazka_id" | "name",
+        [Fk<"zakazka_id", "zakazky">, Fk<"owner_id", "profiles">, Fk<"archived_by", "profiles">]
+      >;
+      tasks: TableShape<
+        TaskRow,
+        "project_id" | "name",
+        [Fk<"project_id", "projects">, Fk<"assignee_id", "profiles">, Fk<"archived_by", "profiles">]
+      >;
+      task_notes: TableShape<TaskNoteRow, "task_id" | "body", [Fk<"task_id", "tasks">, Fk<"author_id", "profiles">]>;
+      task_todos: TableShape<TaskTodoRow, "task_id" | "body", [Fk<"task_id", "tasks">]>;
+      project_notes: TableShape<
+        ProjectNoteRow,
+        "project_id" | "body",
+        [Fk<"project_id", "projects">, Fk<"author_id", "profiles">]
+      >;
+      project_todos: TableShape<ProjectTodoRow, "project_id" | "body", [Fk<"project_id", "projects">]>;
+      absences: TableShape<AbsenceRow, "profile_id" | "type" | "start_date" | "end_date", [Fk<"profile_id", "profiles">]>;
     };
     Views: Record<string, never>;
     Functions: {

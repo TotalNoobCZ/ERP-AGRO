@@ -12,6 +12,25 @@
   --color-text-muted: #9aa0a8;
   --color-neutral: #8a8f98;
 
+  /* mapování rolí shadcn-stylu tříd z původních aplikací na tmavé téma
+     (bg-card, text-muted-foreground, bg-accent, border-input, bg-primary…) */
+  --color-background: #0e0f11;
+  --color-foreground: #e8e9eb;
+  --color-card: #16181b;
+  --color-card-foreground: #e8e9eb;
+  --color-muted: #1e2126;
+  --color-muted-foreground: #9aa0a8;
+  --color-accent: #1e2126;
+  --color-accent-foreground: #e8e9eb;
+  --color-primary: #a8c7e7;
+  --color-primary-foreground: #0e0f11;
+  --color-secondary: #1e2126;
+  --color-secondary-foreground: #e8e9eb;
+  --color-destructive: #f0a8a8;
+  --color-destructive-foreground: #0e0f11;
+  --color-input: #33373d;
+  --color-ring: #a8c7e7;
+
   /* paleta uživatelů 0–9 */
   --color-user-0: #a8c7e7;
   --color-user-1: #a8d8b9;
@@ -25,7 +44,28 @@
   --color-user-9: #b0bee8;
 }
 
+/* Výchozí barva rámečků (shadcn styl `border` bez barvy) – tlumená tmavá. */
+*,
+::before,
+::after {
+  border-color: #2e3238;
+}
+
 body {
   background-color: var(--color-bg);
   color: var(--color-text);
+}
+
+/* Nativní <select>: tmavé pozadí i pro rozbalené options. */
+select {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+}
+
+/* Tiskové stránky jsou světlé – viz route group (tisk). */
+@media print {
+  body {
+    background-color: #fff;
+    color: #000;
+  }
 }
