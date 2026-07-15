@@ -14,7 +14,8 @@
     "typecheck": "npm run typecheck -w @erp/web",
     "db:start": "supabase start",
     "db:stop": "supabase stop",
-    "db:reset": "supabase db reset"
+    "db:reset": "supabase db reset",
+    "migrate": "node packages/db/migrate/migrate.mjs"
   },
   "engines": {
     "node": ">=20.9"

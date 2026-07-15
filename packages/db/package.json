@@ -8,5 +8,8 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "devDependencies": {
+    "pg": "^8.22.0"
   }
 }
