@@ -232,11 +232,21 @@ export async function vytvoritZakazku(_prev: ZakazkaStav, fd: FormData): Promise
   );
   if (prirErr) return { obecna: "Přiřazení se nepodařilo uložit." };
 
+  // Integrace s Konstrukcí: každá zakázka automaticky založí jeden konstrukční
+  // projekt. Je „volný“ (owner_id = null) – čeká na přidělení zodpovědného
+  // nebo na rozdělení do dalších projektů/úkolů v modulu Konstrukce.
+  await supabase.from("projects").insert({
+    zakazka_id: zakazka.id,
+    name: d.kod,
+    owner_id: null,
+  });
+
   await zapisAudit(supabase, {
     entita: "zakazka", entitaId: zakazka.id, typZmeny: "VYTVORENI", uzivatelId: u.id,
-    nova: { kod: d.kod, ...(d.inquiryId ? { zPoptavky: d.inquiryId } : {}) },
+    nova: { kod: d.kod, konstrukcniProjekt: true, ...(d.inquiryId ? { zPoptavky: d.inquiryId } : {}) },
   });
   revalidatePath("/zakazky");
+  revalidatePath("/konstrukce");
   redirect(`/zakazky/${zakazka.id}`);
 }
 

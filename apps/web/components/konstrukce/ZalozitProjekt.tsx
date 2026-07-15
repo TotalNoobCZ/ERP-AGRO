@@ -28,17 +28,21 @@ export function ZalozitProjekt({ zakazkaId }: { zakazkaId: string }) {
   return (
     <form onSubmit={submit} className="flex flex-wrap items-end gap-2">
       <div className="grow">
-        <label className="label">Nový konstrukční projekt</label>
+        <label className="label">Rozdělit na další projekt</label>
         <input
           className="field"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Název projektu (Enter založí)"
+          placeholder="Název dalšího projektu (Enter založí)"
         />
       </div>
       <button className="btn-primary" type="submit" disabled={busy || !name.trim()}>
-        {busy ? "Zakládám…" : "Založit projekt"}
+        {busy ? "Zakládám…" : "Přidat projekt"}
       </button>
+      <p className="w-full text-xs text-text-muted">
+        První konstrukční projekt vzniká automaticky se zakázkou (volný, čeká na přidělení).
+        Tady ho můžeš rozdělit na víc projektů.
+      </p>
       {chyba && <p className="err w-full">{chyba}</p>}
     </form>
   );
