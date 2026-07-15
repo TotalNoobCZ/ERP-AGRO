@@ -3,13 +3,22 @@
 import { createBrowserClient } from "@supabase/ssr";
 import type { Database } from "@erp/db";
 
+/** decodeURIComponent, který u vadné hodnoty (osamocené %) nespadne. */
+function safeDecode(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
 /** Přečte hodnotu cookie z document.cookie (prohlížeč). */
 function readCookie(name: string): string | undefined {
   if (typeof document === "undefined") return undefined;
   const match = document.cookie
     .split("; ")
     .find((c) => c.startsWith(name + "="));
-  return match ? decodeURIComponent(match.slice(name.length + 1)) : undefined;
+  return match ? safeDecode(match.slice(name.length + 1)) : undefined;
 }
 
 /** Supabase klient pro prohlížeč (client components). */
@@ -28,7 +37,7 @@ export function createClient() {
               const eq = c.indexOf("=");
               const name = eq === -1 ? c : c.slice(0, eq);
               const value = eq === -1 ? "" : c.slice(eq + 1);
-              return { name, value: decodeURIComponent(value) };
+              return { name, value: safeDecode(value) };
             });
         },
         setAll(cookiesToSet) {

@@ -51,16 +51,23 @@ export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isPublic = pathname.startsWith("/login") || pathname.startsWith("/api/auth");
 
-  if (!user && !isPublic) {
+  // Přesměrování musí přenést cookies, které mohl getUser() obnovit (rotace
+  // tokenů). Jinak by se do prohlížeče nedostaly nové tokeny a starý (už
+  // spotřebovaný) refresh token by uživatele při dalším requestu odhlásil.
+  function redirectTo(path: string): NextResponse {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
+    url.pathname = path;
+    const redirect = NextResponse.redirect(url);
+    response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
+    return redirect;
+  }
+
+  if (!user && !isPublic) {
+    return redirectTo("/login");
   }
 
   if (user && pathname.startsWith("/login")) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/";
-    return NextResponse.redirect(url);
+    return redirectTo("/");
   }
 
   return response;
