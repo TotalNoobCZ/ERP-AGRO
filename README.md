@@ -101,9 +101,16 @@ Každý další push do produkční větve se nasadí automaticky.
         kolizí a náhradníky, plán (timeline podle akcí i zaměstnanců), archiv
   - [x] **Správa** – zakládání a úprava profilů (role, oddělení, přiřaditelnost,
         barva), změna vlastního hesla
-  - [ ] Konstrukce (čeká na zdrojový kód, případně stavba dle ZADANI.md)
-- [x] Krok 5 (část) – tok poptávka „Objednáno" → zakázka: nabídka založení po
-      změně stavu, předvyplnění z poptávky, dědění zákazníka, zpětné odkazy
-      (`zakazky.inquiry_id`, `zakazky.customer_id`); založení konstrukčních
-      projektů ze zakázky přijde s modulem Konstrukce
+  - [x] **Konstrukce** (postaveno dle ZADANI.md) – Plánování (dlaždice členů
+        1/3 + masonry projektů 2/3, drag & drop úkolů přes dnd-kit), dialogy
+        úkolu (Začátek/Konec/Trvání s dopočtem, poznámky, todos) a projektu
+        (Zodpovídá, Vyčistit, Archivovat), Gantt (tažení a roztahování žížal,
+        absence na ose, kolizní hlášení), dialog člena (osobní Gantt + absence),
+        Archiv (obnovit, smazat archiv)
+- [x] Krok 5 – tok mezi moduly: poptávka „Objednáno" → zakázka (nabídka,
+      předvyplnění, dědění zákazníka, zpětné odkazy) a zakázka → konstrukční
+      projekty (`projects.zakazka_id` NOT NULL, zakládání z detailu zakázky
+      i z boardu s povinným výběrem zakázky)
+- Navíc: drag & drop posun/roztažení termínů akcí v plánu Zakázek
+  (s povinným důvodem a zápisem do historie)
 - [ ] Krok 6 – migrace ostrých dat (deduplikace lidí podle e-mailu)

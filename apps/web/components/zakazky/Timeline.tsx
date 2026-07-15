@@ -1,7 +1,8 @@
 "use client";
 // Časová osa (plán) – port z Planovani/src/components/Timeline.tsx,
-// barvy přizpůsobené tmavému tématu, logika 1:1.
-import { useState } from "react";
+// barvy dle tématu, logika 1:1. Navíc: volitelné tažení pruhů
+// (posun celé akce / roztažení konce) přes pointer events.
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { celkovaSirka, offsetPx, sirkaPx, mesicniZnacky, PX_ZA_DEN } from "@/lib/zakazky/timeline";
 import { today, formatCz, addDays } from "@/lib/zakazky/dates";
@@ -9,6 +10,10 @@ import { today, formatCz, addDays } from "@/lib/zakazky/dates";
 export type TBar = {
   od: Date; do: Date; lane: number; barva: string;
   label?: string; href?: string; titulek?: string;
+  /** id pro drag & drop; bez něj je pruh statický */
+  dragId?: string;
+  /** povolit roztažení konce (pravý úchyt) */
+  resizable?: boolean;
 };
 export type TZnacka = { datum: Date; barva: string; titulek: string };
 export type TRadek = {
@@ -23,15 +28,31 @@ export type TRadek = {
   podradky?: TRadek[]; // rozbalitelné podřádky (např. pracovníci akce)
 };
 
+export type DragMode = "move" | "resize";
+
 const LANE_H = 26;
 const LABEL_W = 200;
 
+type DragState = {
+  dragId: string;
+  mode: DragMode;
+  startX: number;
+  dx: number; // nesnapnutý posun v px
+};
+
 export default function Timeline({
   start, konec, radky, prazdno = "Žádná data v tomto období.",
+  onBarDrag,
 }: {
   start: Date; konec: Date; radky: TRadek[]; prazdno?: string;
+  /** volá se po puštění taženého pruhu s posunem ve dnech (≠ 0) */
+  onBarDrag?: (dragId: string, deltaDays: number, mode: DragMode) => void;
 }) {
   const [otevrene, setOtevrene] = useState<Set<string>>(new Set());
+  const [drag, setDrag] = useState<DragState | null>(null);
+  const dragRef = useRef<DragState | null>(null);
+  const movedRef = useRef(false);
+
   const toggle = (id: string) =>
     setOtevrene((s) => {
       const n = new Set(s);
@@ -50,6 +71,47 @@ export default function Timeline({
   for (let d = new Date(start); d <= konec; d = addDays(d, 1)) {
     const dow = d.getUTCDay();
     dny.push({ offset: offsetPx(d, start), cislo: d.getUTCDate(), weekend: dow === 0 || dow === 6, mon: dow === 1 });
+  }
+
+  // ---- tažení pruhů ------------------------------------------------------
+  function startDrag(e: React.PointerEvent, dragId: string, mode: DragMode) {
+    if (!onBarDrag) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const st = { dragId, mode, startX: e.clientX, dx: 0 };
+    dragRef.current = st;
+    movedRef.current = false;
+    setDrag(st);
+
+    function onMove(ev: PointerEvent) {
+      const cur = dragRef.current;
+      if (!cur) return;
+      const dx = ev.clientX - cur.startX;
+      if (Math.abs(dx) > 3) movedRef.current = true;
+      const next = { ...cur, dx };
+      dragRef.current = next;
+      setDrag(next);
+    }
+    function onUp() {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      const cur = dragRef.current;
+      dragRef.current = null;
+      setDrag(null);
+      if (!cur) return;
+      const deltaDays = Math.round(cur.dx / PX_ZA_DEN);
+      if (deltaDays !== 0) onBarDrag!(cur.dragId, deltaDays, cur.mode);
+      // klik po tažení potlačí onClickCapture níže; příznak shodíme vzápětí
+      setTimeout(() => {
+        movedRef.current = false;
+      }, 0);
+    }
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }
+
+  function snapPx(dx: number): number {
+    return Math.round(dx / PX_ZA_DEN) * PX_ZA_DEN;
   }
 
   function Mrizka() {
@@ -92,18 +154,53 @@ export default function Timeline({
           <Mrizka />
           {r.bary.map((b, i) => {
             const minTextW = (b.label?.length ?? 0) * 7 + 16;
+            const draggable = Boolean(b.dragId && onBarDrag);
+            const isDragged = Boolean(drag && b.dragId && b.dragId === drag.dragId);
+            const posunPx = isDragged && drag!.mode === "move" ? snapPx(drag!.dx) : 0;
+            const extraSirka = isDragged && drag!.mode === "resize" ? snapPx(drag!.dx) : 0;
+
             const bar = (
               <div
-                className="flex h-[20px] items-center overflow-hidden whitespace-nowrap rounded px-2 text-[11px] font-medium text-white"
+                className={`relative flex h-[20px] items-center overflow-hidden whitespace-nowrap rounded px-2 text-[11px] font-medium text-white ${draggable ? "cursor-grab active:cursor-grabbing" : ""} ${isDragged ? "opacity-80 ring-2 ring-link" : ""}`}
                 style={{ backgroundColor: b.barva }}
                 title={b.titulek}
+                onPointerDown={draggable ? (e) => startDrag(e, b.dragId!, "move") : undefined}
               >
                 {b.label}
+                {draggable && b.resizable && (
+                  <span
+                    className="absolute right-0 top-0 h-full w-2 cursor-ew-resize bg-black/25"
+                    title="Táhnutím změníš konec"
+                    onPointerDown={(e) => startDrag(e, b.dragId!, "resize")}
+                  />
+                )}
               </div>
             );
             return (
-              <div key={i} className="absolute" style={{ left: offsetPx(b.od, start), width: sirkaPx(b.od, b.do), minWidth: minTextW, top: b.lane * LANE_H + 4 }}>
-                {b.href ? <Link href={b.href}>{bar}</Link> : bar}
+              <div
+                key={i}
+                className="absolute"
+                style={{
+                  left: offsetPx(b.od, start) + posunPx,
+                  width: Math.max(PX_ZA_DEN, sirkaPx(b.od, b.do) + extraSirka),
+                  minWidth: isDragged ? undefined : minTextW,
+                  top: b.lane * LANE_H + 4,
+                  zIndex: isDragged ? 20 : undefined,
+                }}
+              >
+                {b.href ? (
+                  <Link
+                    href={b.href}
+                    draggable={false}
+                    onClick={(e) => {
+                      if (movedRef.current || drag) e.preventDefault();
+                    }}
+                  >
+                    {bar}
+                  </Link>
+                ) : (
+                  bar
+                )}
               </div>
             );
           })}

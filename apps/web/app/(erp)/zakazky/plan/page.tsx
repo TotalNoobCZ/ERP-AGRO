@@ -1,12 +1,13 @@
 // Plán (timeline) – port z Planovani/app/(app)/plan/page.tsx.
 // Režimy: podle akcí (s rozbalitelnými pracovníky) / podle zaměstnance.
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCurrentProfile } from "@/lib/supabase/server";
 import { parseDay, formatCz } from "@/lib/zakazky/dates";
 import { poTerminu } from "@/lib/zakazky/orders";
 import { okno, baleniDoRad } from "@/lib/zakazky/timeline";
 import Timeline, { type TRadek } from "@/components/zakazky/Timeline";
-import { MILNIK_LABELS, ODDELENI_LABELS, type Oddeleni, type StavZakazky, type TypMilniku } from "@erp/core";
+import PlanGantt from "@/components/zakazky/PlanGantt";
+import { canWrite, MILNIK_LABELS, ODDELENI_LABELS, type Oddeleni, type Role, type StavZakazky, type TypMilniku } from "@erp/core";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +66,8 @@ export default async function PlanPage({
   const ref = refDatum(sp.ref);
   const { start, konec } = okno(ref, 3);
   const supabase = await createClient();
+  const profile = await getCurrentProfile();
+  const writer = profile ? canWrite(profile.role as Role) : false;
 
   let radky: TRadek[] = [];
 
@@ -132,6 +135,8 @@ export default async function PlanPage({
             label: z.kod,
             href: `/zakazky/${z.id}`,
             titulek: `${z.kod} — ${z.misto_plneni}`,
+            // drag & drop: posun termínů tažením (jen pro editory)
+            ...(writer ? { dragId: z.id, resizable: true } : {}),
           },
         ],
         znacky: [
@@ -222,12 +227,16 @@ export default async function PlanPage({
         </div>
       </div>
 
-      <Timeline
-        start={start}
-        konec={konec}
-        radky={radky}
-        prazdno={mode === "osoby" ? "Nikdo nemá v tomto období přiřazení." : "Žádné akce v tomto období."}
-      />
+      {mode === "zakazky" && writer ? (
+        <PlanGantt start={start} konec={konec} radky={radky} prazdno="Žádné akce v tomto období." />
+      ) : (
+        <Timeline
+          start={start}
+          konec={konec}
+          radky={radky}
+          prazdno={mode === "osoby" ? "Nikdo nemá v tomto období přiřazení." : "Žádné akce v tomto období."}
+        />
+      )}
 
       <div className="flex flex-wrap gap-4 text-xs text-text-muted">
         <Legenda barva={BARVA.aktivni} text="Aktivní" />

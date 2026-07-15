@@ -15,6 +15,7 @@ import {
 } from "../actions";
 import { ProdlouzeniForm, PreruseniForm, PoznamkyAkce, MilnikyEditor } from "@/components/zakazky/formulare";
 import Timeline, { type TRadek } from "@/components/zakazky/Timeline";
+import { ZalozitProjekt } from "@/components/konstrukce/ZalozitProjekt";
 import type { StavZakazky } from "@erp/core";
 
 export const dynamic = "force-dynamic";
@@ -293,6 +294,14 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
         )}
       </section>
 
+      {/* Integrace: konstrukční projekty této zakázky */}
+      <section className="card p-4">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-muted">
+          Konstrukční projekty
+        </h2>
+        <KonstrukcniProjekty zakazkaId={z.id} />
+      </section>
+
       <section className="flex flex-wrap gap-3">
         <StavTlacitko id={z.id} stav="DOKONCENO" label="Označit dokončeno" cls="btn-primary" />
         <StavTlacitko id={z.id} stav="AKTIVNI" label="Znovu aktivovat" cls="btn-ghost" />
@@ -324,6 +333,42 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
       <section className="border-t border-line pt-4">
         <SmazatButton akce={akceSmazat} />
       </section>
+    </div>
+  );
+}
+
+async function KonstrukcniProjekty({ zakazkaId }: { zakazkaId: string }) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("projects")
+    .select("id, name, status, owner:profiles!projects_owner_id_fkey(name), tasks(count)")
+    .eq("zakazka_id", zakazkaId)
+    .order("created_at", { ascending: true });
+  const projekty = (data ?? []) as unknown as {
+    id: string;
+    name: string;
+    status: string;
+    owner: { name: string } | null;
+    tasks: { count: number }[];
+  }[];
+
+  return (
+    <div className="space-y-3">
+      {projekty.length === 0 ? (
+        <p className="text-sm text-text-muted">Zatím žádné konstrukční projekty.</p>
+      ) : (
+        <div className="divide-y divide-line rounded-md border border-line">
+          {projekty.map((p) => (
+            <Link key={p.id} href="/konstrukce" className="flex items-center gap-3 px-3 py-2 text-sm hover:bg-accent">
+              <span className="font-medium">{p.name}</span>
+              {p.owner && <span className="text-text-muted">zodpovídá {p.owner.name}</span>}
+              <span className="ml-auto text-xs text-text-muted">{p.tasks?.[0]?.count ?? 0} úkolů</span>
+              {p.status === "archived" && <span className="badge bg-slate-100 text-slate-500">archiv</span>}
+            </Link>
+          ))}
+        </div>
+      )}
+      <ZalozitProjekt zakazkaId={zakazkaId} />
     </div>
   );
 }

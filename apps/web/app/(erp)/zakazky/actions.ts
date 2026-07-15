@@ -859,3 +859,126 @@ export async function nahraditPracovnika(
   revalidatePath("/zakazky/plan");
   return { ok: true };
 }
+
+// ---- Posun akce tažením v plánu (drag & drop) ------------------------------
+export type PosunVysledek = { ok: boolean; chyba?: string };
+
+/**
+ * mode "move":  posune celou akci o deltaDays (začátek, konec, přiřazení
+ *               i milníky); změna konce se zapíše do historie prodloužení.
+ * mode "resize": změní jen konec (stejná pravidla jako prodlouzit).
+ * Důvod je povinný – změna termínu je auditovaná operace.
+ */
+export async function posunoutAkci(
+  zakazkaId: string,
+  mode: "move" | "resize",
+  deltaDays: number,
+  duvod: string,
+): Promise<PosunVysledek> {
+  const u = await writer();
+  if (!u) return { ok: false, chyba: "Nejste přihlášeni nebo nemáte právo zápisu." };
+  if (!Number.isInteger(deltaDays) || deltaDays === 0) return { ok: false, chyba: "Nulový posun." };
+  if (Math.abs(deltaDays) > 365) return { ok: false, chyba: "Posun je příliš velký." };
+  if (duvod.trim().length < 3) return { ok: false, chyba: "Uveďte důvod." };
+  const supabase = await createClient();
+
+  const { data: z } = await supabase
+    .from("zakazky")
+    .select("id, kod, zacatek, konec_aktualni, deleted_at")
+    .eq("id", zakazkaId)
+    .maybeSingle();
+  if (!z || z.deleted_at) return { ok: false, chyba: "Akce nenalezena." };
+
+  const staryZacatek = parseDay(z.zacatek);
+  const staryKonec = parseDay(z.konec_aktualni);
+  const novyKonec = addDays(staryKonec, deltaDays);
+
+  if (mode === "resize") {
+    if (novyKonec < staryZacatek) return { ok: false, chyba: "Konec nesmí být před začátkem akce." };
+    // stejná logika jako prodlouzit()
+    await supabase.from("prodlouzeni").insert({
+      zakazka_id: z.id,
+      stary_konec: formatDay(staryKonec),
+      novy_konec: formatDay(novyKonec),
+      duvod,
+      provedl_id: u.id,
+    });
+    await supabase.from("zakazky").update({ konec_aktualni: formatDay(novyKonec) }).eq("id", z.id);
+
+    if (novyKonec < staryKonec) {
+      const { data: presahujici } = await supabase
+        .from("prirazeni_zakazka").select("id")
+        .eq("zakazka_id", z.id).is("deleted_at", null)
+        .lte("datum_od", formatDay(novyKonec)).gt("datum_do", formatDay(novyKonec));
+      for (const pr of presahujici ?? []) {
+        await supabase.from("prirazeni_zakazka").update({ datum_do: formatDay(novyKonec) }).eq("id", pr.id);
+      }
+      const { data: zaKoncem } = await supabase
+        .from("prirazeni_zakazka").select("id")
+        .eq("zakazka_id", z.id).is("deleted_at", null).gt("datum_od", formatDay(novyKonec));
+      for (const pr of zaKoncem ?? []) {
+        await supabase.from("prirazeni_zakazka").update({ deleted_at: new Date().toISOString() }).eq("id", pr.id);
+      }
+    } else {
+      const { data: celodelkova } = await supabase
+        .from("prirazeni_zakazka").select("id")
+        .eq("zakazka_id", z.id).is("deleted_at", null).eq("datum_do", formatDay(staryKonec));
+      for (const pr of celodelkova ?? []) {
+        await supabase.from("prirazeni_zakazka").update({ datum_do: formatDay(novyKonec) }).eq("id", pr.id);
+      }
+    }
+
+    await zapisAudit(supabase, {
+      entita: "zakazka", entitaId: z.id, typZmeny: "PRODLOUZENI", uzivatelId: u.id,
+      puvodni: { konec: formatDay(staryKonec) },
+      nova: { konec: formatDay(novyKonec), duvod, popis: `Konec změněn tažením v plánu o ${deltaDays} dní — důvod: ${duvod}` },
+    });
+  } else {
+    // move: posun celé akce včetně přiřazení a milníků
+    const novyZacatek = addDays(staryZacatek, deltaDays);
+
+    await supabase.from("prodlouzeni").insert({
+      zakazka_id: z.id,
+      stary_konec: formatDay(staryKonec),
+      novy_konec: formatDay(novyKonec),
+      duvod: `Posun celé akce o ${deltaDays} dní — ${duvod}`,
+      provedl_id: u.id,
+    });
+    await supabase
+      .from("zakazky")
+      .update({ zacatek: formatDay(novyZacatek), konec_aktualni: formatDay(novyKonec) })
+      .eq("id", z.id);
+
+    const { data: prirazeni } = await supabase
+      .from("prirazeni_zakazka").select("id, datum_od, datum_do")
+      .eq("zakazka_id", z.id).is("deleted_at", null);
+    for (const p of prirazeni ?? []) {
+      await supabase.from("prirazeni_zakazka").update({
+        datum_od: formatDay(addDays(parseDay(p.datum_od), deltaDays)),
+        datum_do: formatDay(addDays(parseDay(p.datum_do), deltaDays)),
+      }).eq("id", p.id);
+    }
+    const { data: milniky } = await supabase
+      .from("milniky").select("id, datum")
+      .eq("zakazka_id", z.id).is("deleted_at", null);
+    for (const m of milniky ?? []) {
+      await supabase.from("milniky").update({
+        datum: formatDay(addDays(parseDay(m.datum), deltaDays)),
+      }).eq("id", m.id);
+    }
+
+    await zapisAudit(supabase, {
+      entita: "zakazka", entitaId: z.id, typZmeny: "UPRAVA", uzivatelId: u.id,
+      puvodni: { zacatek: formatDay(staryZacatek), konec: formatDay(staryKonec) },
+      nova: {
+        zacatek: formatDay(novyZacatek), konec: formatDay(novyKonec),
+        popis: `Akce posunuta tažením v plánu o ${deltaDays} dní (vč. přiřazení a milníků) — důvod: ${duvod}`,
+      },
+    });
+  }
+
+  revalidatePath("/zakazky");
+  revalidatePath(`/zakazky/${z.id}`);
+  revalidatePath("/zakazky/plan");
+  return { ok: true };
+}
