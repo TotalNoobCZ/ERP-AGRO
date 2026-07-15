@@ -1,5 +1,5 @@
 -- ============================================================================
---  seed/0001_first_admin.sql
+--  supabase/seed.sql
 --  Zakládající admini ERP systému. Profily se zakládají BEZ hesla
 --  (auth_user_id = null) – heslo si nastaví při 1. přihlášení ("Jsem tu poprvé").
 --  Spusť ručně po migracích. Idempotentní (on conflict do nothing).

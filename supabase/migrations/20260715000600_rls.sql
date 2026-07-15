@@ -1,5 +1,5 @@
 -- ============================================================================
---  0006_rls.sql
+--  20260715000600_rls.sql
 --  Row Level Security pro celý ERP systém.
 --  Model rolí (viz DESIGN.md):
 --    viewer  – jen čtení (SELECT) všude; změna vlastního hesla je na úrovni

@@ -23,24 +23,49 @@ packages/
   ui/             # barevné tokeny, paleta uživatelů
 ```
 
-## Lokální spuštění
+## Lokální spuštění (testujeme lokálně, na Vercel až potom)
 
-Požadavky: Node.js ≥ 20.9, Supabase projekt (cloud, nebo lokální `supabase start`).
+Požadavky na počítač:
+- **Node.js ≥ 20.9** (https://nodejs.org)
+- **Docker Desktop** (https://docker.com) – běží v něm lokální Supabase
+  (Postgres + Auth + Studio); nic se neposílá do cloudu
 
-1. **Databáze** – aplikuj migrace a seed (v pořadí):
+Postup:
+
+1. **Nainstaluj závislosti:**
    ```bash
-   for f in packages/db/migrations/*.sql; do psql "$DATABASE_URL" -f "$f"; done
-   psql "$DATABASE_URL" -f packages/db/seed/0001_first_admin.sql
-   ```
-2. **Aplikace:**
-   ```bash
-   cp apps/web/.env.example apps/web/.env.local   # doplň URL + klíče ze Supabase
    npm install
-   npm run dev                                     # http://localhost:3000
    ```
-3. **První přihlášení:** na /login zvol „Jsem tu poprvé", zadej e-mail
-   založeného profilu (seed: `rohac@agrocs.cz`, `harantk@agrocs.cz`)
-   a nastav si heslo.
+2. **Rozjeď lokální Supabase** (poprvé stáhne Docker image, chvíli trvá):
+   ```bash
+   npm run db:start
+   ```
+   Na konci vypíše `API URL`, `anon key` a `service_role key`.
+3. **Nastav prostředí aplikace:**
+   ```bash
+   cp apps/web/.env.example apps/web/.env.local
+   ```
+   a do `.env.local` vlož vypsané hodnoty (URL + oba klíče).
+4. **Aplikuj migrace + seed** (vytvoří všechny tabulky, RLS a první adminy):
+   ```bash
+   npm run db:reset
+   ```
+5. **Spusť aplikaci:**
+   ```bash
+   npm run dev        # http://localhost:3000
+   ```
+6. **První přihlášení:** na /login zvol „Jsem tu poprvé", zadej
+   `rohac@agrocs.cz` nebo `harantk@agrocs.cz` a nastav si heslo.
+
+Užitečné: `npm run db:stop` (vypne stack), Supabase Studio běží na
+http://127.0.0.1:54323 (prohlížení dat). Databázi kdykoli srovnáš do čistého
+stavu přes `npm run db:reset`.
+
+## Nasazení (později)
+
+Až bude lokálně otestováno: založit cloud Supabase projekt, `supabase db push`
+(aplikuje tytéž migrace), na Vercelu nastavit env proměnné z `.env.example`
+a nasadit z GitHubu. Detaily doplníme, až na to dojde.
 
 ## Stav integrace
 

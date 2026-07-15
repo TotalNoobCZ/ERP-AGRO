@@ -11,9 +11,15 @@
     "build": "npm run build -w @erp/web",
     "start": "npm run start -w @erp/web",
     "lint": "npm run lint -w @erp/web",
-    "typecheck": "npm run typecheck -w @erp/web"
+    "typecheck": "npm run typecheck -w @erp/web",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset"
   },
   "engines": {
     "node": ">=20.9"
+  },
+  "devDependencies": {
+    "supabase": "^2.109.1"
   }
 }

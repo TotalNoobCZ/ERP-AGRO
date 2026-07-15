@@ -1,5 +1,5 @@
 -- ============================================================================
---  0003_poptavky.sql
+--  20260715000300_poptavky.sql
 --  Modul Poptávky. Předloha: Popt-vky/prisma/schema.prisma
 --  (Inquiry, Comment, StatusLog + enum InquiryStatus).
 --  Změny proti originálu:

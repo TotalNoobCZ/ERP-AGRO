@@ -1,5 +1,5 @@
 -- ============================================================================
---  0002_shared_customers.sql
+--  20260715000200_shared_customers.sql
 --  Sdílené entity zákazníků (z modulu Poptávky). Sdílené napříč moduly –
 --  zákazník se z poptávky dědí do zakázky (viz 0004: zakazky.customer_id).
 --  Předloha: Popt-vky/prisma/schema.prisma (model Customer, Contact).

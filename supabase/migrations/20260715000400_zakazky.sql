@@ -1,5 +1,5 @@
 -- ============================================================================
---  0004_zakazky.sql
+--  20260715000400_zakazky.sql
 --  Modul Zakázky (páteř systému) + plánování lidí.
 --  Předloha: Planovani/prisma/schema.prisma
 --  (Zakazka, Milnik, PrirazeniZakazka, PrirazeniMilnik, Preruseni,

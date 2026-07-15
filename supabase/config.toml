@@ -1,0 +1,10 @@
+# Supabase CLI – lokální vývojový stack (Docker).
+# `supabase start`   → Postgres + Auth + Studio na tomto počítači
+# `supabase db reset`→ aplikuje migrations/ a seed.sql
+# Ponecháno minimální; porty a ostatní hodnoty = výchozí
+# (API 54321, DB 54322, Studio 54323).
+
+project_id = "erp-agro"
+
+[auth]
+site_url = "http://localhost:3000"

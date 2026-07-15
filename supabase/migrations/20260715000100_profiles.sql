@@ -1,5 +1,5 @@
 -- ============================================================================
---  0001_profiles.sql
+--  20260715000100_profiles.sql
 --  Sjednocený model lidí pro celý ERP systém.
 --  Nahrazuje tři původní modely: Person (Poptávky), Osoba+Uzivatel (Plánování),
 --  profiles (Konstrukce). Jedna tabulka napojená na Supabase Auth.

@@ -1,5 +1,5 @@
 -- ============================================================================
---  0005_konstrukce.sql
+--  20260715000500_konstrukce.sql
 --  Modul Konstrukce (Gantt, dlaždice, kolizní engine).
 --  Předloha: ZADANI.md kap. 4 (datový model konstrukční aplikace).
 --  Změny proti originálu:
