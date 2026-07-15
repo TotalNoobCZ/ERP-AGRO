@@ -46,6 +46,13 @@ export function StatusChanger({
     }
     setShowReason(false);
     setReason("");
+    // Tok mezi moduly: poptávka OBJEDNANO → nabídnout založení zakázky.
+    if (status === "OBJEDNANO" && current !== "OBJEDNANO") {
+      if (window.confirm("Poptávka je objednaná. Vytvořit z ní rovnou výrobní zakázku?")) {
+        router.push(`/zakazky/nova?inquiry=${inquiryId}`);
+        return;
+      }
+    }
     router.refresh();
   }
 

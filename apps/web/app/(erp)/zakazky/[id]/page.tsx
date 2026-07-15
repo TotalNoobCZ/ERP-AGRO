@@ -1,0 +1,352 @@
+// Detail akce – port z Planovani/app/(app)/zakazky/[id]/page.tsx.
+// Nové (integrace): odkaz na zdrojovou poptávku a zděděného zákazníka.
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { createClient, getCurrentProfile } from "@/lib/supabase/server";
+import { parseDay, formatDay, formatCz, today } from "@/lib/zakazky/dates";
+import { StavBadge, SubmitButton, SmazatButton } from "@/components/zakazky/common";
+import {
+  prodlouzit,
+  zmenitStav,
+  smazatZakazku,
+  prerusitAkci,
+  obnovitAkci,
+  type ZakazkaStav,
+} from "../actions";
+import { ProdlouzeniForm, PreruseniForm, PoznamkyAkce, MilnikyEditor } from "@/components/zakazky/formulare";
+import Timeline, { type TRadek } from "@/components/zakazky/Timeline";
+import type { StavZakazky } from "@erp/core";
+
+export const dynamic = "force-dynamic";
+
+const TYP_ZMENY_LABEL: Record<string, string> = {
+  VYTVORENI: "Vytvoření",
+  UPRAVA: "Úprava",
+  SMAZANI: "Smazání",
+  PRODLOUZENI: "Prodloužení",
+  ARCHIVACE: "Archivace",
+};
+
+type Detail = {
+  id: string;
+  kod: string;
+  misto_plneni: string;
+  priorita: number;
+  zacatek: string;
+  konec_puvodni: string;
+  konec_aktualni: string;
+  stav: StavZakazky;
+  poznamka: string | null;
+  deleted_at: string | null;
+  inquiry: { id: string; number: number; subject: string } | null;
+  customer: { id: string; name: string } | null;
+  odpovedna: { name: string } | null;
+  prirazeni: { id: string; osoba_id: string; datum_od: string; datum_do: string; deleted_at: string | null; osoba: { name: string } | null }[];
+  milniky: { id: string; typ: string; datum: string; cas: string | null; poznamka: string | null; deleted_at: string | null }[];
+  prodlouzeni: { id: string; stary_konec: string; novy_konec: string; duvod: string; created_at: string; provedl: { name: string } | null }[];
+  poznamky: { id: string; text: string; uzivatel_id: string; created_at: string; deleted_at: string | null; uzivatel: { name: string } | null }[];
+  preruseni: { id: string; datum_od: string; datum_do: string | null; zbyvajici_dny: number; duvod: string; created_at: string; prerusil: { name: string } | null; obnovil: { name: string } | null }[];
+};
+
+export default async function ZakazkaDetail({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from("zakazky")
+    .select(
+      `id, kod, misto_plneni, priorita, zacatek, konec_puvodni, konec_aktualni, stav, poznamka, deleted_at,
+       inquiry:inquiries(id, number, subject),
+       customer:customers(id, name),
+       odpovedna:profiles!zakazky_odpovedna_osoba_id_fkey(name),
+       prirazeni:prirazeni_zakazka(id, osoba_id, datum_od, datum_do, deleted_at, osoba:profiles(name)),
+       milniky(id, typ, datum, cas, poznamka, deleted_at),
+       prodlouzeni(id, stary_konec, novy_konec, duvod, created_at, provedl:profiles!prodlouzeni_provedl_id_fkey(name)),
+       poznamky:akce_poznamky(id, text, uzivatel_id, created_at, deleted_at, uzivatel:profiles(name)),
+       preruseni(id, datum_od, datum_do, zbyvajici_dny, duvod, created_at,
+         prerusil:profiles!preruseni_prerusil_id_fkey(name),
+         obnovil:profiles!preruseni_obnovil_id_fkey(name))`,
+    )
+    .eq("id", id)
+    .maybeSingle();
+  if (!data || (data as { deleted_at: string | null }).deleted_at) notFound();
+  const z = data as unknown as Detail;
+
+  const prirazeni = z.prirazeni
+    .filter((p) => !p.deleted_at)
+    .sort((a, b) => a.datum_od.localeCompare(b.datum_od));
+  const milniky = z.milniky
+    .filter((m) => !m.deleted_at)
+    .sort((a, b) => a.datum.localeCompare(b.datum));
+  const prodlouzeni = [...z.prodlouzeni].sort((a, b) => b.created_at.localeCompare(a.created_at));
+  const preruseni = [...z.preruseni].sort((a, b) => b.created_at.localeCompare(a.created_at));
+
+  const profile = await getCurrentProfile();
+  const uid = profile?.id;
+  const jeAdmin = profile?.role === "admin";
+
+  const poznamky = z.poznamky
+    .filter((p) => !p.deleted_at)
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .map((p) => ({
+      id: p.id,
+      text: p.text,
+      autor: p.uzivatel?.name ?? "?",
+      kdy: new Date(p.created_at).toLocaleString("cs-CZ", {
+        timeZone: "Europe/Prague",
+        dateStyle: "short",
+        timeStyle: "short",
+      }),
+      muzeSmazat: p.uzivatel_id === uid || Boolean(jeAdmin),
+    }));
+
+  const otevrenePreruseni = preruseni.find((p) => p.datum_do === null) ?? null;
+  const akcePrerusit = prerusitAkci.bind(null, z.id) as (p: ZakazkaStav, fd: FormData) => Promise<ZakazkaStav>;
+  const akceObnovit = obnovitAkci.bind(null, z.id) as (p: ZakazkaStav, fd: FormData) => Promise<ZakazkaStav>;
+
+  const { data: auditData } = await supabase
+    .from("audit_log")
+    .select("id, typ_zmeny, nova_hodnota, created_at, uzivatel:profiles(name)")
+    .eq("entita", "zakazka")
+    .eq("entita_id", z.id)
+    .order("created_at", { ascending: false })
+    .limit(30);
+  const audit = (auditData ?? []) as unknown as {
+    id: string;
+    typ_zmeny: string;
+    nova_hodnota: { popis?: string } | null;
+    created_at: string;
+    uzivatel: { name: string } | null;
+  }[];
+
+  const zacatekD = parseDay(z.zacatek);
+  const konecPuvodniD = parseDay(z.konec_puvodni);
+  const konecAktualniD = parseDay(z.konec_aktualni);
+  const prodlouzeno = konecAktualniD.getTime() !== konecPuvodniD.getTime();
+  const akceProdlouzit = prodlouzit.bind(null, z.id) as (p: ZakazkaStav, fd: FormData) => Promise<ZakazkaStav>;
+  const akceSmazat = smazatZakazku.bind(null, z.id) as (fd: FormData) => Promise<void>;
+  const stavovaZakazka = { konecAktualni: konecAktualniD, stav: z.stav };
+
+  // Barvy podle osoby – stejná osoba = stejná barva.
+  const PALETA = ["#2f5d78", "#b45309", "#0f766e", "#be185d", "#4d7c0f", "#6d28d9", "#0369a1", "#a16207"];
+  const poradiOsob: string[] = [];
+  for (const p of prirazeni) if (!poradiOsob.includes(p.osoba_id)) poradiOsob.push(p.osoba_id);
+  const barvaOsoby = (oid: string) => PALETA[poradiOsob.indexOf(oid) % PALETA.length]!;
+
+  // Časová osa přiřazení – jeden řádek na osobu.
+  const casy = prirazeni.flatMap((p) => [parseDay(p.datum_od).getTime(), parseDay(p.datum_do).getTime()]);
+  const tlStart = new Date(Math.min(zacatekD.getTime(), ...(casy.length ? casy : [zacatekD.getTime()])));
+  const tlKonec = new Date(Math.max(konecAktualniD.getTime(), ...(casy.length ? casy : [konecAktualniD.getTime()])));
+  const radkyMap = new Map<string, TRadek>();
+  for (const p of prirazeni) {
+    if (!radkyMap.has(p.osoba_id)) {
+      radkyMap.set(p.osoba_id, {
+        id: p.osoba_id,
+        label: p.osoba?.name ?? "?",
+        pocetRad: 1,
+        bary: [],
+        znacky: [],
+      });
+    }
+    radkyMap.get(p.osoba_id)!.bary.push({
+      od: parseDay(p.datum_od),
+      do: parseDay(p.datum_do),
+      lane: 0,
+      barva: barvaOsoby(p.osoba_id),
+      titulek: `${formatCz(parseDay(p.datum_od))} – ${formatCz(parseDay(p.datum_do))}`,
+    });
+  }
+  const tlRadky = Array.from(radkyMap.values());
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <Link href="/zakazky" className="text-sm text-text-muted hover:underline">← Akce</Link>
+        <div className="mt-2 flex flex-wrap items-center gap-3">
+          <h1 className="font-mono text-xl font-semibold">{z.kod}</h1>
+          <StavBadge z={stavovaZakazka} />
+          <span title="1 = nejvyšší, 5 = nejnižší" className="badge bg-slate-100 text-slate-500">Priorita {z.priorita}</span>
+          <div className="ml-auto flex gap-2">
+            <Link href={`/zakazky/${z.id}/upravit`} className="btn-ghost">Upravit</Link>
+          </div>
+        </div>
+        <p className="mt-1 text-text-muted">{z.misto_plneni}</p>
+        {z.odpovedna && (
+          <p className="mt-1 text-sm text-text-muted">Odpovědná osoba: {z.odpovedna.name}</p>
+        )}
+        {/* Integrace: původ zakázky */}
+        {(z.inquiry || z.customer) && (
+          <p className="mt-1 text-sm text-text-muted">
+            {z.customer && <>Zákazník: <span className="text-text">{z.customer.name}</span></>}
+            {z.customer && z.inquiry && " · "}
+            {z.inquiry && (
+              <>
+                vznikla z poptávky{" "}
+                <Link href={`/poptavky/${z.inquiry.id}`} className="text-user-0 hover:underline">
+                  #{z.inquiry.number} · {z.inquiry.subject}
+                </Link>
+              </>
+            )}
+          </p>
+        )}
+      </div>
+
+      <section className="card p-4">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-muted">Termíny</h2>
+        <div className="grid grid-cols-3 gap-4 text-sm">
+          <div><span className="text-text-muted">Začátek</span><br />{formatCz(zacatekD)}</div>
+          <div>
+            <span className="text-text-muted">Konec</span><br />
+            {prodlouzeno ? (
+              <>
+                <span className="text-text-muted line-through">{formatCz(konecPuvodniD)}</span>{" "}
+                <strong>{formatCz(konecAktualniD)}</strong>
+              </>
+            ) : (
+              formatCz(konecAktualniD)
+            )}
+          </div>
+          <div><span className="text-text-muted">Prodlouženo</span><br />{prodlouzeni.length}×</div>
+        </div>
+        {z.poznamka && <p className="mt-3 text-sm text-text-muted">{z.poznamka}</p>}
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-text-muted">Přiřazení pracovníci</h2>
+
+        {tlRadky.length > 0 && <Timeline start={tlStart} konec={tlKonec} radky={tlRadky} />}
+
+        <div className="card divide-y divide-white/5">
+          {prirazeni.map((p) => (
+            <div key={p.id} className="flex items-center gap-3 px-4 py-2 text-sm">
+              <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: barvaOsoby(p.osoba_id) }} />
+              <span className="font-medium">{p.osoba?.name ?? "?"}</span>
+              <span className="ml-auto text-text-muted">
+                {formatCz(parseDay(p.datum_od))} – {formatCz(parseDay(p.datum_do))}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <MilnikyEditor
+        zakazkaId={z.id}
+        milniky={milniky.map((m) => ({
+          id: m.id,
+          typ: m.typ,
+          datum: m.datum,
+          cas: m.cas,
+          poznamka: m.poznamka,
+        }))}
+      />
+
+      <PoznamkyAkce zakazkaId={z.id} poznamky={poznamky} />
+
+      <section className="card p-4">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-muted">Změna termínu (prodloužit / zkrátit)</h2>
+        <ProdlouzeniForm akce={akceProdlouzit} />
+        {prodlouzeni.length > 0 && (
+          <div className="mt-4 space-y-2 border-t border-white/10 pt-4 text-sm">
+            {prodlouzeni.map((p) => (
+              <div key={p.id} className="text-text-muted">
+                <span>{formatCz(parseDay(p.stary_konec))} → </span>
+                <strong className="text-text">{formatCz(parseDay(p.novy_konec))}</strong> — {p.duvod}
+                <span> ({p.provedl?.name ?? "?"})</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="card p-4">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-muted">Přerušení akce</h2>
+        {otevrenePreruseni ? (
+          <div className="space-y-3">
+            <div className="rounded-md border border-amber-400/40 bg-amber-400/10 p-3 text-sm text-amber-300">
+              Akce je přerušená od {formatCz(parseDay(otevrenePreruseni.datum_od))} — zbývá{" "}
+              <strong>{otevrenePreruseni.zbyvajici_dny} dnů</strong> práce. Důvod: {otevrenePreruseni.duvod}.{" "}
+              Přerušil: {otevrenePreruseni.prerusil?.name ?? "?"}.
+            </div>
+            <PreruseniForm mode="obnovit" akce={akceObnovit} />
+          </div>
+        ) : (
+          <PreruseniForm mode="prerusit" akce={akcePrerusit} />
+        )}
+        {preruseni.length > 0 && (
+          <div className="mt-4 space-y-2 border-t border-white/10 pt-4 text-sm">
+            {preruseni.map((p) => (
+              <div key={p.id} className="text-text-muted">
+                <span>{formatCz(parseDay(p.datum_od))}</span>
+                {p.datum_do ? (
+                  <> → <strong className="text-text">{formatCz(parseDay(p.datum_do))}</strong> (obnoveno)</>
+                ) : (
+                  " (probíhá)"
+                )}
+                {" — "}{p.duvod}
+                <span>
+                  {" "}(přerušil {p.prerusil?.name ?? "?"}
+                  {p.obnovil ? `, obnovil ${p.obnovil.name}` : ""})
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="flex flex-wrap gap-3">
+        <StavTlacitko id={z.id} stav="DOKONCENO" label="Označit dokončeno" cls="btn-primary" />
+        <StavTlacitko id={z.id} stav="AKTIVNI" label="Znovu aktivovat" cls="btn-ghost" />
+        <StavTlacitko id={z.id} stav="ARCHIV" label="Archivovat" cls="btn-danger" />
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-muted">Historie změn</h2>
+        <div className="card divide-y divide-white/5 text-sm">
+          {audit.map((a) => {
+            const popis = a.nova_hodnota && typeof a.nova_hodnota === "object" && a.nova_hodnota.popis
+              ? String(a.nova_hodnota.popis)
+              : null;
+            return (
+              <div key={a.id} className="px-4 py-2">
+                <div className="flex items-center gap-3">
+                  <span className="badge bg-slate-100 text-slate-600">{TYP_ZMENY_LABEL[a.typ_zmeny] ?? a.typ_zmeny}</span>
+                  <span className="text-text-muted">{a.uzivatel?.name ?? "?"}</span>
+                  <span className="ml-auto text-text-muted">{formatCz(new Date(a.created_at))}</span>
+                </div>
+                {popis && <p className="mt-0.5 text-text-muted">{popis}</p>}
+              </div>
+            );
+          })}
+          {audit.length === 0 && <p className="px-4 py-2 text-text-muted">Žádné záznamy.</p>}
+        </div>
+      </section>
+
+      <section className="border-t border-white/10 pt-4">
+        <SmazatButton akce={akceSmazat} />
+      </section>
+    </div>
+  );
+}
+
+function StavTlacitko({
+  id,
+  stav,
+  label,
+  cls,
+}: {
+  id: string;
+  stav: "DOKONCENO" | "ARCHIV" | "AKTIVNI" | "POZASTAVENO";
+  label: string;
+  cls: string;
+}) {
+  return (
+    <form
+      action={async () => {
+        "use server";
+        await zmenitStav(id, stav);
+      }}
+    >
+      <SubmitButton className={cls} pendingText="Ukládám…">{label}</SubmitButton>
+    </form>
+  );
+}

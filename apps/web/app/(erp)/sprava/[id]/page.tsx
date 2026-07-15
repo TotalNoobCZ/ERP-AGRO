@@ -1,0 +1,47 @@
+import { notFound } from "next/navigation";
+import { createClient, getCurrentProfile } from "@/lib/supabase/server";
+import { ProfilForm } from "@/components/sprava/ProfilForm";
+import { upravitProfil, type ProfilStav } from "../actions";
+
+export const dynamic = "force-dynamic";
+
+export default async function UpravitProfilPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const me = await getCurrentProfile();
+  if (me?.role !== "admin") {
+    return <p className="text-sm text-text-muted">Správa uživatelů je jen pro administrátory.</p>;
+  }
+
+  const supabase = await createClient();
+  const { data: p } = await supabase
+    .from("profiles")
+    .select("id, name, email, role, oddeleni, assignable, color_index, active, pozice, osobni_cislo, poznamka, auth_user_id")
+    .eq("id", id)
+    .maybeSingle();
+  if (!p) notFound();
+
+  const akce = upravitProfil.bind(null, p.id) as (prev: ProfilStav, fd: FormData) => Promise<ProfilStav>;
+
+  return (
+    <div className="space-y-4">
+      <h1 className="text-2xl font-bold">Upravit uživatele</h1>
+      <ProfilForm
+        akce={akce}
+        initial={{
+          id: p.id,
+          name: p.name,
+          email: p.email,
+          role: p.role,
+          oddeleni: p.oddeleni,
+          assignable: p.assignable,
+          colorIndex: p.color_index,
+          active: p.active,
+          pozice: p.pozice,
+          osobniCislo: p.osobni_cislo,
+          poznamka: p.poznamka,
+          maUcet: Boolean(p.auth_user_id),
+        }}
+      />
+    </div>
+  );
+}

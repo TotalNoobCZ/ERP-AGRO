@@ -96,7 +96,14 @@ Každý další push do produkční větve se nasadí automaticky.
   - [x] **Poptávky** – dashboard, seznam s filtry, detail (stavy, komentáře,
         historie, „Kontaktovat"), nová/editace, zákazníci + kontakty, tiskové
         exporty. Data přes supabase-js + server actions, autor = přihlášený profil.
+  - [x] **Zakázky/Plánování** – seznam akcí s filtry, detail (milníky, poznámky,
+        prodloužení, přerušení/obnovení, pracovníci, audit), nová akce s kontrolou
+        kolizí a náhradníky, plán (timeline podle akcí i zaměstnanců), archiv
+  - [x] **Správa** – zakládání a úprava profilů (role, oddělení, přiřaditelnost,
+        barva), změna vlastního hesla
   - [ ] Konstrukce (čeká na zdrojový kód, případně stavba dle ZADANI.md)
-  - [ ] Plánování
-- [ ] Krok 5 – tok mezi moduly (poptávka „Objednáno" → zakázka → projekty)
+- [x] Krok 5 (část) – tok poptávka „Objednáno" → zakázka: nabídka založení po
+      změně stavu, předvyplnění z poptávky, dědění zákazníka, zpětné odkazy
+      (`zakazky.inquiry_id`, `zakazky.customer_id`); založení konstrukčních
+      projektů ze zakázky přijde s modulem Konstrukce
 - [ ] Krok 6 – migrace ostrých dat (deduplikace lidí podle e-mailu)

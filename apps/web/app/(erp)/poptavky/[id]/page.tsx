@@ -61,6 +61,14 @@ export default async function InquiryDetailPage({ params }: { params: Promise<{ 
   const [persons, profile] = await Promise.all([queryPersons(supabase), getCurrentProfile()]);
   const defaultAuthor = profile?.name ?? "";
 
+  // Tok mezi moduly: existuje už zakázka založená z této poptávky?
+  const { data: zakazkaZPoptavky } = await supabase
+    .from("zakazky")
+    .select("id, kod")
+    .eq("inquiry_id", inquiry.id)
+    .is("deleted_at", null)
+    .maybeSingle();
+
   const comments = [...(inquiry.comments ?? [])].sort((a, b) =>
     b.created_at.localeCompare(a.created_at),
   );
@@ -105,6 +113,31 @@ export default async function InquiryDetailPage({ params }: { params: Promise<{ 
           <DeleteInquiryButton inquiryId={inquiry.id} />
         </div>
       </div>
+
+      {/* Tok mezi moduly: poptávka OBJEDNANO ⇄ zakázka */}
+      {inquiry.status === "OBJEDNANO" && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-user-1/40 bg-user-1/10 p-3 text-sm">
+          {zakazkaZPoptavky ? (
+            <span>
+              Z této poptávky vznikla zakázka{" "}
+              <Link href={`/zakazky/${zakazkaZPoptavky.id}`} className="font-mono font-semibold text-user-0 hover:underline">
+                {zakazkaZPoptavky.kod}
+              </Link>
+              .
+            </span>
+          ) : (
+            <>
+              <span>Poptávka je objednaná — je čas založit výrobní zakázku.</span>
+              <Link
+                href={`/zakazky/nova?inquiry=${inquiry.id}`}
+                className="rounded-md bg-user-1 px-3 py-1.5 font-semibold text-bg hover:opacity-90"
+              >
+                Vytvořit zakázku
+              </Link>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-3">
         {/* Levý sloupec – informace */}
