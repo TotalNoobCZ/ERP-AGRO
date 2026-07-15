@@ -61,11 +61,30 @@ Užitečné: `npm run db:stop` (vypne stack), Supabase Studio běží na
 http://127.0.0.1:54323 (prohlížení dat). Databázi kdykoli srovnáš do čistého
 stavu přes `npm run db:reset`.
 
-## Nasazení (později)
+## Nasazení: cloud Supabase + Vercel
 
-Až bude lokálně otestováno: založit cloud Supabase projekt, `supabase db push`
-(aplikuje tytéž migrace), na Vercelu nastavit env proměnné z `.env.example`
-a nasadit z GitHubu. Detaily doplníme, až na to dojde.
+### 1. Databáze (Supabase)
+1. https://supabase.com → **New project** (název `erp-agro`, region EU,
+   silné DB heslo – ulož si ho).
+2. V projektu otevři **SQL Editor**, vlož celý obsah souboru
+   [`supabase/remote_setup.sql`](supabase/remote_setup.sql) a spusť (**Run**).
+   Vytvoří všechny tabulky, RLS politiky a profily adminů.
+3. **Project Settings → API** – budeš potřebovat 3 hodnoty:
+   `Project URL`, `anon public` klíč, `service_role` klíč (ten nikdy do frontendu).
+
+### 2. Aplikace (Vercel)
+1. https://vercel.com → **Add New… → Project** → importuj GitHub repo
+   `TotalNoobCZ/ERP-AGRO`.
+2. **Root Directory:** nastav `apps/web` (Edit vedle pole Root Directory).
+   Framework: Next.js (auto). Build/install příkazy nech výchozí.
+3. **Environment Variables** – přidej (názvy viz `apps/web/.env.example`):
+   - `NEXT_PUBLIC_SUPABASE_URL` = Project URL
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = anon public klíč
+   - `SUPABASE_SERVICE_ROLE_KEY` = service_role klíč
+4. **Deploy.** Po nasazení: `/login` → „Jsem tu poprvé" →
+   `rohac@agrocs.cz` / `harantk@agrocs.cz` → nastavit heslo.
+
+Každý další push do produkční větve se nasadí automaticky.
 
 ## Stav integrace
 

@@ -6,6 +6,15 @@ import { createServerClient } from "@supabase/ssr";
  * nepřihlášený uživatel smí jen na /login (a auth API).
  */
 export default async function proxy(request: NextRequest) {
+  // Srozumitelná hláška místo pádu, dokud nejsou na hostingu nastavené env proměnné.
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return new NextResponse(
+      "ERP AGRO: aplikace zatím není nakonfigurována – v nastavení hostingu chybí " +
+        "NEXT_PUBLIC_SUPABASE_URL a NEXT_PUBLIC_SUPABASE_ANON_KEY (viz apps/web/.env.example).",
+      { status: 503, headers: { "content-type": "text/plain; charset=utf-8" } },
+    );
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
