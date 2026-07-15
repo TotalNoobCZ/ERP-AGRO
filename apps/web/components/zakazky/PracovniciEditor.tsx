@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { OsobaSelect, type OsobaLite } from "./common";
+import { DateField } from "@/components/DateField";
 import {
   pridatPracovnika,
   odebratPracovnika,
@@ -93,11 +94,11 @@ export default function PracovniciEditor({
                   <div className="flex flex-wrap items-end gap-2">
                     <div>
                       <label className="label">Od</label>
-                      <input type="date" className="field" value={rOd} onChange={(e) => setROd(e.target.value)} />
+                      <DateField value={rOd} onChange={setROd} />
                     </div>
                     <div>
                       <label className="label">Do</label>
-                      <input type="date" className="field" value={rDo} onChange={(e) => setRDo(e.target.value)} />
+                      <DateField value={rDo} onChange={setRDo} />
                     </div>
                   </div>
                 )}
@@ -137,8 +138,8 @@ export default function PracovniciEditor({
         <p className="text-sm font-medium text-text-muted">Přidat pracovníka</p>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <OsobaSelect osoby={pracovnici} value={addOsoba} onChange={setAddOsoba} name="_pridat" />
-          <input type="date" className="field" value={addOd} onChange={(e) => setAddOd(e.target.value)} />
-          <input type="date" className="field" value={addDo} onChange={(e) => setAddDo(e.target.value)} />
+          <DateField value={addOd} onChange={setAddOd} />
+          <DateField value={addDo} onChange={setAddDo} />
         </div>
         <input className="field" value={addDuvod} onChange={(e) => setAddDuvod(e.target.value)} placeholder="Důvod (povinný)" />
         <button

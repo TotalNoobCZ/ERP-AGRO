@@ -9,6 +9,7 @@ import Link from "next/link";
 import { vytvoritZakazku, vyresitKolizi, type ZakazkaStav, type KolizeInfo } from "@/app/(erp)/zakazky/actions";
 import { OsobaSelect, type OsobaLite } from "./common";
 import { formatDen } from "@/lib/format";
+import { DateField } from "@/components/DateField";
 
 type Radek = { key: number; osobaId: string; vyjimka: boolean; od: string; do: string };
 
@@ -113,12 +114,12 @@ export default function ZakazkaForm({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="label">Začátek akce</label>
-            <input name="zacatek" type="date" className="field" value={zacatek} onChange={(e) => setZacatek(e.target.value)} required />
+            <DateField name="zacatek" value={zacatek} onChange={setZacatek} required />
             {ch.zacatek && <p className="err">{ch.zacatek}</p>}
           </div>
           <div>
             <label className="label">Konec akce</label>
-            <input name="konec" type="date" className="field" value={konec} onChange={(e) => setKonec(e.target.value)} required />
+            <DateField name="konec" value={konec} onChange={setKonec} required />
             {ch.konec && <p className="err">{ch.konec}</p>}
           </div>
         </div>
@@ -155,8 +156,8 @@ export default function ZakazkaForm({
 
                 {r.vyjimka && (
                   <div className="mt-2 grid grid-cols-2 gap-2">
-                    <input type="date" className="field" value={r.od} onChange={(e) => zmenit(r.key, { od: e.target.value })} />
-                    <input type="date" className="field" value={r.do} onChange={(e) => zmenit(r.key, { do: e.target.value })} />
+                    <DateField value={r.od} onChange={(v) => zmenit(r.key, { od: v })} />
+                    <DateField value={r.do} onChange={(v) => zmenit(r.key, { do: v })} />
                   </div>
                 )}
 

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 
 const TABS = [
+  { href: "/konstrukce/prehled", label: "Přehled" },
   { href: "/konstrukce", label: "Plánování" },
   { href: "/konstrukce/gantt", label: "Gantt" },
   { href: "/konstrukce/archiv", label: "Archiv" },
@@ -35,6 +36,12 @@ export function KonstrukceSubNav({ canWrite }: { canWrite: boolean }) {
           {t.label}
         </Link>
       ))}
+      <Link
+        href="/konstrukce/tisk?print=1"
+        className="ml-auto rounded-md px-3 py-1.5 text-sm font-medium text-text-muted transition hover:text-text"
+      >
+        🖨 Export do PDF
+      </Link>
     </div>
   );
 }

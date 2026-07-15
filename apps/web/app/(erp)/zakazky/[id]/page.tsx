@@ -165,7 +165,8 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
           <StavBadge z={stavovaZakazka} />
           <span title="1 = nejvyšší, 5 = nejnižší" className="badge bg-slate-100 text-slate-500">Priorita {z.priorita}</span>
           <div className="ml-auto flex gap-2">
-            <Link href={`/zakazky/${z.id}/upravit`} className="btn-ghost">Upravit</Link>
+            <Link href={`/zakazky/${z.id}/tisk?print=1`} className="btn-ghost">🖨 Export do PDF</Link>
+            <Link href={`/zakazky/${z.id}/upravit`} className="btn-ghost">✏️ Upravit</Link>
           </div>
         </div>
         <p className="mt-1 text-text-muted">{z.misto_plneni}</p>

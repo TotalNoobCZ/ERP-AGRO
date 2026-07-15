@@ -7,6 +7,7 @@ import { userColor } from "@erp/ui";
 import { pridatAbsenci, smazatAbsenci, type Kolize } from "@/app/(erp)/konstrukce/actions";
 import { formatDen } from "@/lib/format";
 import Gantt, { ABSENCE_BARVY } from "./Gantt";
+import { DateField } from "@/components/DateField";
 import { KolizeDialog } from "./dialogs";
 import type { Absence, Clen, Ukol } from "./types";
 
@@ -110,11 +111,11 @@ export function MemberDialog({
               </div>
               <div>
                 <label className="label">Od</label>
-                <input type="date" className="field" value={od} onChange={(e) => setOd(e.target.value)} />
+                <DateField value={od} onChange={setOd} />
               </div>
               <div>
                 <label className="label">Do (včetně)</label>
-                <input type="date" className="field" value={doo} onChange={(e) => setDoo(e.target.value)} />
+                <DateField value={doo} onChange={setDoo} />
               </div>
               <button className="btn-primary" onClick={() => pridat(false)} disabled={busy || !od || !doo}>
                 {busy ? "Ukládám…" : "Přidat absenci"}

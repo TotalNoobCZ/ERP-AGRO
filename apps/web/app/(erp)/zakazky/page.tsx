@@ -1,96 +1,34 @@
-// Seznam akcí (zakázek) s filtry – port z Planovani/app/(app)/zakazky/page.tsx.
+// Seznam akcí (zakázek) s živými filtry – jednotné s Poptávkami.
 import Link from "next/link";
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { queryZakazky, type ZakazkaListParams } from "@/lib/zakazky-query";
 import { parseDay, formatCz } from "@/lib/zakazky/dates";
-import { poTerminu } from "@/lib/zakazky/orders";
 import { StavBadge } from "@/components/zakazky/common";
-import { ZAKAZKA_STAVY, type StavZakazky } from "@erp/core";
+import { ZakazkyFilters, ZakazkyFilterRestore } from "@/components/zakazky/filters";
 
 export const dynamic = "force-dynamic";
-
-type Row = {
-  id: string;
-  kod: string;
-  misto_plneni: string;
-  priorita: number;
-  konec_aktualni: string;
-  stav: StavZakazky;
-  inquiry_id: string | null;
-  prirazeni: { count: number }[];
-};
 
 export default async function ZakazkyPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; stav?: string; priorita?: string }>;
+  searchParams: Promise<ZakazkaListParams>;
 }) {
-  const sp = await searchParams;
-  const q = sp.q?.trim();
-  const stav = sp.stav;
-  const priorita = sp.priorita ? Number(sp.priorita) : undefined;
-
+  const params = await searchParams;
   const supabase = await createClient();
-  let query = supabase
-    .from("zakazky")
-    .select("id, kod, misto_plneni, priorita, konec_aktualni, stav, inquiry_id, prirazeni:prirazeni_zakazka(count)")
-    .is("deleted_at", null)
-    .order("priorita", { ascending: true })
-    .order("konec_aktualni", { ascending: true });
-
-  if (q) query = query.or(`kod.ilike.%${q}%,misto_plneni.ilike.%${q}%`);
-  if (stav && stav !== "PO_TERMINU" && (ZAKAZKA_STAVY as readonly string[]).includes(stav)) {
-    query = query.eq("stav", stav as StavZakazky);
-  } else if (stav !== "PO_TERMINU") {
-    // výchozí i "Vše" skryje archivované – ty mají vlastní záložku Archiv
-    query = query.neq("stav", "ARCHIV");
-  }
-  if (priorita) query = query.eq("priorita", priorita);
-
-  const { data } = await query;
-  let zakazky = (data ?? []) as unknown as Row[];
-
-  // "Po termínu" je odvozený filtr.
-  if (stav === "PO_TERMINU") {
-    zakazky = zakazky.filter((z) =>
-      poTerminu({ konecAktualni: parseDay(z.konec_aktualni), stav: z.stav }),
-    );
-  }
+  const zakazky = await queryZakazky(supabase, params);
 
   return (
     <div>
+      <ZakazkyFilterRestore />
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Akce</h1>
+        <span className="text-sm text-text-muted">{zakazky.length} záznamů</span>
       </div>
 
-      <form className="card mb-4 flex flex-wrap items-end gap-3 p-4" action="/zakazky">
-        <div className="grow">
-          <label className="label">Hledat (kód / místo)</label>
-          <input name="q" className="field" defaultValue={q} placeholder="např. Z-2026-001" />
-        </div>
-        <div>
-          <label className="label">Stav</label>
-          <select name="stav" className="field" defaultValue={stav ?? ""}>
-            <option value="">Vše</option>
-            <option value="AKTIVNI">Aktivní</option>
-            <option value="PO_TERMINU">Po termínu</option>
-            <option value="POZASTAVENO">Pozastaveno</option>
-            <option value="DOKONCENO">Dokončeno</option>
-            <option value="ARCHIV">Archiv</option>
-          </select>
-        </div>
-        <div>
-          <label className="label">Priorita</label>
-          <select name="priorita" className="field" defaultValue={sp.priorita ?? ""}>
-            <option value="">Vše</option>
-            <option value={1}>1 – nejvyšší</option>
-            <option value={2}>2</option>
-            <option value={3}>3</option>
-            <option value={4}>4</option>
-            <option value={5}>5 – nejnižší</option>
-          </select>
-        </div>
-        <button className="btn-ghost" type="submit">Filtrovat</button>
-      </form>
+      <Suspense fallback={<div className="mb-4 h-10" />}>
+        <ZakazkyFilters />
+      </Suspense>
 
       <p className="mb-2 text-xs text-text-muted">P1 = nejvyšší priorita · P5 = nejnižší</p>
 

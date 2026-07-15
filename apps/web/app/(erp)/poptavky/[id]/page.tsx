@@ -100,13 +100,13 @@ export default async function InquiryDetailPage({ params }: { params: Promise<{ 
         <div className="flex gap-2">
           <Link
             href={`/poptavky/${inquiry.id}/tisk?print=1`}
-            className="inline-flex h-8 items-center gap-2 rounded-md border border-input px-3 text-xs font-medium hover:bg-accent"
+            className="btn-ghost"
           >
             🖨 Export do PDF
           </Link>
           <Link
             href={`/poptavky/${inquiry.id}/upravit`}
-            className="inline-flex h-8 items-center gap-2 rounded-md border border-input px-3 text-xs font-medium hover:bg-accent"
+            className="btn-ghost"
           >
             ✏️ Upravit
           </Link>

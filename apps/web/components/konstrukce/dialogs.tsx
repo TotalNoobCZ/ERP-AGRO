@@ -7,6 +7,7 @@ import Link from "next/link";
 import { recalcDates, KONSTRUKCE_LABELS } from "@erp/core";
 import { userColor } from "@erp/ui";
 import { formatDen, formatDateTime } from "@/lib/format";
+import { DateField } from "@/components/DateField";
 import {
   upravitUkol,
   upravitProjekt,
@@ -272,11 +273,11 @@ export function TaskDialog({
         <div className="grid grid-cols-3 gap-2">
           <div>
             <label className="label">Začátek</label>
-            <input type="date" className="field" value={dates.startDate ?? ""} onChange={(e) => changeDate("startDate", e.target.value)} />
+            <DateField value={dates.startDate ?? ""} onChange={(v) => changeDate("startDate", v)} />
           </div>
           <div>
             <label className="label">Konec</label>
-            <input type="date" className="field" value={dates.endDate ?? ""} onChange={(e) => changeDate("endDate", e.target.value)} />
+            <DateField value={dates.endDate ?? ""} onChange={(v) => changeDate("endDate", v)} />
           </div>
           <div>
             <label className="label">Trvání (prac. dny)</label>

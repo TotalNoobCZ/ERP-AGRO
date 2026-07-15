@@ -56,6 +56,11 @@ export default function PlanBoard({
   const [pending, setPending] = useState<{ taskId: string; assigneeId: string; kolize: Kolize[] } | null>(null);
   const [busy, setBusy] = useState(false);
   const [chyba, setChyba] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+
+  const q = query.trim().toLowerCase();
+  const taskMatches = (u: Ukol) =>
+    !q || u.name.toLowerCase().includes(q) || u.projectName.toLowerCase().includes(q);
 
   // Nový projekt
   const [showNewProject, setShowNewProject] = useState(false);
@@ -175,9 +180,27 @@ export default function PlanBoard({
   const openProjectData = openProject ? projekty.find((p) => p.id === openProject) : null;
   const openMemberData = openMember ? clenove.find((c) => c.id === openMember) : null;
 
+  const visibleProjekty = q
+    ? projekty.filter(
+        (p) => p.name.toLowerCase().includes(q) || (ukolyProjektu.get(p.id) ?? []).some(taskMatches),
+      )
+    : projekty;
+
   return (
     <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
       {chyba && <p className="err mb-2">{chyba}</p>}
+      <div className="mb-3 flex items-center gap-2">
+        <div className="relative max-w-xs flex-1">
+          <span className="absolute left-2.5 top-2 text-text-muted">🔍</span>
+          <input
+            className="field pl-8"
+            placeholder="Hledat úkol / projekt…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+        {q && <button className="btn-ghost" onClick={() => setQuery("")}>✕ Zrušit</button>}
+      </div>
       <div className="flex gap-4">
         {/* Levá 1/3 – dlaždice členů */}
         <div className="w-1/3 min-w-[260px] space-y-3">
@@ -185,7 +208,7 @@ export default function PlanBoard({
             <MemberTile
               key={c.id}
               clen={c}
-              ukoly={ukolyClena.get(c.id) ?? []}
+              ukoly={(ukolyClena.get(c.id) ?? []).filter(taskMatches)}
               editable={editable}
               onOpen={() => setOpenMember(c.id)}
               onTaskClick={(id) => setOpenTask(id)}
@@ -208,11 +231,11 @@ export default function PlanBoard({
             )}
           </div>
           <div className="columns-1 gap-3 md:columns-2 2xl:columns-3 [&>*]:mb-3 [&>*]:break-inside-avoid">
-            {projekty.map((p) => (
+            {visibleProjekty.map((p) => (
               <ProjectTile
                 key={p.id}
                 projekt={p}
-                ukoly={ukolyProjektu.get(p.id) ?? []}
+                ukoly={(ukolyProjektu.get(p.id) ?? []).filter(taskMatches)}
                 clenove={clenove}
                 editable={editable}
                 onOpen={() => setOpenProject(p.id)}
@@ -220,6 +243,9 @@ export default function PlanBoard({
               />
             ))}
           </div>
+          {q && visibleProjekty.length === 0 && (
+            <p className="text-sm text-text-muted">Nic neodpovídá hledání.</p>
+          )}
           {projekty.length === 0 && (
             <p className="text-sm text-text-muted">
               Žádné projekty. Projekt založíš tlačítkem výše (musí patřit k zakázce) nebo z detailu zakázky.

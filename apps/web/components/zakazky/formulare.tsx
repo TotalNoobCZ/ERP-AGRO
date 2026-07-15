@@ -16,6 +16,7 @@ import {
 } from "@/app/(erp)/zakazky/actions";
 import { MILNIK_LABELS, MILNIK_TYPY, type TypMilniku } from "@erp/core";
 import { OsobaSelect, type OsobaLite } from "./common";
+import { DateField } from "@/components/DateField";
 
 function Btn({ label = "Uložit" }: { label?: string }) {
   const { pending } = useFormStatus();
@@ -48,6 +49,7 @@ export function ZakazkaEditForm({
 }) {
   const [stav, formAction] = useActionState<ZakazkaStav, FormData>(akce, {});
   const [odpovedny, setOdpovedny] = useState(zakazka.odpovednaOsobaId ?? "");
+  const [zacatek, setZacatek] = useState(zakazka.zacatek);
   const ch = stav.chyby ?? {};
 
   return (
@@ -86,7 +88,7 @@ export function ZakazkaEditForm({
 
       <div>
         <label className="label">Začátek akce</label>
-        <input name="zacatek" type="date" className="field" defaultValue={zakazka.zacatek} required />
+        <DateField name="zacatek" value={zacatek} onChange={setZacatek} required />
         {ch.zacatek && <p className="err">{ch.zacatek}</p>}
         <p className="mt-1 text-xs text-text-muted">
           Termín konce se mění přes „Změna termínu“ na detailu akce (kvůli historii a důvodu).
@@ -113,13 +115,14 @@ export function ProdlouzeniForm({
   akce: (prev: ZakazkaStav, fd: FormData) => Promise<ZakazkaStav>;
 }) {
   const [stav, formAction] = useActionState<ZakazkaStav, FormData>(akce, {});
+  const [novyKonec, setNovyKonec] = useState("");
   const ch = stav.chyby ?? {};
   return (
     <form action={formAction} className="flex flex-wrap items-end gap-3">
       {stav.obecna && <p className="err w-full">{stav.obecna}</p>}
       <div>
         <label className="label">Nový termín konce</label>
-        <input name="novyKonec" type="date" className="field" required />
+        <DateField name="novyKonec" value={novyKonec} onChange={setNovyKonec} required />
         {ch.novyKonec && <p className="err">{ch.novyKonec}</p>}
       </div>
       <div className="grow">
@@ -141,6 +144,7 @@ export function PreruseniForm({
   akce: (prev: ZakazkaStav, fd: FormData) => Promise<ZakazkaStav>;
 }) {
   const [stav, formAction] = useActionState<ZakazkaStav, FormData>(akce, {});
+  const [datum, setDatum] = useState("");
   const ch = stav.chyby ?? {};
 
   return (
@@ -150,7 +154,7 @@ export function PreruseniForm({
         <>
           <div>
             <label className="label">Datum přerušení</label>
-            <input name="datumOd" type="date" className="field" required />
+            <DateField name="datumOd" value={datum} onChange={setDatum} required />
             {ch.datumOd && <p className="err">{ch.datumOd}</p>}
           </div>
           <div className="grow">
@@ -164,7 +168,7 @@ export function PreruseniForm({
         <>
           <div>
             <label className="label">Datum obnovení (odtud se dopočítají zbývající dny)</label>
-            <input name="datumObnoveni" type="date" className="field" required />
+            <DateField name="datumObnoveni" value={datum} onChange={setDatum} required />
             {ch.datumObnoveni && <p className="err">{ch.datumObnoveni}</p>}
           </div>
           <Btn label="Obnovit akci" />
@@ -249,7 +253,7 @@ function PoleMilniku({ f, set }: { f: MilnikFormData; set: (f: MilnikFormData) =
           <option key={t} value={t}>{MILNIK_LABELS[t as TypMilniku]}</option>
         ))}
       </select>
-      <input type="date" className="field" value={f.datum} onChange={(e) => set({ ...f, datum: e.target.value })} />
+      <DateField value={f.datum} onChange={(v) => set({ ...f, datum: v })} />
       <input type="time" className="field" value={f.cas} onChange={(e) => set({ ...f, cas: e.target.value })} />
       <input className="field" placeholder="Poznámka" value={f.poznamka} onChange={(e) => set({ ...f, poznamka: e.target.value })} />
     </div>

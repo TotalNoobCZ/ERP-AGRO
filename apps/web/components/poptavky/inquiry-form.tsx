@@ -9,6 +9,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input, Textarea, Label, Card, CardContent, Select } from "@/components/ui";
 import { COUNTRIES, dialForCountry } from "@/lib/countries";
+import { DateField } from "@/components/DateField";
 import { createInquiry, updateInquiry, type InquiryInput } from "@/app/(erp)/poptavky/actions";
 
 type Customer = {
@@ -192,11 +193,11 @@ export function InquiryForm({
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label htmlFor="receivedAt">Datum přijetí</Label>
-              <Input id="receivedAt" type="date" value={receivedAt} onChange={(e) => setReceivedAt(e.target.value)} />
+              <DateField id="receivedAt" value={receivedAt} onChange={setReceivedAt} />
             </div>
             <div>
               <Label htmlFor="deadline">Termín nabídky</Label>
-              <Input id="deadline" type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+              <DateField id="deadline" value={deadline} onChange={setDeadline} />
             </div>
           </div>
 

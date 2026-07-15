@@ -1,10 +1,11 @@
 "use client";
-// Podnavigace modulu Zakázky (v původním Planovani horní lišta: Plán/Akce/Archiv).
+// Podnavigace modulu Zakázky: Přehled / Plán / Akce / Archiv.
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 
 const TABS = [
+  { href: "/zakazky/dashboard", label: "Přehled" },
   { href: "/zakazky/plan", label: "Plán" },
   { href: "/zakazky", label: "Akce" },
   { href: "/zakazky/archiv", label: "Archiv" },
@@ -15,7 +16,14 @@ export function ZakazkySubNav({ canWrite }: { canWrite: boolean }) {
 
   function isActive(href: string): boolean {
     if (href === "/zakazky") {
-      return pathname === "/zakazky" || (!pathname.startsWith("/zakazky/plan") && !pathname.startsWith("/zakazky/archiv") && pathname.startsWith("/zakazky"));
+      // „Akce" = seznam + detail + nová, ale ne ostatní záložky
+      return (
+        pathname === "/zakazky" ||
+        (pathname.startsWith("/zakazky/") &&
+          !pathname.startsWith("/zakazky/dashboard") &&
+          !pathname.startsWith("/zakazky/plan") &&
+          !pathname.startsWith("/zakazky/archiv"))
+      );
     }
     return pathname.startsWith(href);
   }

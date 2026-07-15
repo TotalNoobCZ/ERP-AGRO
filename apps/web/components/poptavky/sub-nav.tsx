@@ -6,7 +6,7 @@ import { Suspense } from "react";
 import { cn } from "@/lib/cn";
 
 const TABS = [
-  { href: "/poptavky/dashboard", label: "Dashboard" },
+  { href: "/poptavky/dashboard", label: "Přehled" },
   { href: "/poptavky", label: "Poptávky" },
   { href: "/poptavky?status=OBJEDNANO", label: "Objednáno" },
   { href: "/zakaznici", label: "Zákazníci" },

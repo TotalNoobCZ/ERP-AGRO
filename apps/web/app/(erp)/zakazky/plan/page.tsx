@@ -222,6 +222,7 @@ export default async function PlanPage({
           </Link>
         </div>
         <div className="flex items-center gap-2">
+          <Link href="/zakazky/plan/tisk?print=1" className="btn-ghost">🖨 Export do PDF</Link>
           <Link href={odkaz(mode, refPosun(ref, -1))} className="btn-ghost">◀</Link>
           <Link href={odkaz(mode, refPosun(ref, 1))} className="btn-ghost">▶</Link>
         </div>
