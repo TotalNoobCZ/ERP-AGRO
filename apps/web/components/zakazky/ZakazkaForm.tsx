@@ -8,6 +8,7 @@ import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { vytvoritZakazku, vyresitKolizi, type ZakazkaStav, type KolizeInfo } from "@/app/(erp)/zakazky/actions";
 import { OsobaSelect, type OsobaLite } from "./common";
+import { formatDen } from "@/lib/format";
 
 type Radek = { key: number; osobaId: string; vyjimka: boolean; od: string; do: string };
 
@@ -214,7 +215,7 @@ function KolizeDialog({
           {kolize.map((k) => (
             <div key={k.prirazeniId} className="rounded-md border border-line p-3">
               <p className="text-sm">
-                <strong>{k.osobaJmeno}</strong> už je v období {k.od} – {k.do} na akci{" "}
+                <strong>{k.osobaJmeno}</strong> už je v období {formatDen(k.od)} – {formatDen(k.do)} na akci{" "}
                 <span className="font-mono">{k.zakazkaKod}</span>.
               </p>
               <p className="mt-1 text-sm text-text-muted">
@@ -222,14 +223,14 @@ function KolizeDialog({
                 {k.predOd || k.poOd ? (
                   <>
                     osobě zůstane{" "}
-                    {k.predOd && <strong>{k.predOd} – {k.predDo}</strong>}
+                    {k.predOd && <strong>{formatDen(k.predOd)} – {formatDen(k.predDo)}</strong>}
                     {k.predOd && k.poOd ? " a " : ""}
-                    {k.poOd && <strong>{k.poOd} – {k.poDo}</strong>}
+                    {k.poOd && <strong>{formatDen(k.poOd)} – {formatDen(k.poDo)}</strong>}
                   </>
                 ) : (
                   "osoba už nezůstane (nové období pokrývá celé)"
                 )}
-                ; na období {k.nahradnikOd} – {k.nahradnikDo} sem dosadíme náhradníka:
+                ; na období {formatDen(k.nahradnikOd)} – {formatDen(k.nahradnikDo)} sem dosadíme náhradníka:
               </p>
 
               {vyreseno[k.prirazeniId] ? (

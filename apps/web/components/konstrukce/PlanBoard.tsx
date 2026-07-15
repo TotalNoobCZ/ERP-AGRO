@@ -17,6 +17,7 @@ import {
 } from "@dnd-kit/core";
 import { KONSTRUKCE_LABELS } from "@erp/core";
 import { COLOR_TOKENS, userColor } from "@erp/ui";
+import { formatDen } from "@/lib/format";
 import {
   upravitUkol,
   vytvoritUkol,
@@ -340,7 +341,7 @@ function DraggableTask({
       <p className={`truncate font-semibold ${ukol.completed ? "line-through opacity-70" : ""}`}>{ukol.name}</p>
       {showProject && <p className="truncate text-xs opacity-75">{ukol.projectName}</p>}
       {ukol.startDate && ukol.endDate && !ukol.completed && (
-        <p className="text-[10px] opacity-70">{ukol.startDate} – {ukol.endDate}</p>
+        <p className="text-[10px] opacity-70">{formatDen(ukol.startDate)} – {formatDen(ukol.endDate)}</p>
       )}
     </div>
   );

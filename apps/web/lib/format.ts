@@ -1,7 +1,11 @@
 // ----------------------------------------------------------------------------
-//  Formátování dat a logika termínů. Převzato 1:1 z Popt-vky/lib/utils.ts –
-//  jediný zdroj pravdy pro barevné rozlišení termínů (zelená/oranžová/červená).
+//  Formátování dat a logika termínů. Jednotné české formátování napříč ERP.
+//  - datum: "15. 7. 2026"  (bez úvodních nul, jak je v CZ zvykem)
+//  - datum a čas: "15. 7. 2026 14:30" (časová zóna Europe/Prague)
+//  Logika termínů (barvy) převzata z Popt-vky/lib/utils.ts.
 // ----------------------------------------------------------------------------
+
+const TZ = "Europe/Prague";
 
 export type DeadlineLevel = "green" | "orange" | "red";
 
@@ -23,18 +27,30 @@ export function deadlineLevel(deadline: Date, now: Date = new Date()): DeadlineL
   return "green";
 }
 
-/** Formátování data do českého tvaru DD.MM.YYYY. */
-export function formatDate(date: Date | string): string {
-  const d = typeof date === "string" ? new Date(date) : date;
-  return d.toLocaleDateString("cs-CZ", { day: "2-digit", month: "2-digit", year: "numeric" });
+/**
+ * Datum čistě z „YYYY-MM-DD" řetězce (sloupce typu date) → "15. 7. 2026".
+ * Parsuje se ručně, aby nedošlo k posunu dne kvůli časové zóně.
+ */
+export function formatDen(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+  if (!y || !m || !d) return String(iso);
+  return `${d}. ${m}. ${y}`;
 }
 
-/** Formátování data a času. */
+/** Datum z timestampu (Date/ISO) v české podobě, zóna Europe/Prague. */
+export function formatDate(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  return d.toLocaleDateString("cs-CZ", { timeZone: TZ, day: "numeric", month: "numeric", year: "numeric" });
+}
+
+/** Datum a čas z timestampu, zóna Europe/Prague → "15. 7. 2026 14:30". */
 export function formatDateTime(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
   return d.toLocaleString("cs-CZ", {
-    day: "2-digit",
-    month: "2-digit",
+    timeZone: TZ,
+    day: "numeric",
+    month: "numeric",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",

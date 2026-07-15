@@ -26,6 +26,12 @@ async function writer() {
   return { id: profile.id, name: profile.name };
 }
 
+/** "YYYY-MM-DD" → "15. 7. 2026" (české datum, bez posunu zóny). */
+function denCz(iso: string): string {
+  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+  return y && m && d ? `${d}. ${m}. ${y}` : iso;
+}
+
 function refreshKonstrukce() {
   revalidatePath("/konstrukce");
   revalidatePath("/konstrukce/gantt");
@@ -59,7 +65,7 @@ async function najdiKolizeClena(
     const other = { start: t.start_date!, end: t.end_date! };
     if (rangesOverlap(range, other)) {
       kolize.push({
-        s: `úkol „${t.name}“ (${other.start} – ${other.end})`,
+        s: `úkol „${t.name}“ (${denCz(other.start)} – ${denCz(other.end)})`,
         od: range.start > other.start ? range.start : other.start,
         do: range.end < other.end ? range.end : other.end,
       });
@@ -74,7 +80,7 @@ async function najdiKolizeClena(
     const other = { start: a.start_date, end: a.end_date };
     if (rangesOverlap(range, other)) {
       kolize.push({
-        s: `absence ${ABSENCE_LABELS[a.type as AbsenceType]} (${other.start} – ${other.end})`,
+        s: `absence ${ABSENCE_LABELS[a.type as AbsenceType]} (${denCz(other.start)} – ${denCz(other.end)})`,
         od: range.start > other.start ? range.start : other.start,
         do: range.end < other.end ? range.end : other.end,
       });

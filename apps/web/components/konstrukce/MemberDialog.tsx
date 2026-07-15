@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ABSENCE_TYPES, ABSENCE_LABELS, type AbsenceType } from "@erp/core";
 import { userColor } from "@erp/ui";
 import { pridatAbsenci, smazatAbsenci, type Kolize } from "@/app/(erp)/konstrukce/actions";
+import { formatDen } from "@/lib/format";
 import Gantt, { ABSENCE_BARVY } from "./Gantt";
 import { KolizeDialog } from "./dialogs";
 import type { Absence, Clen, Ukol } from "./types";
@@ -87,7 +88,7 @@ export function MemberDialog({
               <div key={a.id} className="flex items-center gap-2 px-3 py-1.5 text-sm">
                 <span className="inline-block h-3 w-3 rounded" style={{ backgroundColor: ABSENCE_BARVY[a.type] ?? "#94a3b8" }} />
                 <span className="font-medium">{ABSENCE_LABELS[a.type as AbsenceType] ?? a.type}</span>
-                <span className="text-text-muted">{a.startDate} – {a.endDate}</span>
+                <span className="text-text-muted">{formatDen(a.startDate)} – {formatDen(a.endDate)}</span>
                 {editable && (
                   <button className="ml-auto text-xs text-red-500 hover:underline" onClick={() => smazat(a.id)}>
                     smazat

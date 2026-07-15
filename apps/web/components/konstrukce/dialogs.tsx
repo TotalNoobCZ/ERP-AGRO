@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { recalcDates, KONSTRUKCE_LABELS } from "@erp/core";
 import { userColor } from "@erp/ui";
+import { formatDen, formatDateTime } from "@/lib/format";
 import {
   upravitUkol,
   upravitProjekt,
@@ -51,7 +52,7 @@ export function KolizeDialog({
               {kolize.map((k, i) => (
                 <tr key={i} className="border-t border-line">
                   <td className="px-3 py-1.5">{k.s}</td>
-                  <td className="whitespace-nowrap px-3 py-1.5">{k.od} – {k.do}</td>
+                  <td className="whitespace-nowrap px-3 py-1.5">{formatDen(k.od)} – {formatDen(k.do)}</td>
                 </tr>
               ))}
             </tbody>
@@ -100,7 +101,7 @@ function PoznamkyBlok({
           <div key={n.id} className="rounded-md border border-line p-2 text-sm">
             <p className="whitespace-pre-wrap">{n.body}</p>
             <p className="mt-0.5 text-xs text-text-muted">
-              {n.author ?? "?"} · {new Date(n.createdAt).toLocaleString("cs-CZ", { dateStyle: "short", timeStyle: "short" })}
+              {n.author ?? "?"} · {formatDateTime(n.createdAt)}
             </p>
           </div>
         ))}

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient, getCurrentProfile } from "@/lib/supabase/server";
 import { parseDay, formatDay, formatCz, today } from "@/lib/zakazky/dates";
+import { formatDateTime } from "@/lib/format";
 import { StavBadge, SubmitButton, SmazatButton } from "@/components/zakazky/common";
 import {
   prodlouzit,
@@ -93,11 +94,7 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
       id: p.id,
       text: p.text,
       autor: p.uzivatel?.name ?? "?",
-      kdy: new Date(p.created_at).toLocaleString("cs-CZ", {
-        timeZone: "Europe/Prague",
-        dateStyle: "short",
-        timeStyle: "short",
-      }),
+      kdy: formatDateTime(p.created_at),
       muzeSmazat: p.uzivatel_id === uid || Boolean(jeAdmin),
     }));
 

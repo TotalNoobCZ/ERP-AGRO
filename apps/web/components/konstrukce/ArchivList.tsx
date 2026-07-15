@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { KONSTRUKCE_LABELS } from "@erp/core";
 import { obnovitProjekt, obnovitUkol, smazatArchiv } from "@/app/(erp)/konstrukce/actions";
+import { formatDateTime } from "@/lib/format";
 
 export type ArchivRadek = {
   typ: "projekt" | "ukol";
@@ -69,7 +70,7 @@ export function ArchivList({ radky, editable }: { radky: ArchivRadek[]; editable
               <span className="text-text-muted">{r.projekt}</span>
               <span className="ml-auto text-xs text-text-muted">
                 {r.kdo}
-                {r.kdy ? ` · ${new Date(r.kdy).toLocaleString("cs-CZ", { dateStyle: "short", timeStyle: "short" })}` : ""}
+                {r.kdy ? ` · ${formatDateTime(r.kdy)}` : ""}
               </span>
               {editable && (
                 <button className="btn-ghost" onClick={() => obnovit(r)} disabled={busy}>
