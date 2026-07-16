@@ -31,7 +31,7 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
       .from("projects")
       .select(
         `id, name, zakazka_id, owner_id, status,
-         zakazka:zakazky(kod, parent_id, parent:zakazky!zakazky_parent_id_fkey(id, kod)),
+         zakazka:zakazky(kod, parent_id),
          owner:profiles!projects_owner_id_fkey(name),
          project_notes(id, body, created_at, author:profiles(name)),
          project_todos(id, body, done, position)`,
@@ -70,28 +70,41 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
   const mapTodos = (rows: TodoRow[] | null | undefined) =>
     (rows ?? []).sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
 
-  const projekty: Projekt[] = ((projektyRes.data ?? []) as unknown as {
+  const rawProjekty = (projektyRes.data ?? []) as unknown as {
     id: string;
     name: string;
     zakazka_id: string;
     owner_id: string | null;
-    zakazka: { kod: string; parent_id: string | null; parent: { id: string; kod: string } | null } | null;
+    zakazka: { kod: string; parent_id: string | null } | null;
     owner: { name: string } | null;
     project_notes: NoteRow[];
     project_todos: TodoRow[];
-  }[]).map((p) => ({
-    id: p.id,
-    name: p.name,
-    zakazkaId: p.zakazka_id,
-    zakazkaKod: p.zakazka?.kod ?? "?",
-    // Akce = nadřazená zakázka (parent), jinak zakázka sama.
-    akceId: p.zakazka?.parent_id ?? p.zakazka_id,
-    akceKod: p.zakazka?.parent?.kod ?? p.zakazka?.kod ?? "?",
-    ownerId: p.owner_id,
-    ownerName: p.owner?.name ?? null,
-    notes: mapNotes(p.project_notes),
-    todos: mapTodos(p.project_todos),
-  }));
+  }[];
+
+  // Kódy nadřazených akcí (bez self-embed – ten PostgREST vztah nemusí znát).
+  const parentIds = [...new Set(rawProjekty.map((p) => p.zakazka?.parent_id).filter((x): x is string => !!x))];
+  const parentKod = new Map<string, string>();
+  if (parentIds.length > 0) {
+    const { data: pz } = await supabase.from("zakazky").select("id, kod").in("id", parentIds);
+    for (const z of pz ?? []) parentKod.set(z.id, z.kod);
+  }
+
+  const projekty: Projekt[] = rawProjekty.map((p) => {
+    const parentId = p.zakazka?.parent_id ?? null;
+    return {
+      id: p.id,
+      name: p.name,
+      zakazkaId: p.zakazka_id,
+      zakazkaKod: p.zakazka?.kod ?? "?",
+      // Akce = nadřazená zakázka (parent), jinak zakázka sama.
+      akceId: parentId ?? p.zakazka_id,
+      akceKod: parentId ? (parentKod.get(parentId) ?? p.zakazka?.kod ?? "?") : (p.zakazka?.kod ?? "?"),
+      ownerId: p.owner_id,
+      ownerName: p.owner?.name ?? null,
+      notes: mapNotes(p.project_notes),
+      todos: mapTodos(p.project_todos),
+    };
+  });
 
   const ukoly: Ukol[] = ((ukolyRes.data ?? []) as unknown as {
     id: string;
