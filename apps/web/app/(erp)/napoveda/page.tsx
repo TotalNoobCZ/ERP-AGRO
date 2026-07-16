@@ -2,7 +2,7 @@
 // při změnách funkcí aktualizuj tuto stránku i datum níže.
 import type { ReactNode } from "react";
 
-const AKTUALIZOVANO = "16. 7. 2026 (šéfkonstruktér i v Konstrukci, karta zaměstnance)";
+const AKTUALIZOVANO = "16. 7. 2026 (termín poptávky ze seznamu i tabule, vysvětlivky)";
 
 export const dynamic = "force-dynamic";
 
@@ -102,7 +102,8 @@ export default function NapovedaPage() {
       <UL>
         <li><strong>Nová poptávka:</strong> Předmět a Zákazník jsou povinné (<Code>*</Code>). U existujícího zákazníka se v kontaktech nabízejí jen jeho kontakty.</li>
         <li><strong>Odpovědná osoba je nepovinná</strong> — doplníš i později; vybírá se z rolí Vedoucí a oddělení Projekťák.</li>
-        <li><strong>Tabule (drag &amp; drop):</strong> vlevo odpovědné osoby, vpravo nepřidělené poptávky. Přetáhni poptávku na osobu = přiřadíš (z pravého sloupce zmizí). Mezi osobami přeřadíš.</li>
+        <li><strong>Termín přímo ze seznamu:</strong> u každé poptávky lze termín přidat/změnit tužkou <Code>✎</Code> ve sloupci Termín – bez otvírání detailu.</li>
+        <li><strong>Tabule (drag &amp; drop):</strong> vlevo odpovědné osoby, vpravo nepřidělené poptávky. Přetáhni poptávku na osobu = přiřadíš (z pravého sloupce zmizí). Mezi osobami přeřadíš. <strong>Přidělená poptávka musí mít termín</strong> – když ho poptávka nemá, tabule si při přetažení vyžádá termín v okně.</li>
         <li><strong>Objednáno:</strong> poptávky, ze kterých se tvoří zakázky.</li>
         <li>Seznam má filtry a <strong>Export do PDF</strong>.</li>
       </UL>

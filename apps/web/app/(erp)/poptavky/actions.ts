@@ -167,11 +167,46 @@ export async function updateInquiry(id: string, input: InquiryInput): Promise<Ac
   return { ok: true, id };
 }
 
+const DEN_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Nastaví/zruší termín poptávky přímo (např. ze seznamu poptávek). */
+export async function nastavitTerminPoptavky(id: string, deadline: string | null): Promise<ActionResult> {
+  const auth = await requireWriter();
+  if (auth.error !== undefined) return { ok: false, error: auth.error };
+  const val = deadline && deadline.trim() ? deadline.trim() : null;
+  if (val && !DEN_RE.test(val)) return { ok: false, error: "Zadejte platné datum." };
+
+  const supabase = await createClient();
+  const { data: inq } = await supabase.from("inquiries").select("person_id, deadline").eq("id", id).maybeSingle();
+  if (!inq) return { ok: false, error: "Poptávka nenalezena." };
+  // Přidělená poptávka nemůže existovat bez termínu.
+  if (!val && inq.person_id) return { ok: false, error: "Přidělená poptávka musí mít termín. Nejdřív zruš přidělení." };
+
+  const zmena = val !== inq.deadline;
+  const { error } = await supabase
+    .from("inquiries")
+    .update({ deadline: val, ...(zmena ? { reminder_sent: false, expired_notified: false } : {}) })
+    .eq("id", id);
+  if (error) return { ok: false, error: "Uložení se nezdařilo." };
+  revalidatePath("/poptavky");
+  revalidatePath("/poptavky/tabule");
+  revalidatePath(`/poptavky/${id}`);
+  return { ok: true };
+}
+
+export type PriraditVysledek = { ok: true } | { ok: false; error?: string; needsDeadline?: boolean };
+
 /**
  * Přiřadí poptávku odpovědné osobě (drag & drop na tabuli poptávek).
  * Odpovědnou osobou smí být jen role Vedoucí nebo oddělení Projekťák.
+ * Přidělená poptávka nemůže být bez termínu – pokud ho nemá a není zadán,
+ * vrátí needsDeadline (tabule si vyžádá termín) a nic neuloží.
  */
-export async function priraditPoptavku(id: string, personId: string): Promise<ActionResult> {
+export async function priraditPoptavku(
+  id: string,
+  personId: string,
+  deadline?: string,
+): Promise<PriraditVysledek> {
   const auth = await requireWriter();
   if (auth.error !== undefined) return { ok: false, error: auth.error };
   if (!personId) return { ok: false, error: "Chybí osoba." };
@@ -187,7 +222,23 @@ export async function priraditPoptavku(id: string, personId: string): Promise<Ac
     return { ok: false, error: "Odpovědnou osobou může být jen Vedoucí nebo Projekťák." };
   }
 
-  const { error } = await supabase.from("inquiries").update({ person_id: personId }).eq("id", id);
+  const { data: inq } = await supabase.from("inquiries").select("deadline").eq("id", id).maybeSingle();
+  if (!inq) return { ok: false, error: "Poptávka nenalezena." };
+
+  const zadany = deadline && deadline.trim() ? deadline.trim() : null;
+  if (zadany && !DEN_RE.test(zadany)) return { ok: false, error: "Zadejte platné datum." };
+  // Přidělená poptávka musí mít termín – když ho nemá a není zadán, vyžádáme si ho.
+  const vyslednyTermin = zadany ?? inq.deadline;
+  if (!vyslednyTermin) return { ok: false, needsDeadline: true };
+
+  const meniTermin = zadany !== null && zadany !== inq.deadline;
+  const { error } = await supabase
+    .from("inquiries")
+    .update({
+      person_id: personId,
+      ...(meniTermin ? { deadline: zadany, reminder_sent: false, expired_notified: false } : {}),
+    })
+    .eq("id", id);
   if (error) return { ok: false, error: "Přiřazení se nezdařilo." };
   revalidatePath("/poptavky");
   revalidatePath("/poptavky/tabule");
