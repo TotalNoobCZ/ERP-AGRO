@@ -339,7 +339,7 @@ async function KonstrukcniProjekty({ zakazkaId }: { zakazkaId: string }) {
   const supabase = await createClient();
   const { data } = await supabase
     .from("projects")
-    .select("id, name, status, owner:profiles!projects_owner_id_fkey(name), tasks(count)")
+    .select("id, name, status, owner:profiles!projects_owner_id_fkey(name), tasks(id, assignee_id, assignee:profiles(name))")
     .eq("zakazka_id", zakazkaId)
     .order("created_at", { ascending: true });
   const projekty = (data ?? []) as unknown as {
@@ -347,23 +347,51 @@ async function KonstrukcniProjekty({ zakazkaId }: { zakazkaId: string }) {
     name: string;
     status: string;
     owner: { name: string } | null;
-    tasks: { count: number }[];
+    tasks: { id: string; assignee_id: string | null; assignee: { name: string } | null }[];
   }[];
+
+  const distinct = (jmena: (string | null | undefined)[]) =>
+    Array.from(new Set(jmena.filter((x): x is string => !!x))).sort((a, b) => a.localeCompare(b, "cs"));
+
+  // Konstruktéři na celé zakázce = jedineční řešitelé podúkolů všech projektů.
+  const vsichniKonstrukteri = distinct(
+    projekty.flatMap((p) => p.tasks.map((t) => (t.assignee_id ? t.assignee?.name : null))),
+  );
 
   return (
     <div className="space-y-3">
+      {vsichniKonstrukteri.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 text-sm">
+          <span className="text-text-muted">Konstruktéři:</span>
+          {vsichniKonstrukteri.map((n) => (
+            <span key={n} className="rounded-md bg-accent px-2 py-0.5 text-xs font-medium text-text">{n}</span>
+          ))}
+        </div>
+      )}
       {projekty.length === 0 ? (
         <p className="text-sm text-text-muted">Zatím žádné konstrukční projekty.</p>
       ) : (
         <div className="divide-y divide-line rounded-md border border-line">
-          {projekty.map((p) => (
-            <Link key={p.id} href="/konstrukce" className="flex items-center gap-3 px-3 py-2 text-sm hover:bg-accent">
-              <span className="font-medium">{p.name}</span>
-              {p.owner && <span className="text-text-muted">zodpovídá {p.owner.name}</span>}
-              <span className="ml-auto text-xs text-text-muted">{p.tasks?.[0]?.count ?? 0} úkolů</span>
-              {p.status === "archived" && <span className="badge bg-slate-100 text-slate-500">archiv</span>}
-            </Link>
-          ))}
+          {projekty.map((p) => {
+            const konstrukteri = distinct(p.tasks.map((t) => (t.assignee_id ? t.assignee?.name : null)));
+            return (
+              <Link key={p.id} href="/konstrukce" className="block px-3 py-2 text-sm hover:bg-accent">
+                <div className="flex items-center gap-3">
+                  <span className="font-medium">{p.name}</span>
+                  {p.owner && <span className="text-text-muted">zodpovídá {p.owner.name}</span>}
+                  <span className="ml-auto text-xs text-text-muted">{p.tasks.length} úkolů</span>
+                  {p.status === "archived" && <span className="badge bg-slate-100 text-slate-500">archiv</span>}
+                </div>
+                {konstrukteri.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1 text-xs text-text-muted">
+                    {konstrukteri.map((n) => (
+                      <span key={n} className="rounded border border-line px-1.5 py-0.5">{n}</span>
+                    ))}
+                  </div>
+                )}
+              </Link>
+            );
+          })}
         </div>
       )}
       <ZalozitProjekt zakazkaId={zakazkaId} />
