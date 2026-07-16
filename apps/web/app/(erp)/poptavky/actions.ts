@@ -165,6 +165,34 @@ export async function updateInquiry(id: string, input: InquiryInput): Promise<Ac
   return { ok: true, id };
 }
 
+/**
+ * Přiřadí poptávku odpovědné osobě (drag & drop na tabuli poptávek).
+ * Odpovědnou osobou smí být jen role Vedoucí nebo oddělení Projekťák.
+ */
+export async function priraditPoptavku(id: string, personId: string): Promise<ActionResult> {
+  const auth = await requireWriter();
+  if (auth.error !== undefined) return { ok: false, error: auth.error };
+  if (!personId) return { ok: false, error: "Chybí osoba." };
+
+  const supabase = await createClient();
+  const { data: person } = await supabase
+    .from("profiles")
+    .select("role, oddeleni, active")
+    .eq("id", personId)
+    .maybeSingle();
+  if (!person || !person.active) return { ok: false, error: "Osoba nenalezena." };
+  if (person.role !== "vedouci" && person.oddeleni !== "projektak") {
+    return { ok: false, error: "Odpovědnou osobou může být jen Vedoucí nebo Projekťák." };
+  }
+
+  const { error } = await supabase.from("inquiries").update({ person_id: personId }).eq("id", id);
+  if (error) return { ok: false, error: "Přiřazení se nezdařilo." };
+  revalidatePath("/poptavky");
+  revalidatePath("/poptavky/tabule");
+  revalidatePath(`/poptavky/${id}`);
+  return { ok: true };
+}
+
 // DELETE /api/inquiries/[id] → deleteInquiry (kaskádově komentáře a logy – FK)
 export async function deleteInquiry(id: string): Promise<ActionResult> {
   const auth = await requireWriter();

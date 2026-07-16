@@ -125,3 +125,58 @@ export async function queryResponsibles(
   }
   return list;
 }
+
+// ---------- Tabule poptávek (drag & drop přiřazení) ----------
+
+export type BoardOsoba = { id: string; name: string; colorIndex: number | null };
+export type BoardPoptavka = {
+  id: string;
+  number: number;
+  subject: string;
+  status: InquiryStatus;
+  deadline: string | null;
+  personId: string | null;
+  customerName: string;
+};
+
+/** Data pro tabuli poptávek: odpovědné osoby (dlaždice) + otevřené poptávky. */
+export async function queryPoptavkyBoard(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<{ osoby: BoardOsoba[]; poptavky: BoardPoptavka[] }> {
+  const [osobyRes, poptRes] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, name, color_index")
+      .eq("active", true)
+      .or("role.eq.vedouci,oddeleni.eq.projektak")
+      .order("name", { ascending: true }),
+    // Jen otevřené poptávky (uzavřené se nepřiřazují).
+    supabase
+      .from("inquiries")
+      .select("id, number, subject, status, deadline, person_id, customer:customers(name)")
+      .not("status", "in", `(${INQUIRY_CLOSED_STATUSES.join(",")})`)
+      .order("number", { ascending: false }),
+  ]);
+
+  const osoby: BoardOsoba[] = (osobyRes.data ?? []).map((o) => ({
+    id: o.id,
+    name: o.name,
+    colorIndex: o.color_index,
+  }));
+
+  const poptavky: BoardPoptavka[] = (poptRes.data ?? []).map((p) => {
+    const cust = p.customer as { name: string } | { name: string }[] | null;
+    const customerName = Array.isArray(cust) ? cust[0]?.name ?? "—" : cust?.name ?? "—";
+    return {
+      id: p.id,
+      number: p.number,
+      subject: p.subject,
+      status: p.status as InquiryStatus,
+      deadline: p.deadline,
+      personId: p.person_id,
+      customerName,
+    };
+  });
+
+  return { osoby, poptavky };
+}
