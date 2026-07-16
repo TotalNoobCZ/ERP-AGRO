@@ -395,7 +395,7 @@ export function ProjectDialog({
           </div>
           {projektaci.length === 0 && (
             <p className="mt-1 text-xs text-text-muted">
-              Zatím není nikdo s oddělením „Projekťák" ani rolí „Vedoucí". Přiřaď je ve Správě uživatele.
+              Zatím není nikdo s oddělením „Konstrukce". Přiřaď ho ve Správě uživatele.
             </p>
           )}
         </div>

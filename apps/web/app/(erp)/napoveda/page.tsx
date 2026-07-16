@@ -124,7 +124,7 @@ export default function NapovedaPage() {
       <P>Záložky: Přehled · Plánování · Gantt · Archiv. Zobrazují se lidé z oddělení <strong>Konstrukce</strong>. Na <strong>Přehledu</strong> je sekce <strong>Akce a konstruktéři</strong> – akce se všemi svými konstruktéry a sbalitelný seznam zakázek k akci, u každé její konstruktéři.</P>
       <UL>
         <li><strong>Projekt vzniká automaticky se zakázkou</strong>; v detailu zakázky ho lze rozdělit na víc projektů.</li>
-        <li><strong>Vedoucí projektu</strong> může být jen Projekťák nebo role Vedoucí.</li>
+        <li><strong>Zodpovědný za konstrukční projekt</strong> je vždy <strong>konstruktér</strong> (oddělení Konstrukce) – nikoho jiného tam vybrat nejde. Řešitelé úkolů jsou také konstruktéři.</li>
         <li><strong>Plánovací tabule:</strong> vlevo dlaždice členů, vpravo projekty <strong>seskupené pod akci</strong> (sbalitelné). Přetáhni úkol na člena = přiřadíš řešitele; zpět doprava = odebereš; uvnitř dlaždice řadíš tažením.</li>
         <li><strong>Propojení:</strong> přiřazením řešitele k úkolu se <strong>konstruktér propíše k zakázce</strong> a je vidět v jejím detailu.</li>
         <li><strong>Gantt:</strong> termíny úkolů posouváš tažením; zobrazují se absence. Kolize systém vždy nahlásí (uložit lze i tak).</li>

@@ -20,12 +20,12 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
       .eq("oddeleni", "konstrukce")
       .order("tile_order", { ascending: true, nullsFirst: false })
       .order("name", { ascending: true }),
-    // Možní vedoucí projektu: oddělení Projekťák NEBO role Vedoucí.
+    // Zodpovědný za konstrukční projekt = vždy konstruktér (oddělení Konstrukce).
     supabase
       .from("profiles")
       .select("id, name, color_index, tile_order")
       .eq("active", true)
-      .or("oddeleni.eq.projektak,role.eq.vedouci")
+      .eq("oddeleni", "konstrukce")
       .order("name", { ascending: true }),
     supabase
       .from("projects")
