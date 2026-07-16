@@ -41,6 +41,8 @@ export default function ZakazkyBoard({
   const [busy, setBusy] = useState(false);
   const [chyba, setChyba] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  // Sbalená oddělení v levém sloupci (klíč oddělení, "" = bez oddělení).
+  const [sbalene, setSbalene] = useState<Set<string>>(new Set());
   // Potvrzení kolize (osoba obsazená u jiné akce).
   const [potvrzeni, setPotvrzeni] = useState<{ zakId: string; osobaId: string; text: string } | null>(null);
 
@@ -76,6 +78,15 @@ export default function ZakazkyBoard({
       }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [osoby, q]);
+
+  function prepnoutSkupinu(key: string) {
+    setSbalene((s) => {
+      const next = new Set(s);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
 
   async function priradit(zakId: string, osobaId: string, vynutit: boolean) {
     setBusy(true);
@@ -143,14 +154,24 @@ export default function ZakazkyBoard({
       <div className="flex gap-4">
         {/* Levá 1/3 – osoby rozdělené podle oddělení (táhnou se) */}
         <div className="w-1/3 min-w-[220px] space-y-3">
-          {skupiny.map((g) => (
-            <div key={g.key} className="space-y-1.5">
-              <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{g.label}</p>
-              {g.lidi.map((o) => (
-                <OsobaChip key={o.id} osoba={o} editable={editable} />
-              ))}
-            </div>
-          ))}
+          {skupiny.map((g) => {
+            const zavreno = sbalene.has(g.key);
+            return (
+              <div key={g.key} className="space-y-1.5">
+                <button
+                  type="button"
+                  onClick={() => prepnoutSkupinu(g.key)}
+                  className="flex w-full items-center gap-1 text-xs font-semibold uppercase tracking-wide text-text-muted hover:text-text"
+                >
+                  <span className="inline-block w-3 text-[10px]">{zavreno ? "▸" : "▾"}</span>
+                  {g.label}
+                  <span className="font-normal">({g.lidi.length})</span>
+                </button>
+                {!zavreno &&
+                  g.lidi.map((o) => <OsobaChip key={o.id} osoba={o} editable={editable} />)}
+              </div>
+            );
+          })}
           {osoby.length === 0 && (
             <p className="text-sm text-text-muted">
               Žádné osoby. Přidej uživatele ve Správě.
