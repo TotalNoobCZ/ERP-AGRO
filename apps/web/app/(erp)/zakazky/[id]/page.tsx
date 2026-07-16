@@ -155,6 +155,18 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
   const akceSmazat = smazatZakazku.bind(null, z.id) as (fd: FormData) => Promise<void>;
   const stavovaZakazka = { konecAktualni: konecAktualniD, stav: z.stav };
 
+  // Potvrzení mazání: akce s podzakázkami varuje, že smaže i je;
+  // zakázka k akci upozorní, že ostatní zůstanou.
+  const pocetPodz = podzakazky.length;
+  const sklonZakazky =
+    pocetPodz === 1 ? "1 zakázka k akci" : pocetPodz >= 2 && pocetPodz <= 4 ? `${pocetPodz} zakázky k akci` : `${pocetPodz} zakázek k akci`;
+  const smazatLabel = z.parent_id ? "Smazat zakázku k akci" : "Smazat akci";
+  const smazatConfirm = z.parent_id
+    ? "Smazat tuto zakázku k akci? Hlavní akce ani ostatní zakázky k akci se nesmažou (zůstane jen v auditu)."
+    : pocetPodz > 0
+      ? `Smazat akci ${z.kod}? Smaže se s ní i ${sklonZakazky}. Vše zmizí ze seznamů i z plánu (zůstane jen v auditu).`
+      : "Opravdu smazat tuto akci? Zmizí ze seznamů i z plánu (zůstane jen v auditu).";
+
   // Barvy podle osoby – stejná osoba = stejná barva.
   const PALETA = ["#2f5d78", "#b45309", "#0f766e", "#be185d", "#4d7c0f", "#6d28d9", "#0369a1", "#a16207"];
   const poradiOsob: string[] = [];
@@ -396,7 +408,7 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
       </section>
 
       <section className="border-t border-line pt-4">
-        <SmazatButton akce={akceSmazat} />
+        <SmazatButton akce={akceSmazat} label={smazatLabel} confirmText={smazatConfirm} />
       </section>
     </div>
   );
