@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { cn } from "@/lib/cn";
+import { LinkSpinner } from "@/components/LinkSpinner";
 
 const TABS = [
   { href: "/poptavky/dashboard", label: "Přehled" },
@@ -37,6 +38,7 @@ function Tabs({ canWrite }: { canWrite: boolean }) {
           )}
         >
           {t.label}
+          <LinkSpinner />
         </Link>
       ))}
       {canWrite && (

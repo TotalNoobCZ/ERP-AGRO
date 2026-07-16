@@ -6,12 +6,15 @@ import { createClient } from "@/lib/supabase/client";
 import { userColor } from "@erp/ui";
 import { ROLE_LABELS, type Role } from "@erp/core";
 import { ThemeToggle } from "@/components/theme";
+import { LinkSpinner } from "@/components/LinkSpinner";
 
+// Hlavní karty vždy otevřou záložku Přehled; `match` řídí zvýraznění pro
+// celý modul (i ostatní jeho podstránky).
 const MODULES = [
-  { href: "/poptavky", label: "Poptávky" },
-  { href: "/zakazky", label: "Zakázky" },
-  { href: "/konstrukce", label: "Konstrukce" },
-  { href: "/sprava", label: "Správa" },
+  { href: "/poptavky/dashboard", match: "/poptavky", label: "Poptávky" },
+  { href: "/zakazky/dashboard", match: "/zakazky", label: "Zakázky" },
+  { href: "/konstrukce/prehled", match: "/konstrukce", label: "Konstrukce" },
+  { href: "/sprava", match: "/sprava", label: "Správa" },
 ] as const;
 
 export interface NavProps {
@@ -38,7 +41,7 @@ export function Nav({ name, role, colorIndex }: NavProps) {
 
       <nav className="flex flex-1 gap-1">
         {MODULES.map((m) => {
-          const active = pathname.startsWith(m.href);
+          const active = pathname.startsWith(m.match);
           return (
             <Link
               key={m.href}
@@ -49,6 +52,7 @@ export function Nav({ name, role, colorIndex }: NavProps) {
               }
             >
               {m.label}
+              <LinkSpinner />
             </Link>
           );
         })}

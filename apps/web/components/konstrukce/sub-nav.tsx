@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
+import { LinkSpinner } from "@/components/LinkSpinner";
 
 const TABS = [
   { href: "/konstrukce/prehled", label: "Přehled" },
@@ -34,6 +35,7 @@ export function KonstrukceSubNav({ canWrite }: { canWrite: boolean }) {
           )}
         >
           {t.label}
+          <LinkSpinner />
         </Link>
       ))}
       <Link
