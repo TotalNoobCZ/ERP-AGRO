@@ -554,6 +554,12 @@ export async function upravitZakazku(zakazkaId: string, _prev: ZakazkaStav, fd: 
     return { obecna: "Uložení se nezdařilo." };
   }
 
+  // Přejmenování zakázky → přejmenuj i její automatický konstrukční projekt
+  // (ten, který nesl původní číslo), aby v Konstrukci nezůstalo staré číslo.
+  if (d.kod !== z.kod) {
+    await supabase.from("projects").update({ name: d.kod }).eq("zakazka_id", zakazkaId).eq("name", z.kod);
+  }
+
   await zapisAudit(supabase, {
     entita: "zakazka", entitaId: zakazkaId, typZmeny: "UPRAVA", uzivatelId: u.id,
     puvodni: { kod: z.kod, mistoPlneni: z.misto_plneni, priorita: z.priorita },
@@ -561,6 +567,7 @@ export async function upravitZakazku(zakazkaId: string, _prev: ZakazkaStav, fd: 
   });
   revalidatePath(`/zakazky/${zakazkaId}`);
   revalidatePath("/zakazky");
+  revalidatePath("/konstrukce");
   redirect(`/zakazky/${zakazkaId}`);
 }
 

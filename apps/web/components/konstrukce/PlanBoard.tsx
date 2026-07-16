@@ -527,9 +527,10 @@ function ProjectTile({
     <div className="rounded-xl p-3" style={{ backgroundColor: tileColor }}>
       <div className="mb-2 flex items-start justify-between gap-2">
         <button type="button" onClick={onOpen} className="min-w-0 text-left hover:underline">
-          <p className="truncate text-base font-bold text-black/85">{projekt.name}</p>
+          <p className="truncate text-base font-bold text-black/85">{projekt.zakazkaKod}</p>
           <p className="truncate text-xs text-black/60">
-            {owner ? owner.name : "bez zodpovědného"} · {projekt.zakazkaKod}
+            {owner ? owner.name : "bez zodpovědného"}
+            {projekt.name !== projekt.zakazkaKod ? ` · ${projekt.name}` : ""}
           </p>
         </button>
         {editable && (
