@@ -69,7 +69,7 @@ export default function LoginPage() {
     <main className="flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-sm rounded-xl border border-line bg-surface p-8 shadow-xl">
         <div className="mb-1 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">ERP AGRO</h1>
+          <h1 className="text-2xl font-bold">ERP Strojírenská divize</h1>
           <ThemeToggle />
         </div>
         <p className="mb-6 text-sm text-text-muted">

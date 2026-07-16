@@ -3,7 +3,7 @@ import { THEME_INIT_SCRIPT } from "@/components/theme";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ERP AGRO",
+  title: "ERP Strojírenská divize",
   description: "Poptávky · Zakázky · Konstrukce – jeden systém",
 };
 

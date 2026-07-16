@@ -37,9 +37,9 @@ export function Nav({ name, role, colorIndex }: NavProps) {
 
   return (
     <header className="flex items-center gap-6 border-b border-border/30 bg-surface px-6 py-3">
-      <span className="text-lg font-bold">ERP AGRO</span>
+      <span className="whitespace-nowrap text-lg font-bold">ERP Strojírenská divize</span>
 
-      <nav className="flex flex-1 gap-1">
+      <nav className="flex flex-1 gap-2">
         {MODULES.map((m) => {
           const active = pathname.startsWith(m.match);
           return (
@@ -47,8 +47,10 @@ export function Nav({ name, role, colorIndex }: NavProps) {
               key={m.href}
               href={m.href}
               className={
-                "rounded-md px-3 py-1.5 text-sm font-medium transition " +
-                (active ? "bg-accent text-text" : "text-text-muted hover:text-text")
+                "inline-flex items-center rounded-lg border px-4 py-2 text-sm font-semibold transition " +
+                (active
+                  ? "border-link bg-accent text-text shadow-sm ring-1 ring-link"
+                  : "border-line text-text-muted hover:border-link hover:text-text")
               }
             >
               {m.label}
