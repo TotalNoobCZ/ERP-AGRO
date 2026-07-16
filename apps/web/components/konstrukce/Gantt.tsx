@@ -297,7 +297,7 @@ export default function Gantt({
             );
           })}
           {clenove.length === 0 && (
-            <p className="px-3 py-6 text-sm text-text-muted">Žádní členové týmu (Správa → „lze přiřazovat“ + oddělení Konstrukce).</p>
+            <p className="px-3 py-6 text-sm text-text-muted">Žádní členové týmu (Správa → oddělení Konstrukce).</p>
           )}
         </div>
       </div>

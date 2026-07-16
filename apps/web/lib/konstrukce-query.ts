@@ -12,12 +12,11 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
   absence: Absence[];
 }> {
   const [clenoveRes, projektaciRes, projektyRes, ukolyRes, absenceRes] = await Promise.all([
-    // Dlaždice: přiřaditelní členové konstrukčního týmu (oddělení Konstrukce).
+    // Dlaždice = všichni aktivní z oddělení Konstrukce (bez ohledu na „lze přiřazovat").
     supabase
       .from("profiles")
       .select("id, name, color_index, tile_order")
       .eq("active", true)
-      .eq("assignable", true)
       .eq("oddeleni", "konstrukce")
       .order("tile_order", { ascending: true, nullsFirst: false })
       .order("name", { ascending: true }),

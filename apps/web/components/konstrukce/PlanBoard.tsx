@@ -218,7 +218,7 @@ export default function PlanBoard({
           ))}
           {clenove.length === 0 && (
             <p className="text-sm text-text-muted">
-              Žádné dlaždice. Ve Správě dej členům týmu oddělení „Konstrukce“ a zaškrtni „lze přiřazovat“.
+              Žádné dlaždice. Ve Správě přiřaď uživatelům oddělení „Konstrukce“.
             </p>
           )}
         </div>
