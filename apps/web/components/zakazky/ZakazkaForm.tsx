@@ -96,7 +96,7 @@ export default function ZakazkaForm({
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="label">Číslo zakázky *</label>
+            <label className="label">Název akce *</label>
             <input name="kod" className="field" required />
             {ch.kod && <p className="err">{ch.kod}</p>}
           </div>

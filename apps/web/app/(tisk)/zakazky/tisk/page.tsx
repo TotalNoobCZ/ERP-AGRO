@@ -30,7 +30,7 @@ export default async function ZakazkyPrintPage({
         <thead>
           <tr className="border-b-2 border-gray-400 text-left">
             <th className="py-1 pr-2">P</th>
-            <th className="py-1 pr-2">Číslo zakázky</th>
+            <th className="py-1 pr-2">Název akce</th>
             <th className="py-1 pr-2">Místo plnění</th>
             <th className="py-1 pr-2">Odpovědná</th>
             <th className="py-1 pr-2">Termín</th>

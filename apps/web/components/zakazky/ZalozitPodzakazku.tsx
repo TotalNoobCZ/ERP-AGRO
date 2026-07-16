@@ -1,5 +1,5 @@
 "use client";
-// Inline lišta pro rychlé založení podzakázky (Číslo zakázky + Popis).
+// Inline lišta pro rychlé založení podzakázky (Název akce + Popis).
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { vytvoritPodzakazku } from "@/app/(erp)/zakazky/actions";
@@ -29,13 +29,13 @@ export function ZalozitPodzakazku({ parentId }: { parentId: string }) {
 
   return (
     <form onSubmit={submit} className="flex flex-wrap items-end gap-2">
-      <div className="w-44">
-        <label className="label">Číslo zakázky</label>
+      <div className="w-56">
+        <label className="label">Název akce</label>
         <input
           className="field"
           value={cislo}
           onChange={(e) => setCislo(e.target.value)}
-          placeholder="např. 2024-001-A"
+          placeholder="název podzakázky"
         />
       </div>
       <div className="grow">

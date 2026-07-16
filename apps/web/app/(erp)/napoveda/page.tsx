@@ -109,13 +109,13 @@ export default function NapovedaPage() {
       <H2>7. Zakázky</H2>
       <P>Záložky: Přehled · Plán · Akce · Tabule · Archiv.</P>
       <UL>
-        <li><strong>Vznik:</strong> obvykle z objednané poptávky (zdědí zákazníka). Nová akce: Číslo zakázky, Místo plnění, Začátek, Konec (povinné <Code>*</Code>), priorita.</li>
+        <li><strong>Vznik:</strong> obvykle z objednané poptávky (zdědí zákazníka). Nová akce: Název akce, Místo plnění, Začátek, Konec (povinné <Code>*</Code>), priorita.</li>
         <li><strong>Odpovědná osoba</strong> (nepovinná) — z Kanceláře, Projekťáků nebo role Vedoucí.</li>
         <li><strong>Pracovníci jsou nepovinní</strong> — přiřadíš i později (na Tabuli).</li>
         <li><strong>Plán:</strong> „Podle akcí" (posun termínů tažením) a „Podle zaměstnance" s filtrem kapitoly <strong>Dílna / Kancelář / Vše</strong>.</li>
         <li><strong>Tabule (obrácené drag &amp; drop):</strong> vlevo osoby dle kapitol a oddělení (sbalitelné), vpravo zakázky. Přetáhni osobu na zakázku = přiřadíš pracovníka; při kolizi termínů systém upozorní.</li>
         <li><strong>Detail:</strong> pracovníci, milníky, prodloužení/přerušení, stav, <strong>konstruktéři z podúkolů</strong>, historie, poznámky, Export do PDF.</li>
-        <li><strong>Podzakázky:</strong> jedna hlavní akce může sdružovat víc <strong>dceřiných zakázek</strong> (každá má vlastní číslo). V detailu akce (pod „Přiřazení pracovníci") je rychle přidáš lištou <strong>Číslo zakázky + Popis</strong>; místo, termíny a prioritu zdědí od hlavní akce. V seznamu Akce se podzakázky ukazují jako <strong>rozbalovací seznam</strong> pod hlavní akcí.</li>
+        <li><strong>Podzakázky:</strong> jedna hlavní akce může sdružovat víc <strong>dceřiných zakázek</strong> (každá má vlastní číslo). V detailu akce (pod „Přiřazení pracovníci") je rychle přidáš lištou <strong>Název akce + Popis</strong>; místo, termíny a prioritu zdědí od hlavní akce. V seznamu Akce se podzakázky ukazují jako <strong>rozbalovací seznam</strong> pod hlavní akcí.</li>
         <li><strong>Archiv:</strong> obsahuje <strong>dokončené</strong> i archivované akce.</li>
       </UL>
 
