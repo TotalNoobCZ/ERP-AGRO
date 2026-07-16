@@ -1,5 +1,5 @@
 "use client";
-// Podnavigace modulu Zakázky: Přehled / Plán / Akce / Archiv.
+// Podnavigace modulu Zakázky: Přehled / Gantt / Akce / Archiv.
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
@@ -8,7 +8,7 @@ import { PinButton } from "@/components/PinButton";
 
 const TABS = [
   { href: "/zakazky/dashboard", label: "Přehled" },
-  { href: "/zakazky/plan", label: "Plán" },
+  { href: "/zakazky/plan", label: "Gantt" },
   { href: "/zakazky", label: "Akce" },
   { href: "/zakazky/tabule", label: "Tabule" },
   { href: "/zakazky/archiv", label: "Archiv" },

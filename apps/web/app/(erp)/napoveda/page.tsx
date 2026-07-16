@@ -55,7 +55,7 @@ export default function NapovedaPage() {
       <UL>
         <li><strong>Vstupní rozcestník</strong> — klikni na název <strong>„ERP Strojírenská divize"</strong> v hlavičce; zobrazí se dlaždice modulů.</li>
         <li><strong>Hlavní karty</strong> (Poptávky · Zakázky · Konstrukce; Správa jen admin) tě pustí na <strong>Přehled</strong> modulu.</li>
-        <li><strong>Podnavigace</strong> — záložky uvnitř modulu (Přehled / Plán / Akce / Tabule / Archiv…).</li>
+        <li><strong>Podnavigace</strong> — záložky uvnitř modulu (Přehled / Gantt / Akce / Tabule / Archiv…).</li>
         <li><strong>📌 Přišpendlení záložky</strong> — klikni na špendlík u záložky; ta se stane výchozí a otevře se jako první po kliknutí na kartu modulu. Nastavení je osobní (drží se v prohlížeči).</li>
         <li><strong>Světlý/tmavý režim</strong> — přepínač 🌙/☀️ v hlavičce.</li>
         <li><strong>Načítání</strong> — po kliknutí je hned vidět indikátor „Načítám…".</li>
@@ -108,12 +108,12 @@ export default function NapovedaPage() {
       </UL>
 
       <H2>7. Zakázky</H2>
-      <P>Záložky: Přehled · Plán · Akce · Tabule · Archiv.</P>
+      <P>Záložky: Přehled · Gantt · Akce · Tabule · Archiv.</P>
       <UL>
         <li><strong>Vznik:</strong> obvykle z objednané poptávky (zdědí zákazníka). Nová akce: Název akce, Místo plnění, Začátek, Konec (povinné <Code>*</Code>), priorita.</li>
         <li><strong>Odpovědná osoba</strong> (nepovinná) — z Kanceláře, Projekťáků nebo role Vedoucí.</li>
         <li><strong>Pracovníci jsou nepovinní</strong> — přiřadíš i později (na Tabuli).</li>
-        <li><strong>Plán:</strong> „Podle akcí" (posun termínů tažením) a „Podle zaměstnance" s filtrem kapitoly <strong>Dílna / Kancelář / Vše</strong>.</li>
+        <li><strong>Gantt:</strong> „Podle akcí" (posun termínů tažením) a „Podle zaměstnance" s filtrem kapitoly <strong>Dílna / Kancelář / Vše</strong>.</li>
         <li><strong>Tabule (obrácené drag &amp; drop):</strong> vlevo osoby dle kapitol a oddělení (sbalitelné), vpravo zakázky. Přetáhni osobu na zakázku = přiřadíš pracovníka; při kolizi termínů systém upozorní. <strong>Dvojklik na osobu</strong> (vlevo i na dlaždici zakázky) otevře její <strong>kartu zaměstnance</strong> (administrátor ji může upravit, ostatní jen prohlížejí).</li>
         <li><strong>Odebrání konstruktéra ze zakázky</strong> smí provést jen <strong>šéfkonstruktér</strong> nebo <strong>administrátor</strong> (u ostatních je místo křížku zámek 🔒). Běžné pracovníky odebírá kdokoli s právem zápisu. Šéfkonstruktéra nastaví admin ve Správě u profilu z oddělení Konstrukce.</li>
         <li><strong>Lidé na akci:</strong> u akce se všude zobrazují <strong>všichni lidé</strong> (dělníci, elektrikáři, konstruktéři i odpovědná osoba) sečtení přes akci a její zakázky k akci; u každé zakázky k akci vidíš její lidi zvlášť (seznam Akce – rozbalovací, detail i Tabule).</li>
@@ -150,7 +150,7 @@ export default function NapovedaPage() {
         <li><strong>Přiřadit poptávku:</strong> Poptávky → Tabule → přetáhni na osobu.</li>
         <li><strong>Zakázka z poptávky:</strong> Poptávky → Objednáno → otevřít → vytvořit zakázku.</li>
         <li><strong>Pracovníci na zakázku:</strong> Zakázky → Tabule → přetáhni osoby na zakázku.</li>
-        <li><strong>Posun termínu:</strong> Zakázky → Plán → táhni pruh.</li>
+        <li><strong>Posun termínu:</strong> Zakázky → Gantt → táhni pruh.</li>
         <li><strong>Naplánovat konstrukci:</strong> Konstrukce → Plánování → přetáhni úkoly na konstruktéry.</li>
         <li><strong>Oblíbená záložka:</strong> klikni na 📌 u záložky.</li>
       </UL>
