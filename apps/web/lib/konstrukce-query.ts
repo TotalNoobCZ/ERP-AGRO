@@ -31,24 +31,26 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
       .from("projects")
       .select(
         `id, name, zakazka_id, owner_id, status,
-         zakazka:zakazky(kod, parent_id),
+         zakazka:zakazky!inner(kod, parent_id, deleted_at),
          owner:profiles!projects_owner_id_fkey(name),
          project_notes(id, body, created_at, author:profiles(name)),
          project_todos(id, body, done, position)`,
       )
       .eq("status", "active")
+      .is("zakazka.deleted_at", null)
       .order("created_at", { ascending: true }),
     supabase
       .from("tasks")
       .select(
         `id, project_id, name, assignee_id, start_date, end_date, duration_days,
          completed, order_in_member, status,
-         project:projects!inner(name, status),
+         project:projects!inner(name, status, zakazka:zakazky!inner(deleted_at)),
          task_notes(id, body, created_at, author:profiles(name)),
          task_todos(id, body, done, position)`,
       )
       .eq("status", "active")
-      .eq("project.status", "active"),
+      .eq("project.status", "active")
+      .is("project.zakazka.deleted_at", null),
     supabase.from("absences").select("id, profile_id, type, start_date, end_date"),
   ]);
 

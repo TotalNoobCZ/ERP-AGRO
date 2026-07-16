@@ -603,6 +603,26 @@ export async function smazatZakazku(zakazkaId: string, _fd?: FormData) {
   const ted = new Date().toISOString();
   await supabase.from("prirazeni_zakazka").update({ deleted_at: ted }).eq("zakazka_id", zakazkaId).is("deleted_at", null);
   await supabase.from("milniky").update({ deleted_at: ted }).eq("zakazka_id", zakazkaId).is("deleted_at", null);
+
+  // Konstrukce: zarchivovat projekty této zakázky + jejich úkoly, ať akce
+  // po smazání nezůstane viset v Plánování/Ganttu.
+  const { data: projs } = await supabase.from("projects").select("id").eq("zakazka_id", zakazkaId);
+  const projIds = (projs ?? []).map((p) => p.id);
+  if (projIds.length > 0) {
+    await supabase
+      .from("tasks")
+      .update({ status: "archived", archived_at: ted, archived_by: u.id })
+      .in("project_id", projIds)
+      .eq("status", "active");
+    await supabase.from("projects").update({ status: "archived" }).in("id", projIds).eq("status", "active");
+  }
+  // Úkoly reprezentující tuto zakázku k akci (žijí v projektu hlavní akce).
+  await supabase
+    .from("tasks")
+    .update({ status: "archived", archived_at: ted, archived_by: u.id })
+    .eq("zakazka_id", zakazkaId)
+    .eq("status", "active");
+
   await supabase.from("zakazky").update({ deleted_at: ted }).eq("id", zakazkaId);
 
   await zapisAudit(supabase, {
@@ -610,6 +630,8 @@ export async function smazatZakazku(zakazkaId: string, _fd?: FormData) {
     puvodni: { kod: z.kod, stav: z.stav },
   });
   revalidatePath("/zakazky");
+  revalidatePath("/konstrukce");
+  revalidatePath("/konstrukce/prehled");
   redirect("/zakazky");
 }
 
