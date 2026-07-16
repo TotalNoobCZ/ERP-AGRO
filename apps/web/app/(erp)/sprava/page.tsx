@@ -1,10 +1,9 @@
-// Správa uživatelů: admin vidí seznam profilů + zakládání;
-// ostatní jen změnu vlastního hesla (dle zadání Konstrukce).
+// Správa uživatelů – jen pro administrátory (ostatní přesměrováni na /heslo).
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient, getCurrentProfile } from "@/lib/supabase/server";
 import { ROLE_LABELS, ODDELENI_LABELS, isAdmin, type Oddeleni, type Role } from "@erp/core";
 import { userColor } from "@erp/ui";
-import { ZmenaHesla } from "@/components/sprava/ProfilForm";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
@@ -13,13 +12,9 @@ export default async function SpravaPage() {
   const profile = await getCurrentProfile();
   const role = (profile?.role ?? "viewer") as Role;
 
+  // Správa je jen pro administrátory; ostatní na změnu vlastního hesla.
   if (!isAdmin(role)) {
-    return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-bold">Správa</h1>
-        <ZmenaHesla />
-      </div>
-    );
+    redirect("/heslo");
   }
 
   const supabase = await createClient();
@@ -87,8 +82,6 @@ export default async function SpravaPage() {
           </TableBody>
         </Table>
       </div>
-
-      <ZmenaHesla />
     </div>
   );
 }
