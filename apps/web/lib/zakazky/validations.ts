@@ -16,15 +16,15 @@ export const zakazkaSchema = z
     odpovednaOsobaId: z.string().optional().or(z.literal("")),
     inquiryId: z.string().optional().or(z.literal("")),
     customerId: z.string().optional().or(z.literal("")),
-    prirazeni: z
-      .array(
-        z.object({
-          osobaId: z.string().min(1, "Vyberte osobu"),
-          datumOd: den,
-          datumDo: den,
-        }),
-      )
-      .min(1, "Přiřaďte alespoň jednu osobu"),
+    // Pracovníci jsou nepovinní – zakázku lze založit i bez nich a přiřadit
+    // je později (např. na Tabuli zakázek).
+    prirazeni: z.array(
+      z.object({
+        osobaId: z.string().min(1, "Vyberte osobu"),
+        datumOd: den,
+        datumDo: den,
+      }),
+    ),
   })
   .refine((d) => d.zacatek <= d.konec, {
     message: "Konec nesmí být před začátkem",

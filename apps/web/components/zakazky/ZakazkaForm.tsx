@@ -32,17 +32,17 @@ function Ulozit() {
 
 export default function ZakazkaForm({
   osoby,
+  odpovedni,
   inquiry,
 }: {
   osoby: OsobaLite[];
+  odpovedni: OsobaLite[]; // odpovědná osoba = Kancelář / Projekťák / role Vedoucí
   inquiry?: InquiryOrigin | null;
 }) {
   const [stav, formAction] = useActionState<ZakazkaStav, FormData>(vytvoritZakazku, {});
   const [zacatek, setZacatek] = useState("");
   const [konec, setKonec] = useState("");
   const [odpovedny, setOdpovedny] = useState("");
-  // Odpovědná osoba akce = Kancelář nebo Projekťák.
-  const kancelar = osoby.filter((o) => o.oddeleni === "kancelar" || o.oddeleni === "projektak");
   const [radky, setRadky] = useState<Radek[]>([{ key: 1, osobaId: "", vyjimka: false, od: "", do: "" }]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const ch = stav.chyby ?? {};
@@ -83,7 +83,7 @@ export default function ZakazkaForm({
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="label">Číslo zakázky</label>
+            <label className="label">Číslo zakázky *</label>
             <input name="kod" className="field" required />
             {ch.kod && <p className="err">{ch.kod}</p>}
           </div>
@@ -101,25 +101,27 @@ export default function ZakazkaForm({
         </div>
 
         <div>
-          <label className="label">Místo plnění</label>
+          <label className="label">Místo plnění *</label>
           <input name="mistoPlneni" className="field" required />
           {ch.mistoPlneni && <p className="err">{ch.mistoPlneni}</p>}
         </div>
 
         <div>
-          <label className="label">Odpovědná osoba (kancelář / projekťák)</label>
-          <OsobaSelect osoby={kancelar} value={odpovedny} onChange={setOdpovedny} name="odpovednaOsobaId" />
-          <p className="mt-1 text-xs text-text-muted">Nepovinné. Vybírá se z lidí v Kanceláři.</p>
+          <label className="label">Odpovědná osoba</label>
+          <OsobaSelect osoby={odpovedni} value={odpovedny} onChange={setOdpovedny} name="odpovednaOsobaId" />
+          <p className="mt-1 text-xs text-text-muted">
+            Nepovinné. Vybírá se z Kanceláře, Projekťáků nebo lidí s rolí Vedoucí.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="label">Začátek akce</label>
+            <label className="label">Začátek akce *</label>
             <DateField name="zacatek" value={zacatek} onChange={setZacatek} required />
             {ch.zacatek && <p className="err">{ch.zacatek}</p>}
           </div>
           <div>
-            <label className="label">Konec akce</label>
+            <label className="label">Konec akce *</label>
             <DateField name="konec" value={konec} onChange={setKonec} required />
             {ch.konec && <p className="err">{ch.konec}</p>}
           </div>
@@ -131,7 +133,8 @@ export default function ZakazkaForm({
             <button type="button" onClick={pridat} className="btn-ghost px-2 py-1 text-sm">+ Přidat</button>
           </div>
           <p className="mb-2 text-xs text-text-muted">
-            Pracovník je automaticky na akci po celou dobu jejího trvání. Pokud má být jinak,
+            Nepovinné – pracovníky můžeš přiřadit i později (např. na Tabuli zakázek).
+            Pracovník je automaticky na akci po celou dobu jejího trvání; pokud má být jinak,
             zaškrtni „Jiné termíny“ a zadej vlastní období.
           </p>
           {ch.prirazeni && <p className="err">{ch.prirazeni}</p>}

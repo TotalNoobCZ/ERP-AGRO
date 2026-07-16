@@ -37,15 +37,23 @@ export default async function UpravitZakazkuPage({ params }: { params: Promise<{
     .filter((p) => !p.deleted_at)
     .sort((a, b) => a.datum_od.localeCompare(b.datum_od));
 
-  // Odpovědná osoba = Kancelář nebo Projekťák; pracovníci = přiřaditelní mimo Kancelář.
-  const { data: vsichni } = await supabase
-    .from("profiles")
-    .select("id, name, oddeleni")
-    .eq("active", true)
-    .eq("assignable", true)
-    .order("name", { ascending: true });
+  // Odpovědná osoba = Kancelář / Projekťák / role Vedoucí; pracovníci = přiřaditelní mimo Kancelář.
+  const [{ data: vsichni }, { data: odpovedniData }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, name, oddeleni")
+      .eq("active", true)
+      .eq("assignable", true)
+      .order("name", { ascending: true }),
+    supabase
+      .from("profiles")
+      .select("id, name, oddeleni")
+      .eq("active", true)
+      .or("oddeleni.in.(kancelar,projektak),role.eq.vedouci")
+      .order("name", { ascending: true }),
+  ]);
   const osoby = (vsichni ?? []) as OsobaLite[];
-  const kancelar = osoby.filter((o) => o.oddeleni === "kancelar" || o.oddeleni === "projektak");
+  const kancelar = (odpovedniData ?? []) as OsobaLite[];
   const pracovnici = osoby.filter((o) => o.oddeleni !== "kancelar");
 
   const akce = upravitZakazku.bind(null, z.id) as (prev: ZakazkaStav, fd: FormData) => Promise<ZakazkaStav>;

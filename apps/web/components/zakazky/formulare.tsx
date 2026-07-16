@@ -58,7 +58,7 @@ export function ZakazkaEditForm({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className="label">Číslo zakázky</label>
+          <label className="label">Číslo zakázky *</label>
           <input name="kod" className="field" defaultValue={zakazka.kod} required />
           {ch.kod && <p className="err">{ch.kod}</p>}
         </div>
@@ -75,19 +75,21 @@ export function ZakazkaEditForm({
       </div>
 
       <div>
-        <label className="label">Místo plnění</label>
+        <label className="label">Místo plnění *</label>
         <input name="mistoPlneni" className="field" defaultValue={zakazka.mistoPlneni} required />
         {ch.mistoPlneni && <p className="err">{ch.mistoPlneni}</p>}
       </div>
 
       <div>
-        <label className="label">Odpovědná osoba (kancelář)</label>
+        <label className="label">Odpovědná osoba</label>
         <OsobaSelect osoby={osoby} value={odpovedny} onChange={setOdpovedny} name="odpovednaOsobaId" />
-        <p className="mt-1 text-xs text-text-muted">Nepovinné. Vybírá se z lidí v Kanceláři.</p>
+        <p className="mt-1 text-xs text-text-muted">
+          Nepovinné. Vybírá se z Kanceláře, Projekťáků nebo lidí s rolí Vedoucí.
+        </p>
       </div>
 
       <div>
-        <label className="label">Začátek akce</label>
+        <label className="label">Začátek akce *</label>
         <DateField name="zacatek" value={zacatek} onChange={setZacatek} required />
         {ch.zacatek && <p className="err">{ch.zacatek}</p>}
         <p className="mt-1 text-xs text-text-muted">
