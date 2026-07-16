@@ -45,6 +45,7 @@ create table profiles (
   oddeleni      text
                   check (oddeleni in ('vyroba', 'montaz', 'elektro', 'kancelar', 'obchod', 'konstrukce', 'projektak', 'elektro_projektant', 'programator')),
   assignable    boolean not null default true,    -- lze přiřazovat na úkoly/zakázky (automatické u všech)
+  sefkonstrukter boolean not null default false,  -- pozice: smí odebírat konstruktéry ze zakázek
   color_index   int,                              -- 0–9, paleta dlaždic z Konstrukce
   tile_order    int,                              -- pořadí dlaždic členů (Konstrukce)
   active        boolean not null default true,

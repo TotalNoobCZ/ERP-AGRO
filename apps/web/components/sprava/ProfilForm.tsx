@@ -16,6 +16,7 @@ type Init = {
   role?: string;
   oddeleni?: string | null;
   assignable?: boolean;
+  sefkonstrukter?: boolean;
   colorIndex?: number | null;
   active?: boolean;
   pozice?: string | null;
@@ -135,6 +136,13 @@ export function ProfilForm({
           <input type="checkbox" name="active" defaultChecked={initial?.active ?? true} />
           Aktivní
         </label>
+        {oddeleni === "konstrukce" && (
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" name="sefkonstrukter" defaultChecked={initial?.sefkonstrukter ?? false} />
+            Šéfkonstruktér
+            <span className="text-xs text-text-muted">(smí odebírat konstruktéry ze zakázek)</span>
+          </label>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

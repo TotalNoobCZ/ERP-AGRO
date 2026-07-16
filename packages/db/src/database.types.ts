@@ -52,6 +52,8 @@ export type ProfileRow = {
     | "programator"
     | null;
   assignable: boolean;
+  /** pozice: šéfkonstruktér – smí odebírat konstruktéry ze zakázek */
+  sefkonstrukter: boolean;
   color_index: number | null;
   tile_order: number | null;
   active: boolean;

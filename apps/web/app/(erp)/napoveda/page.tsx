@@ -2,7 +2,7 @@
 // při změnách funkcí aktualizuj tuto stránku i datum níže.
 import type { ReactNode } from "react";
 
-const AKTUALIZOVANO = "16. 7. 2026 (podzakázky, archiv dokončených)";
+const AKTUALIZOVANO = "16. 7. 2026 (šéfkonstruktér, karta zaměstnance)";
 
 export const dynamic = "force-dynamic";
 
@@ -93,6 +93,7 @@ export default function NapovedaPage() {
       <UL>
         <li>Nový/úprava: jméno, e-mail, role, oddělení (rozbalovátko dle kapitol), barva, aktivní.</li>
         <li><strong>E-mail je nepovinný pro kapitolu Dílna</strong> (nepřihlašuje se). „Lze přiřazovat" je automaticky u všech.</li>
+        <li><strong>Šéfkonstruktér</strong> — u profilu z oddělení <strong>Konstrukce</strong> lze zaškrtnout pozici Šéfkonstruktér; smí jako jediný (kromě administrátora) <strong>odebírat konstruktéry ze zakázek</strong>.</li>
         <li><strong>Heslo uživatele</strong> (v jeho detailu): nastavit konkrétní, nebo vygenerovat náhodné a předat. Bez e-mailu se heslo neřeší.</li>
       </UL>
 
@@ -113,7 +114,8 @@ export default function NapovedaPage() {
         <li><strong>Odpovědná osoba</strong> (nepovinná) — z Kanceláře, Projekťáků nebo role Vedoucí.</li>
         <li><strong>Pracovníci jsou nepovinní</strong> — přiřadíš i později (na Tabuli).</li>
         <li><strong>Plán:</strong> „Podle akcí" (posun termínů tažením) a „Podle zaměstnance" s filtrem kapitoly <strong>Dílna / Kancelář / Vše</strong>.</li>
-        <li><strong>Tabule (obrácené drag &amp; drop):</strong> vlevo osoby dle kapitol a oddělení (sbalitelné), vpravo zakázky. Přetáhni osobu na zakázku = přiřadíš pracovníka; při kolizi termínů systém upozorní.</li>
+        <li><strong>Tabule (obrácené drag &amp; drop):</strong> vlevo osoby dle kapitol a oddělení (sbalitelné), vpravo zakázky. Přetáhni osobu na zakázku = přiřadíš pracovníka; při kolizi termínů systém upozorní. <strong>Dvojklik na osobu</strong> (vlevo i na dlaždici zakázky) otevře její <strong>kartu zaměstnance</strong> (administrátor ji může upravit, ostatní jen prohlížejí).</li>
+        <li><strong>Odebrání konstruktéra ze zakázky</strong> smí provést jen <strong>šéfkonstruktér</strong> nebo <strong>administrátor</strong> (u ostatních je místo křížku zámek 🔒). Běžné pracovníky odebírá kdokoli s právem zápisu. Šéfkonstruktéra nastaví admin ve Správě u profilu z oddělení Konstrukce.</li>
         <li><strong>Lidé na akci:</strong> u akce se všude zobrazují <strong>všichni lidé</strong> (dělníci, elektrikáři, konstruktéři i odpovědná osoba) sečtení přes akci a její zakázky k akci; u každé zakázky k akci vidíš její lidi zvlášť (seznam Akce – rozbalovací, detail i Tabule).</li>
         <li><strong>Detail:</strong> pracovníci, milníky, prodloužení/přerušení, stav, <strong>konstruktéři z podúkolů</strong>, historie, poznámky, Export do PDF.</li>
         <li><strong>Zakázky k akci:</strong> jedna hlavní akce může sdružovat víc <strong>dceřiných zakázek</strong> (každá má vlastní název). V detailu akce (pod „Přiřazení pracovníci") je rychle přidáš lištou <strong>Název akce + Popis</strong>; místo, termíny a prioritu zdědí od hlavní akce. V seznamu Akce se ukazují jako <strong>rozbalovací seznam</strong> pod hlavní akcí. V <strong>Konstrukci</strong> se zakázka k akci přidá jako <strong>podúkol do projektu hlavní akce</strong>.</li>

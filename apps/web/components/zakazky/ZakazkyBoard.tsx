@@ -29,10 +29,13 @@ export default function ZakazkyBoard({
   osoby,
   zakazky,
   editable,
+  muzeOdebratKonstruktera,
 }: {
   osoby: BoardOsobaZ[];
   zakazky: BoardZakazka[];
   editable: boolean;
+  /** smí přihlášený odebrat konstruktéra ze zakázky (šéfkonstruktér / admin) */
+  muzeOdebratKonstruktera: boolean;
 }) {
   const router = useRouter();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
@@ -215,7 +218,14 @@ export default function ZakazkyBoard({
                           <span className="font-normal">({d.lidi.length})</span>
                         </button>
                         {!depZavreno &&
-                          d.lidi.map((o) => <OsobaChip key={o.id} osoba={o} editable={editable} />)}
+                          d.lidi.map((o) => (
+                            <OsobaChip
+                              key={o.id}
+                              osoba={o}
+                              editable={editable}
+                              onOpen={() => router.push(`/lide/${o.id}`)}
+                            />
+                          ))}
                       </div>
                     );
                   })}
@@ -240,7 +250,9 @@ export default function ZakazkyBoard({
                   <ZakazkaTile
                     zakazka={g.akce}
                     editable={editable}
+                    muzeOdebratKonstruktera={muzeOdebratKonstruktera}
                     onOpen={() => router.push(`/zakazky/${g.akce.id}`)}
+                    onOpenOsoba={(osobaId) => router.push(`/lide/${osobaId}`)}
                     onRemove={odebrat}
                   />
                   {g.deti.length > 0 && (
@@ -267,7 +279,9 @@ export default function ZakazkyBoard({
                               key={d.id}
                               zakazka={d}
                               editable={editable}
+                              muzeOdebratKonstruktera={muzeOdebratKonstruktera}
                               onOpen={() => router.push(`/zakazky/${d.id}`)}
+                              onOpenOsoba={(osobaId) => router.push(`/lide/${osobaId}`)}
                               onRemove={odebrat}
                             />
                           ))}
@@ -324,7 +338,7 @@ export default function ZakazkyBoard({
   );
 }
 
-function OsobaChip({ osoba, editable }: { osoba: BoardOsobaZ; editable: boolean }) {
+function OsobaChip({ osoba, editable, onOpen }: { osoba: BoardOsobaZ; editable: boolean; onOpen: () => void }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `osoba:${osoba.id}`,
     disabled: !editable,
@@ -334,9 +348,10 @@ function OsobaChip({ osoba, editable }: { osoba: BoardOsobaZ; editable: boolean 
       ref={setNodeRef}
       {...attributes}
       {...listeners}
+      onDoubleClick={onOpen}
       className={`rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition ${isDragging ? "opacity-40" : ""} ${editable ? "cursor-grab hover:brightness-110" : ""}`}
       style={{ backgroundColor: userColor(osoba.colorIndex), color: "#16181b" }}
-      title={editable ? "Přetáhni na zakázku" : osoba.name}
+      title={editable ? "Přetáhni na zakázku · dvojklik = karta zaměstnance" : "Dvojklik = karta zaměstnance"}
     >
       {osoba.name}
     </div>
@@ -346,12 +361,16 @@ function OsobaChip({ osoba, editable }: { osoba: BoardOsobaZ; editable: boolean 
 function ZakazkaTile({
   zakazka,
   editable,
+  muzeOdebratKonstruktera,
   onOpen,
+  onOpenOsoba,
   onRemove,
 }: {
   zakazka: BoardZakazka;
   editable: boolean;
+  muzeOdebratKonstruktera: boolean;
   onOpen: () => void;
+  onOpenOsoba: (osobaId: string) => void;
   onRemove: (prirazeniId: string) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `zak:${zakazka.id}` });
@@ -371,20 +390,27 @@ function ZakazkaTile({
         {zakazka.pracovnici.map((p) => (
           <span
             key={p.prirazeniId}
-            className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium"
+            onDoubleClick={() => onOpenOsoba(p.osobaId)}
+            title="Dvojklik = karta zaměstnance"
+            className="inline-flex cursor-pointer items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium"
             style={{ backgroundColor: userColor(p.colorIndex), color: "#16181b" }}
           >
             {p.name}
-            {editable && (
-              <button
-                type="button"
-                onClick={() => onRemove(p.prirazeniId)}
-                className="text-black/60 hover:text-black"
-                title="Odebrat"
-              >
-                ✕
-              </button>
-            )}
+            {editable &&
+              (p.oddeleni === "konstrukce" && !muzeOdebratKonstruktera ? (
+                <span className="text-black/40" title="Konstruktéra smí odebrat jen šéfkonstruktér nebo administrátor.">
+                  🔒
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onRemove(p.prirazeniId)}
+                  className="text-black/60 hover:text-black"
+                  title="Odebrat"
+                >
+                  ✕
+                </button>
+              ))}
           </span>
         ))}
         {zakazka.pracovnici.length === 0 && (

@@ -84,6 +84,7 @@ export const profilSchema = z
       .optional()
       .or(z.literal("")),
     assignable: z.boolean(),
+    sefkonstrukter: z.boolean(),
     colorIndex: z.coerce.number().int().min(0).max(9).optional(),
     active: z.boolean(),
     pozice: z.string().trim().optional(),

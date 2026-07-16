@@ -78,6 +78,17 @@ export function isAdmin(role: Role): boolean {
   return role === "admin";
 }
 
+/**
+ * Smí odebrat konstruktéra ze zakázky? Jen šéfkonstruktér nebo administrátor.
+ * (Přiřazování zůstává na editorech; odebrání je chráněná operace.)
+ */
+export function muzeOdebratKonstruktera(p: {
+  role: Role | string;
+  sefkonstrukter?: boolean | null;
+}): boolean {
+  return p.role === "admin" || !!p.sefkonstrukter;
+}
+
 export interface Profile {
   id: string;
   authUserId: string | null;
@@ -87,6 +98,8 @@ export interface Profile {
   oddeleni: Oddeleni | null;
   /** lze přiřazovat na úkoly/zakázky (dřívější has_tile / řešitel) */
   assignable: boolean;
+  /** pozice: šéfkonstruktér – smí odebírat konstruktéry ze zakázek */
+  sefkonstrukter: boolean;
   /** 0–9, paleta dlaždic z Konstrukce */
   colorIndex: number | null;
   tileOrder: number | null;

@@ -20,6 +20,7 @@ function ziskat(fd: FormData) {
     role: String(fd.get("role") ?? "viewer"),
     oddeleni: String(fd.get("oddeleni") ?? ""),
     assignable: true, // automaticky u všech (pole ve formuláři zrušeno)
+    sefkonstrukter: fd.get("sefkonstrukter") === "on",
     colorIndex: Number(fd.get("colorIndex") ?? 0),
     active: fd.get("active") !== null ? fd.get("active") === "on" : true,
     pozice: String(fd.get("pozice") ?? ""),
@@ -82,6 +83,7 @@ export async function upravitProfil(id: string, _prev: ProfilStav, fd: FormData)
       role: d.role,
       oddeleni: d.oddeleni || null,
       assignable: d.assignable,
+      sefkonstrukter: d.sefkonstrukter,
       color_index: d.colorIndex ?? null,
       active: d.active,
       pozice: d.pozice || null,

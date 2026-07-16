@@ -57,7 +57,7 @@ export async function queryZakazky(
 // ---------- Tabule zakázek (obrácené drag & drop: osoba → zakázka) ----------
 
 export type BoardOsobaZ = { id: string; name: string; oddeleni: string | null; colorIndex: number | null };
-export type BoardPrirazeni = { prirazeniId: string; osobaId: string; name: string; colorIndex: number | null };
+export type BoardPrirazeni = { prirazeniId: string; osobaId: string; name: string; oddeleni: string | null; colorIndex: number | null };
 export type BoardZakazka = {
   id: string;
   kod: string;
@@ -85,7 +85,7 @@ export async function queryZakazkyBoard(
       .from("zakazky")
       .select(
         "id, kod, misto_plneni, popis, parent_id, zacatek, konec_aktualni, odpovedna_osoba_id, " +
-          "prirazeni:prirazeni_zakazka(id, osoba_id, deleted_at, osoba:profiles(id, name, color_index))",
+          "prirazeni:prirazeni_zakazka(id, osoba_id, deleted_at, osoba:profiles(id, name, oddeleni, color_index))",
       )
       .is("deleted_at", null)
       .in("stav", ["AKTIVNI", "POZASTAVENO"])
@@ -112,7 +112,7 @@ export async function queryZakazkyBoard(
       id: string;
       osoba_id: string;
       deleted_at: string | null;
-      osoba: { id: string; name: string; color_index: number | null } | null;
+      osoba: { id: string; name: string; oddeleni: string | null; color_index: number | null } | null;
     }> | null;
   };
   const rawZ = (zakRes.data ?? []) as unknown as RawZ[];
@@ -125,6 +125,7 @@ export async function queryZakazkyBoard(
         prirazeniId: p.id,
         osobaId: p.osoba_id,
         name: p.osoba?.name ?? "?",
+        oddeleni: p.osoba?.oddeleni ?? null,
         colorIndex: p.osoba?.color_index ?? null,
       }));
     return {

@@ -9,7 +9,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient, getCurrentProfile } from "@/lib/supabase/server";
-import { canWrite, type Role, type TypZmeny } from "@erp/core";
+import { canWrite, muzeOdebratKonstruktera, type Role, type TypZmeny } from "@erp/core";
 import {
   zakazkaSchema,
   zakazkaUpravaSchema,
@@ -50,7 +50,12 @@ async function writer() {
   const profile = await getCurrentProfile();
   if (!profile) return null;
   if (!canWrite(profile.role as Role)) return null;
-  return { id: profile.id, name: profile.name, role: profile.role as Role };
+  return {
+    id: profile.id,
+    name: profile.name,
+    role: profile.role as Role,
+    sefkonstrukter: !!profile.sefkonstrukter,
+  };
 }
 
 async function zapisAudit(
@@ -898,11 +903,17 @@ export async function odebratPracovnika(prirazeniId: string, duvod: string): Pro
   const supabase = await createClient();
   const { data: p } = await supabase
     .from("prirazeni_zakazka")
-    .select("id, zakazka_id, datum_od, datum_do, deleted_at, osoba:profiles(name)")
+    .select("id, zakazka_id, datum_od, datum_do, deleted_at, osoba:profiles(name, oddeleni)")
     .eq("id", prirazeniId)
     .maybeSingle();
   if (!p || p.deleted_at) return { ok: false, chyba: "Přiřazení nenalezeno." };
-  const jmeno = (p.osoba as unknown as { name: string } | null)?.name ?? "?";
+  const osoba = p.osoba as unknown as { name: string; oddeleni: string | null } | null;
+  const jmeno = osoba?.name ?? "?";
+
+  // Odebrat konstruktéra ze zakázky smí jen šéfkonstruktér nebo administrátor.
+  if (osoba?.oddeleni === "konstrukce" && !muzeOdebratKonstruktera(u)) {
+    return { ok: false, chyba: "Odebrat konstruktéra ze zakázky smí jen šéfkonstruktér nebo administrátor." };
+  }
 
   await supabase.from("prirazeni_zakazka").update({ deleted_at: new Date().toISOString() }).eq("id", p.id);
   await zapisAudit(supabase, {

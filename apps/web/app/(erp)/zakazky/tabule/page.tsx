@@ -2,7 +2,7 @@
 import { createClient, getCurrentProfile } from "@/lib/supabase/server";
 import { queryZakazkyBoard } from "@/lib/zakazky-query";
 import ZakazkyBoard from "@/components/zakazky/ZakazkyBoard";
-import { canWrite, type Role } from "@erp/core";
+import { canWrite, muzeOdebratKonstruktera, type Role } from "@erp/core";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +13,9 @@ export default async function ZakazkyTabulePage() {
     getCurrentProfile(),
   ]);
   const editable = profile ? canWrite(profile.role as Role) : false;
+  const smiOdebratKonstruktera = profile
+    ? muzeOdebratKonstruktera({ role: profile.role, sefkonstrukter: profile.sefkonstrukter })
+    : false;
 
   return (
     <div className="space-y-4">
@@ -22,7 +25,12 @@ export default async function ZakazkyTabulePage() {
           {editable ? "Přetáhni osobu na zakázku = přiřazení pracovníka" : "Jen ke čtení"}
         </span>
       </div>
-      <ZakazkyBoard osoby={osoby} zakazky={zakazky} editable={editable} />
+      <ZakazkyBoard
+        osoby={osoby}
+        zakazky={zakazky}
+        editable={editable}
+        muzeOdebratKonstruktera={smiOdebratKonstruktera}
+      />
     </div>
   );
 }
