@@ -39,6 +39,43 @@ function refreshKonstrukce() {
 }
 
 /**
+ * Propíše konstruktéra k zakázce: dostane-li úkol řešitele, přidá se tato
+ * osoba jako pracovník k zakázce, do níž patří projekt úkolu (na celé období
+ * zakázky). Pokud už tam přiřazená je, neudělá nic.
+ */
+async function propsatKonstrukteraDoZakazky(supabase: Db, taskId: string, osobaId: string): Promise<void> {
+  const { data: task } = await supabase.from("tasks").select("project_id").eq("id", taskId).maybeSingle();
+  if (!task) return;
+  const { data: proj } = await supabase.from("projects").select("zakazka_id").eq("id", task.project_id).maybeSingle();
+  if (!proj) return;
+  const { data: zak } = await supabase
+    .from("zakazky")
+    .select("id, zacatek, konec_aktualni, deleted_at")
+    .eq("id", proj.zakazka_id)
+    .maybeSingle();
+  if (!zak || zak.deleted_at) return;
+
+  const { data: existuje } = await supabase
+    .from("prirazeni_zakazka")
+    .select("id")
+    .eq("zakazka_id", zak.id)
+    .eq("osoba_id", osobaId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (existuje) return;
+
+  await supabase.from("prirazeni_zakazka").insert({
+    zakazka_id: zak.id,
+    osoba_id: osobaId,
+    datum_od: zak.zacatek,
+    datum_do: zak.konec_aktualni,
+  });
+  revalidatePath("/zakazky/tabule");
+  revalidatePath("/zakazky/plan");
+  revalidatePath(`/zakazky/${zak.id}`);
+}
+
+/**
  * Najde překryvy nového rozpětí s úkoly a absencemi daného člena.
  * (kap. 9: hlásí se vždy, bez ohledu na trvání či volný prostor.)
  */
@@ -280,6 +317,12 @@ export async function upravitUkol(id: string, patch: UkolPatch, vynutit = false)
 
   const { error } = await supabase.from("tasks").update(update).eq("id", id);
   if (error) return { ok: false, chyba: "Uložení se nezdařilo." };
+
+  // Přiřazení řešitele úkolu → propíše konstruktéra k zakázce projektu.
+  if (patch.assigneeId) {
+    await propsatKonstrukteraDoZakazky(supabase, id, patch.assigneeId);
+  }
+
   refreshKonstrukce();
   return { ok: true };
 }
