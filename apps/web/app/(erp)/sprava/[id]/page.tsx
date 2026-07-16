@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient, getCurrentProfile } from "@/lib/supabase/server";
 import { ProfilForm } from "@/components/sprava/ProfilForm";
+import { HesloSprava } from "@/components/sprava/HesloSprava";
 import { upravitProfil, type ProfilStav } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -42,6 +43,7 @@ export default async function UpravitProfilPage({ params }: { params: Promise<{ 
           maUcet: Boolean(p.auth_user_id),
         }}
       />
+      <HesloSprava profileId={p.id} maUcet={Boolean(p.auth_user_id)} jmeno={p.name} />
     </div>
   );
 }
