@@ -39,6 +39,7 @@ export default function PlanBoard({
   absence,
   zakazky,
   editable,
+  muzeOdebratKonstruktera,
 }: {
   clenove: Clen[];
   projektaci: Clen[];
@@ -47,6 +48,8 @@ export default function PlanBoard({
   absence: Absence[];
   zakazky: ZakazkaLite[];
   editable: boolean;
+  /** smí sundat konstruktéra z úkolu / zrušit zodpovědného (šéfkonstruktér / admin) */
+  muzeOdebratKonstruktera: boolean;
 }) {
   const router = useRouter();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
@@ -135,7 +138,13 @@ export default function PlanBoard({
       // Přetažení jinému členovi → kontrola kolize u NOVÉHO řešitele (kap. 7).
       await priradit(task.id, memberId);
     } else if (overId === "unassign") {
-      if (task.assigneeId) await priradit(task.id, null);
+      if (task.assigneeId) {
+        if (!muzeOdebratKonstruktera) {
+          setChyba("Sundat konstruktéra z úkolu smí jen šéfkonstruktér nebo administrátor.");
+          return;
+        }
+        await priradit(task.id, null);
+      }
     } else if (overId.startsWith("before:") || overId.startsWith("end:")) {
       // řazení uvnitř dlaždice člena
       const [kind, rest] = overId.split(":", 2) as [string, string];
@@ -308,13 +317,19 @@ export default function PlanBoard({
 
       {/* Dialogy */}
       {openTaskData && (
-        <TaskDialog ukol={openTaskData} clenove={clenove} onClose={() => setOpenTask(null)} />
+        <TaskDialog
+          ukol={openTaskData}
+          clenove={clenove}
+          muzeOdebratKonstruktera={muzeOdebratKonstruktera}
+          onClose={() => setOpenTask(null)}
+        />
       )}
       {openProjectData && (
         <ProjectDialog
           projekt={openProjectData}
           projektaci={projektaci}
           aktivniUkoly={ukolyProjektu.get(openProjectData.id) ?? []}
+          muzeOdebratKonstruktera={muzeOdebratKonstruktera}
           onClose={() => setOpenProject(null)}
         />
       )}

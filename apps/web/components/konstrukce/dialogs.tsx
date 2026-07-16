@@ -183,10 +183,13 @@ export function TaskDialog({
   ukol,
   clenove,
   onClose,
+  muzeOdebratKonstruktera = true,
 }: {
   ukol: Ukol;
   clenove: Clen[];
   onClose: () => void;
+  /** smí sundat konstruktéra z úkolu (šéfkonstruktér / admin) */
+  muzeOdebratKonstruktera?: boolean;
 }) {
   const router = useRouter();
   const [name, setName] = useState(ukol.name);
@@ -262,11 +265,14 @@ export function TaskDialog({
         <div>
           <label className="label">{KONSTRUKCE_LABELS.assignee}</label>
           <select className="field" value={assignee} onChange={(e) => setAssignee(e.target.value)}>
-            <option value="">— nepřiřazeno —</option>
+            <option value="" disabled={!!ukol.assigneeId && !muzeOdebratKonstruktera}>— nepřiřazeno —</option>
             {clenove.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
+          {!!ukol.assigneeId && !muzeOdebratKonstruktera && (
+            <p className="mt-1 text-xs text-text-muted">Sundat konstruktéra smí jen šéfkonstruktér nebo administrátor.</p>
+          )}
         </div>
 
         {/* Začátek / Konec / Trvání – vyplněním dvou se dopočítá třetí */}
@@ -316,11 +322,14 @@ export function ProjectDialog({
   projektaci,
   aktivniUkoly,
   onClose,
+  muzeOdebratKonstruktera = true,
 }: {
   projekt: Projekt;
   projektaci: Clen[]; // možní vedoucí projektu (oddělení Projekťák)
   aktivniUkoly: Ukol[]; // aktivní úkoly projektu (pro Vyčistit/Archivovat)
   onClose: () => void;
+  /** smí zrušit zodpovědného konstruktéra (šéfkonstruktér / admin) */
+  muzeOdebratKonstruktera?: boolean;
 }) {
   const router = useRouter();
   const [name, setName] = useState(projekt.name);
@@ -387,7 +396,7 @@ export function ProjectDialog({
               <span className="inline-block h-4 w-4 shrink-0 rounded-full" style={{ backgroundColor: userColor(vlastnik.colorIndex) }} />
             )}
             <select className="field" value={owner} onChange={(e) => setOwner(e.target.value)}>
-              <option value="">— nikdo —</option>
+              <option value="" disabled={!!projekt.ownerId && !muzeOdebratKonstruktera}>— nikdo —</option>
               {projektaci.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}

@@ -7,7 +7,7 @@
 // ----------------------------------------------------------------------------
 import { revalidatePath } from "next/cache";
 import { createClient, getCurrentProfile } from "@/lib/supabase/server";
-import { canWrite, rangesOverlap, workdaysBetween, ABSENCE_LABELS, type AbsenceType, type Role } from "@erp/core";
+import { canWrite, muzeOdebratKonstruktera, rangesOverlap, workdaysBetween, ABSENCE_LABELS, type AbsenceType, type Role } from "@erp/core";
 
 type Db = Awaited<ReturnType<typeof createClient>>;
 
@@ -23,7 +23,12 @@ async function writer() {
   const profile = await getCurrentProfile();
   if (!profile) return null;
   if (!canWrite(profile.role as Role)) return null;
-  return { id: profile.id, name: profile.name };
+  return {
+    id: profile.id,
+    name: profile.name,
+    role: profile.role as Role,
+    sefkonstrukter: !!profile.sefkonstrukter,
+  };
 }
 
 /** "YYYY-MM-DD" → "15. 7. 2026" (české datum, bez posunu zóny). */
@@ -183,6 +188,12 @@ export async function upravitProjekt(
       if (owner?.oddeleni !== "konstrukce") {
         return { ok: false, chyba: "Zodpovědným za konstrukční projekt může být jen konstruktér (oddělení Konstrukce)." };
       }
+    } else {
+      // Zrušit zodpovědného konstruktéra smí jen šéfkonstruktér/admin.
+      const { data: proj } = await supabase.from("projects").select("owner_id").eq("id", id).maybeSingle();
+      if (proj?.owner_id && !muzeOdebratKonstruktera(u)) {
+        return { ok: false, chyba: "Zrušit zodpovědného konstruktéra smí jen šéfkonstruktér nebo administrátor." };
+      }
     }
     update.owner_id = ownerId;
   }
@@ -285,6 +296,13 @@ export async function upravitUkol(id: string, patch: UkolPatch, vynutit = false)
     .eq("id", id)
     .maybeSingle();
   if (!t) return { ok: false, chyba: "Úkol nenalezen." };
+
+  // Sundat konstruktéra z úkolu (zrušit řešitele) smí jen šéfkonstruktér/admin.
+  // Přiřazení nebo přehození na jiného konstruktéra zůstává na editorech.
+  const rusiResitele = patch.assigneeId !== undefined && !patch.assigneeId && !!t.assignee_id;
+  if (rusiResitele && !muzeOdebratKonstruktera(u)) {
+    return { ok: false, chyba: "Sundat konstruktéra z úkolu smí jen šéfkonstruktér nebo administrátor." };
+  }
 
   const assignee = patch.assigneeId !== undefined ? patch.assigneeId : t.assignee_id;
   const start = patch.startDate !== undefined ? patch.startDate : t.start_date;
