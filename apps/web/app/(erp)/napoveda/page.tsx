@@ -112,7 +112,7 @@ export default function NapovedaPage() {
       <H2>7. Zakázky</H2>
       <P>Záložky: Přehled · Gantt · Akce · Tabule · Archiv.</P>
       <UL>
-        <li><strong>Vznik:</strong> obvykle z objednané poptávky (zdědí zákazníka). Nová akce: Název akce, Místo plnění, Začátek, Konec (povinné <Code>*</Code>), priorita.</li>
+        <li><strong>Vznik:</strong> obvykle z objednané poptávky (zdědí zákazníka; <strong>Název akce se předvyplní názvem poptávky</strong> a jde změnit). Nová akce: Název akce, Místo plnění, Začátek, Konec (povinné <Code>*</Code>), priorita.</li>
         <li><strong>Odpovědná osoba</strong> (nepovinná) — z Kanceláře, Projekťáků nebo role Vedoucí.</li>
         <li><strong>Pracovníci jsou nepovinní</strong> — přiřadíš i později (na Tabuli).</li>
         <li><strong>Gantt:</strong> „Podle akcí" (posun termínů tažením) a „Podle zaměstnance" s filtrem kapitoly <strong>Dílna / Kancelář / Vše</strong>.</li>

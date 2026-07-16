@@ -97,7 +97,8 @@ export default function ZakazkaForm({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="label">Název akce *</label>
-            <input name="kod" className="field" required />
+            {/* Z poptávky předvyplníme názvem poptávky – lze změnit. */}
+            <input name="kod" className="field" required defaultValue={inquiry?.subject ?? ""} />
             {ch.kod && <p className="err">{ch.kod}</p>}
           </div>
           <div>
