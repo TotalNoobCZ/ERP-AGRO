@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { nactiKonstrukci } from "@/lib/konstrukce-query";
+import { nacistLidiZakazek, sjednotitOsoby, type Osoba } from "@/lib/zakazky/lide";
+import { AkceKonstrukteri, type AkceSkupina, type AkceZak } from "@/components/konstrukce/AkceKonstrukteri";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { formatDen } from "@/lib/format";
 
@@ -13,6 +15,49 @@ export default async function KonstrukcePrehled() {
   const { projekty, ukoly, clenove } = await nactiKonstrukci(supabase);
   const clenById = new Map(clenove.map((c) => [c.id, c.name]));
   const dnes = new Date().toISOString().slice(0, 10);
+
+  // Akce a jejich zakázky s konstruktéry (jen lidé z oddělení Konstrukce).
+  const { data: zData } = await supabase
+    .from("zakazky")
+    .select("id, kod, popis, misto_plneni, parent_id, zacatek, konec_aktualni")
+    .is("deleted_at", null)
+    .in("stav", ["AKTIVNI", "POZASTAVENO"])
+    .order("konec_aktualni", { ascending: true });
+  const zak = (zData ?? []) as {
+    id: string;
+    kod: string;
+    popis: string | null;
+    misto_plneni: string;
+    parent_id: string | null;
+    zacatek: string;
+    konec_aktualni: string;
+  }[];
+  const lidiMap = await nacistLidiZakazek(supabase, zak.map((z) => z.id));
+  const konstr = (id: string): Osoba[] => (lidiMap.get(id) ?? []).filter((o) => o.oddeleni === "konstrukce");
+  const toZak = (z: (typeof zak)[number]): AkceZak => ({
+    id: z.id,
+    kod: z.kod,
+    popis: z.popis,
+    mistoPlneni: z.misto_plneni,
+    zacatek: z.zacatek,
+    konecAktualni: z.konec_aktualni,
+    konstrukteri: konstr(z.id),
+  });
+  const idset = new Set(zak.map((z) => z.id));
+  const detiBy = new Map<string, typeof zak>();
+  for (const z of zak) {
+    if (z.parent_id && idset.has(z.parent_id)) {
+      if (!detiBy.has(z.parent_id)) detiBy.set(z.parent_id, []);
+      detiBy.get(z.parent_id)!.push(z);
+    }
+  }
+  const akceSkupiny: AkceSkupina[] = zak
+    .filter((z) => !z.parent_id || !idset.has(z.parent_id))
+    .map((a) => {
+      const deti = (detiBy.get(a.id) ?? []).map(toZak);
+      const konstrukteriAkce = sjednotitOsoby([konstr(a.id), ...deti.map((d) => d.konstrukteri)]);
+      return { akce: toZak(a), konstrukteriAkce, deti };
+    });
 
   const aktivni = ukoly.filter((u) => !u.completed);
   const nepriazene = aktivni.filter((u) => !u.assigneeId);
@@ -33,6 +78,11 @@ export default async function KonstrukcePrehled() {
         <Stat label="Nepřiřazené" value={nepriazene.length} warn={nepriazene.length > 0} />
         <Stat label="Splněné k archivaci" value={splneneCekajici.length} />
       </div>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-text-muted">Akce a konstruktéři</h2>
+        <AkceKonstrukteri skupiny={akceSkupiny} />
+      </section>
 
       <Card>
         <CardHeader><CardTitle>📅 Nejbližší konce úkolů</CardTitle></CardHeader>

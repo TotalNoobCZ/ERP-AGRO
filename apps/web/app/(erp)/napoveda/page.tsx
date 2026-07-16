@@ -121,7 +121,7 @@ export default function NapovedaPage() {
       </UL>
 
       <H2>8. Konstrukce</H2>
-      <P>Záložky: Přehled · Plánování · Gantt · Archiv. Zobrazují se lidé z oddělení <strong>Konstrukce</strong>.</P>
+      <P>Záložky: Přehled · Plánování · Gantt · Archiv. Zobrazují se lidé z oddělení <strong>Konstrukce</strong>. Na <strong>Přehledu</strong> je sekce <strong>Akce a konstruktéři</strong> – akce se všemi svými konstruktéry a sbalitelný seznam zakázek k akci, u každé její konstruktéři.</P>
       <UL>
         <li><strong>Projekt vzniká automaticky se zakázkou</strong>; v detailu zakázky ho lze rozdělit na víc projektů.</li>
         <li><strong>Vedoucí projektu</strong> může být jen Projekťák nebo role Vedoucí.</li>

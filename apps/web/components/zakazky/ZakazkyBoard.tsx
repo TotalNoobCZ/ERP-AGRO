@@ -43,6 +43,8 @@ export default function ZakazkyBoard({
   const [query, setQuery] = useState("");
   // Sbalená oddělení v levém sloupci (klíč oddělení, "" = bez oddělení).
   const [sbalene, setSbalene] = useState<Set<string>>(new Set());
+  // Sbalené seznamy zakázek k akci (v pravém sloupci).
+  const [sbaleneAkce, setSbaleneAkce] = useState<Set<string>>(new Set());
   // Potvrzení kolize (osoba obsazená u jiné akce).
   const [potvrzeni, setPotvrzeni] = useState<{ zakId: string; osobaId: string; text: string } | null>(null);
 
@@ -242,16 +244,35 @@ export default function ZakazkyBoard({
                     onRemove={odebrat}
                   />
                   {g.deti.length > 0 && (
-                    <div className="ml-3 mt-2 space-y-2 border-l-2 border-link/40 pl-3">
-                      {g.deti.map((d) => (
-                        <ZakazkaTile
-                          key={d.id}
-                          zakazka={d}
-                          editable={editable}
-                          onOpen={() => router.push(`/zakazky/${d.id}`)}
-                          onRemove={odebrat}
-                        />
-                      ))}
+                    <div className="ml-3 mt-1 border-l-2 border-link/40 pl-3">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSbaleneAkce((s) => {
+                            const n = new Set(s);
+                            if (n.has(g.akce.id)) n.delete(g.akce.id);
+                            else n.add(g.akce.id);
+                            return n;
+                          })
+                        }
+                        className="flex items-center gap-1 py-1 text-xs font-medium text-text-muted hover:text-text"
+                      >
+                        <span className="inline-block w-3">{sbaleneAkce.has(g.akce.id) ? "▸" : "▾"}</span>
+                        Zakázky k akci ({g.deti.length})
+                      </button>
+                      {!sbaleneAkce.has(g.akce.id) && (
+                        <div className="mt-1 space-y-2">
+                          {g.deti.map((d) => (
+                            <ZakazkaTile
+                              key={d.id}
+                              zakazka={d}
+                              editable={editable}
+                              onOpen={() => router.push(`/zakazky/${d.id}`)}
+                              onRemove={odebrat}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
