@@ -65,7 +65,7 @@ export default async function NovaZakazkaPage({
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-bold">{parent ? "Nová podzakázka" : "Nová akce"}</h1>
+      <h1 className="mb-4 text-2xl font-bold">{parent ? "Nová zakázka k akci" : "Nová akce"}</h1>
       <ZakazkaForm
         osoby={(osoby ?? []) as OsobaLite[]}
         odpovedni={(odpovedni ?? []) as OsobaLite[]}

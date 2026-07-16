@@ -35,7 +35,7 @@ export function ZalozitPodzakazku({ parentId }: { parentId: string }) {
           className="field"
           value={cislo}
           onChange={(e) => setCislo(e.target.value)}
-          placeholder="název podzakázky"
+          placeholder="název zakázky k akci"
         />
       </div>
       <div className="grow">
@@ -44,11 +44,11 @@ export function ZalozitPodzakazku({ parentId }: { parentId: string }) {
           className="field"
           value={popis}
           onChange={(e) => setPopis(e.target.value)}
-          placeholder="krátký popis podzakázky"
+          placeholder="krátký popis"
         />
       </div>
       <button className="btn-primary" type="submit" disabled={busy || !cislo.trim()}>
-        {busy ? "Zakládám…" : "Přidat podzakázku"}
+        {busy ? "Zakládám…" : "Přidat zakázku k akci"}
       </button>
       {chyba && <p className="err w-full">{chyba}</p>}
     </form>

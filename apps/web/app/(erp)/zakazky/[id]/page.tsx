@@ -186,7 +186,7 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
         <Link href="/zakazky" className="text-sm text-text-muted hover:underline">← Akce</Link>
         {rodic && (
           <p className="mt-1 text-sm text-text-muted">
-            Podzakázka hlavní akce{" "}
+            Zakázka k akci{" "}
             <Link href={`/zakazky/${rodic.id}`} className="font-mono text-link hover:underline">{rodic.kod}</Link>
           </p>
         )}
@@ -260,7 +260,7 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
 
       {/* Podzakázky (dceřiné akce) – rychlé založení pod Přiřazenými pracovníky */}
       <section className="card space-y-3 p-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-text-muted">Podzakázky</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-text-muted">Zakázky k akci</h2>
         {podzakazky.length > 0 && (
           <div className="divide-y divide-line rounded-md border border-line">
             {podzakazky.map((p) => (

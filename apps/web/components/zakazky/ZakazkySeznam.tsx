@@ -47,7 +47,7 @@ export function ZakazkySeznam({ uzly }: { uzly: Uzel[] }) {
                   type="button"
                   onClick={() => toggle(row.id)}
                   className="w-7 shrink-0 py-3 text-text-muted hover:text-text"
-                  aria-label={otevreno ? "Sbalit podzakázky" : "Rozbalit podzakázky"}
+                  aria-label={otevreno ? "Sbalit zakázky k akci" : "Rozbalit zakázky k akci"}
                 >
                   {otevreno ? "▾" : "▸"}
                 </button>
@@ -58,7 +58,7 @@ export function ZakazkySeznam({ uzly }: { uzly: Uzel[] }) {
                 <Obsah z={row} />
                 {deti.length > 0 && (
                   <span className="rounded-md bg-accent px-1.5 py-0.5 text-[11px] text-text-muted">
-                    {deti.length} podz.
+                    {deti.length} k akci
                   </span>
                 )}
               </Link>

@@ -71,7 +71,7 @@ export default function ZakazkaForm({
         {/* Zakládám podzakázku pod hlavní akcí */}
         {parent && (
           <div className="rounded-md border border-link/40 bg-user-0/10 p-3 text-sm">
-            Podzakázka hlavní akce{" "}
+            Zakázka k akci{" "}
             <Link href={`/zakazky/${parent.id}`} className="font-mono font-medium text-link hover:underline">
               {parent.kod}
             </Link>
