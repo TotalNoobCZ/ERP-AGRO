@@ -2,7 +2,7 @@
 // při změnách funkcí aktualizuj tuto stránku i datum níže.
 import type { ReactNode } from "react";
 
-const AKTUALIZOVANO = "16. 7. 2026";
+const AKTUALIZOVANO = "16. 7. 2026 (podzakázky, archiv dokončených)";
 
 export const dynamic = "force-dynamic";
 
@@ -115,6 +115,8 @@ export default function NapovedaPage() {
         <li><strong>Plán:</strong> „Podle akcí" (posun termínů tažením) a „Podle zaměstnance" s filtrem kapitoly <strong>Dílna / Kancelář / Vše</strong>.</li>
         <li><strong>Tabule (obrácené drag &amp; drop):</strong> vlevo osoby dle kapitol a oddělení (sbalitelné), vpravo zakázky. Přetáhni osobu na zakázku = přiřadíš pracovníka; při kolizi termínů systém upozorní.</li>
         <li><strong>Detail:</strong> pracovníci, milníky, prodloužení/přerušení, stav, <strong>konstruktéři z podúkolů</strong>, historie, poznámky, Export do PDF.</li>
+        <li><strong>Podzakázky:</strong> jedna hlavní akce může sdružovat víc <strong>dceřiných zakázek</strong> (každá má vlastní číslo, termíny, pracovníky i konstrukci). V detailu akce je přidáš tlačítkem „+ Přidat podzakázku"; podzakázka odkazuje zpět na hlavní akci.</li>
+        <li><strong>Archiv:</strong> obsahuje <strong>dokončené</strong> i archivované akce.</li>
       </UL>
 
       <H2>8. Konstrukce</H2>

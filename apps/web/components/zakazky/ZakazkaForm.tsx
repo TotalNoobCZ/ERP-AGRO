@@ -34,10 +34,12 @@ export default function ZakazkaForm({
   osoby,
   odpovedni,
   inquiry,
+  parent,
 }: {
   osoby: OsobaLite[];
   odpovedni: OsobaLite[]; // odpovědná osoba = Kancelář / Projekťák / role Vedoucí
   inquiry?: InquiryOrigin | null;
+  parent?: { id: string; kod: string } | null; // hlavní akce (zakládám podzakázku)
 }) {
   const [stav, formAction] = useActionState<ZakazkaStav, FormData>(vytvoritZakazku, {});
   const [zacatek, setZacatek] = useState("");
@@ -65,6 +67,17 @@ export default function ZakazkaForm({
     <>
       <form action={formAction} className="card max-w-2xl space-y-4 p-6">
         {stav.obecna && <p className="err">{stav.obecna}</p>}
+
+        {/* Zakládám podzakázku pod hlavní akcí */}
+        {parent && (
+          <div className="rounded-md border border-link/40 bg-user-0/10 p-3 text-sm">
+            Podzakázka hlavní akce{" "}
+            <Link href={`/zakazky/${parent.id}`} className="font-mono font-medium text-link hover:underline">
+              {parent.kod}
+            </Link>
+            <input type="hidden" name="parentId" value={parent.id} />
+          </div>
+        )}
 
         {/* Původ z poptávky – propojení modulů */}
         {inquiry && (

@@ -91,6 +91,7 @@ function ziskatData(fd: FormData) {
     odpovednaOsobaId: String(fd.get("odpovednaOsobaId") ?? ""),
     inquiryId: String(fd.get("inquiryId") ?? ""),
     customerId: String(fd.get("customerId") ?? ""),
+    parentId: String(fd.get("parentId") ?? ""),
     prirazeni,
   };
 }
@@ -214,6 +215,7 @@ export async function vytvoritZakazku(_prev: ZakazkaStav, fd: FormData): Promise
       zalozil_id: u.id,
       inquiry_id: d.inquiryId || null,
       customer_id: d.customerId || null,
+      parent_id: d.parentId || null,
     })
     .select("id")
     .single();

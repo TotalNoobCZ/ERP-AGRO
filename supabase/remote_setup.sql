@@ -213,6 +213,7 @@ create table zakazky (
   -- NOVÉ – propojení modulů:
   inquiry_id         uuid references inquiries (id),   -- z jaké poptávky zakázka vznikla
   customer_id        uuid references customers (id),   -- zděděný zákazník
+  parent_id          uuid references zakazky (id),     -- hlavní akce (podzakázka → rodič)
 
   created_at         timestamptz not null default now(),
   updated_at         timestamptz not null default now(),
@@ -224,6 +225,7 @@ create index zakazky_konec_aktualni_idx on zakazky (konec_aktualni);
 create index zakazky_kod_idx            on zakazky (kod);
 create index zakazky_inquiry_id_idx     on zakazky (inquiry_id);
 create index zakazky_customer_id_idx    on zakazky (customer_id);
+create index zakazky_parent_id_idx      on zakazky (parent_id);
 
 create trigger zakazky_set_updated_at
   before update on zakazky

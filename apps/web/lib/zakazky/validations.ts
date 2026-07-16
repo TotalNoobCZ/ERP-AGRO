@@ -17,6 +17,7 @@ export const zakazkaSchema = z
     odpovednaOsobaId: z.string().optional().or(z.literal("")),
     inquiryId: z.string().optional().or(z.literal("")),
     customerId: z.string().optional().or(z.literal("")),
+    parentId: z.string().optional().or(z.literal("")),
     // Pracovníci jsou nepovinní – zakázku lze založit i bez nich a přiřadit
     // je později (např. na Tabuli zakázek).
     prirazeni: z.array(

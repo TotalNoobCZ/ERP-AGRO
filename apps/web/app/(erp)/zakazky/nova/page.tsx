@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function NovaZakazkaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ inquiry?: string }>;
+  searchParams: Promise<{ inquiry?: string; parent?: string }>;
 }) {
   const sp = await searchParams;
   const supabase = await createClient();
@@ -51,13 +51,26 @@ export default async function NovaZakazkaPage({
     }
   }
 
+  // Hlavní akce (tok: zakládám podzakázku z detailu zakázky).
+  let parent: { id: string; kod: string } | null = null;
+  if (sp.parent) {
+    const { data } = await supabase
+      .from("zakazky")
+      .select("id, kod")
+      .eq("id", sp.parent)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (data) parent = { id: data.id, kod: data.kod };
+  }
+
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-bold">Nová akce</h1>
+      <h1 className="mb-4 text-2xl font-bold">{parent ? "Nová podzakázka" : "Nová akce"}</h1>
       <ZakazkaForm
         osoby={(osoby ?? []) as OsobaLite[]}
         odpovedni={(odpovedni ?? []) as OsobaLite[]}
         inquiry={inquiry}
+        parent={parent}
       />
     </div>
   );

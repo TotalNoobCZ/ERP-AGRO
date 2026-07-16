@@ -40,6 +40,7 @@ type Detail = {
   stav: StavZakazky;
   poznamka: string | null;
   deleted_at: string | null;
+  parent_id: string | null;
   inquiry: { id: string; number: number; subject: string } | null;
   customer: { id: string; name: string } | null;
   odpovedna: { name: string } | null;
@@ -57,7 +58,7 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
   const { data } = await supabase
     .from("zakazky")
     .select(
-      `id, kod, misto_plneni, priorita, zacatek, konec_puvodni, konec_aktualni, stav, poznamka, deleted_at,
+      `id, kod, misto_plneni, priorita, zacatek, konec_puvodni, konec_aktualni, stav, poznamka, deleted_at, parent_id,
        inquiry:inquiries(id, number, subject),
        customer:customers(id, name),
        odpovedna:profiles!zakazky_odpovedna_osoba_id_fkey(name),
@@ -73,6 +74,27 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
     .maybeSingle();
   if (!data || (data as { deleted_at: string | null }).deleted_at) notFound();
   const z = data as unknown as Detail;
+
+  // Podzakázky (dceřiné) + odkaz na hlavní akci.
+  const { data: podzakazkyData } = await supabase
+    .from("zakazky")
+    .select("id, kod, misto_plneni, stav, konec_aktualni")
+    .eq("parent_id", z.id)
+    .is("deleted_at", null)
+    .order("kod", { ascending: true });
+  const podzakazky = (podzakazkyData ?? []) as {
+    id: string;
+    kod: string;
+    misto_plneni: string;
+    stav: StavZakazky;
+    konec_aktualni: string;
+  }[];
+
+  let rodic: { id: string; kod: string } | null = null;
+  if (z.parent_id) {
+    const { data: p } = await supabase.from("zakazky").select("id, kod").eq("id", z.parent_id).maybeSingle();
+    if (p) rodic = { id: p.id, kod: p.kod };
+  }
 
   const prirazeni = z.prirazeni
     .filter((p) => !p.deleted_at)
@@ -160,6 +182,12 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
     <div className="space-y-8">
       <div>
         <Link href="/zakazky" className="text-sm text-text-muted hover:underline">← Akce</Link>
+        {rodic && (
+          <p className="mt-1 text-sm text-text-muted">
+            Podzakázka hlavní akce{" "}
+            <Link href={`/zakazky/${rodic.id}`} className="font-mono text-link hover:underline">{rodic.kod}</Link>
+          </p>
+        )}
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <h1 className="font-mono text-2xl font-bold">{z.kod}</h1>
           <StavBadge z={stavovaZakazka} />
@@ -287,6 +315,29 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
                   {p.obnovil ? `, obnovil ${p.obnovil.name}` : ""})
                 </span>
               </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Podzakázky (dceřiné akce) */}
+      <section className="card p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-text-muted">Podzakázky</h2>
+          <Link href={`/zakazky/nova?parent=${z.id}`} className="btn-ghost px-2 py-1 text-sm">
+            + Přidat podzakázku
+          </Link>
+        </div>
+        {podzakazky.length === 0 ? (
+          <p className="text-sm text-text-muted">Žádné podzakázky. Rozděl akci na dceřiné zakázky tlačítkem výše.</p>
+        ) : (
+          <div className="divide-y divide-line rounded-md border border-line">
+            {podzakazky.map((p) => (
+              <Link key={p.id} href={`/zakazky/${p.id}`} className="flex items-center gap-3 px-3 py-2 text-sm hover:bg-accent">
+                <span className="font-mono font-semibold">{p.kod}</span>
+                <span className="flex-1 truncate text-text-muted">{p.misto_plneni}</span>
+                <StavBadge z={{ konecAktualni: parseDay(p.konec_aktualni), stav: p.stav }} />
+              </Link>
             ))}
           </div>
         )}
