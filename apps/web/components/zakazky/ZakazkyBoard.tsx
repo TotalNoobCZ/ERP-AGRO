@@ -17,7 +17,7 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { userColor } from "@erp/ui";
-import { ODDELENI, ODDELENI_LABELS, type Oddeleni } from "@erp/core";
+import { ODDELENI, ODDELENI_LABELS, KAPITOLY, KAPITOLA_LABELS, ODDELENI_KAPITOLA } from "@erp/core";
 import { formatDen } from "@/lib/format";
 import { pridatPracovnika, odebratPracovnika } from "@/app/(erp)/zakazky/actions";
 import type { BoardOsobaZ, BoardZakazka } from "@/lib/zakazky-query";
@@ -60,22 +60,38 @@ export default function ZakazkyBoard({
     return m;
   }, [osoby]);
 
-  // Osoby v levém sloupci rozdělené podle oddělení (dle hledání).
-  const skupiny = useMemo(() => {
-    const map = new Map<string, BoardOsobaZ[]>();
+  // Osoby v levém sloupci: dvě kapitoly (Dílna / Kancelář) → oddělení → lidé.
+  const strom = useMemo(() => {
+    const perDept = new Map<string, BoardOsobaZ[]>();
     for (const o of osoby.filter(osobaMatches)) {
       const key = o.oddeleni ?? "";
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(o);
+      if (!perDept.has(key)) perDept.set(key, []);
+      perDept.get(key)!.push(o);
     }
-    const poradi = [...ODDELENI, ""];
-    return poradi
-      .filter((k) => map.has(k))
-      .map((k) => ({
-        key: k,
-        label: k ? ODDELENI_LABELS[k as Oddeleni] : "Bez oddělení",
-        lidi: map.get(k)!,
+    type DeptUzel = { key: string; label: string; lidi: BoardOsobaZ[] };
+    type KapUzel = { key: string; label: string; depts: DeptUzel[]; pocet: number };
+    const kapitoly: KapUzel[] = KAPITOLY.map((kap) => {
+      const depts: DeptUzel[] = ODDELENI.filter((o) => ODDELENI_KAPITOLA[o] === kap && perDept.has(o)).map((o) => ({
+        key: o,
+        label: ODDELENI_LABELS[o],
+        lidi: perDept.get(o)!,
       }));
+      return {
+        key: kap,
+        label: KAPITOLA_LABELS[kap],
+        depts,
+        pocet: depts.reduce((s, d) => s + d.lidi.length, 0),
+      };
+    }).filter((k) => k.depts.length > 0);
+    if (perDept.has("")) {
+      kapitoly.push({
+        key: "_none",
+        label: "Bez oddělení",
+        depts: [{ key: "", label: "Bez oddělení", lidi: perDept.get("")! }],
+        pocet: perDept.get("")!.length,
+      });
+    }
+    return kapitoly;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [osoby, q]);
 
@@ -154,30 +170,45 @@ export default function ZakazkyBoard({
       <div className="flex gap-4">
         {/* Levá 1/3 – osoby rozdělené podle oddělení (táhnou se) */}
         <div className="w-1/3 min-w-[220px] space-y-3">
-          {skupiny.map((g) => {
-            const zavreno = sbalene.has(g.key);
+          {strom.map((kap) => {
+            const kapZavreno = sbalene.has(`kap:${kap.key}`);
             return (
-              <div key={g.key} className="space-y-1.5">
+              <div key={kap.key} className="space-y-1.5">
                 <button
                   type="button"
-                  onClick={() => prepnoutSkupinu(g.key)}
-                  className="flex w-full items-center gap-1 text-xs font-semibold uppercase tracking-wide text-text-muted hover:text-text"
+                  onClick={() => prepnoutSkupinu(`kap:${kap.key}`)}
+                  className="flex w-full items-center gap-1 text-sm font-bold hover:text-link"
                 >
-                  <span className="inline-block w-3 text-[10px]">{zavreno ? "▸" : "▾"}</span>
-                  {g.label}
-                  <span className="font-normal">({g.lidi.length})</span>
+                  <span className="inline-block w-3 text-xs">{kapZavreno ? "▸" : "▾"}</span>
+                  {kap.label}
+                  <span className="font-normal text-text-muted">({kap.pocet})</span>
                 </button>
-                {!zavreno &&
-                  g.lidi.map((o) => <OsobaChip key={o.id} osoba={o} editable={editable} />)}
+                {!kapZavreno &&
+                  kap.depts.map((d) => {
+                    const depZavreno = sbalene.has(`dep:${d.key}`);
+                    return (
+                      <div key={d.key} className="ml-3 space-y-1.5">
+                        <button
+                          type="button"
+                          onClick={() => prepnoutSkupinu(`dep:${d.key}`)}
+                          className="flex w-full items-center gap-1 text-xs font-semibold uppercase tracking-wide text-text-muted hover:text-text"
+                        >
+                          <span className="inline-block w-3 text-[10px]">{depZavreno ? "▸" : "▾"}</span>
+                          {d.label}
+                          <span className="font-normal">({d.lidi.length})</span>
+                        </button>
+                        {!depZavreno &&
+                          d.lidi.map((o) => <OsobaChip key={o.id} osoba={o} editable={editable} />)}
+                      </div>
+                    );
+                  })}
               </div>
             );
           })}
           {osoby.length === 0 && (
-            <p className="text-sm text-text-muted">
-              Žádné osoby. Přidej uživatele ve Správě.
-            </p>
+            <p className="text-sm text-text-muted">Žádné osoby. Přidej uživatele ve Správě.</p>
           )}
-          {osoby.length > 0 && skupiny.length === 0 && (
+          {osoby.length > 0 && strom.length === 0 && (
             <p className="text-sm text-text-muted">Nikdo neodpovídá hledání.</p>
           )}
         </div>

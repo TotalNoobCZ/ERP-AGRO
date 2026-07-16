@@ -5,7 +5,7 @@ import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { ROLES, ROLE_LABELS, ODDELENI, ODDELENI_LABELS } from "@erp/core";
+import { ROLES, ROLE_LABELS, ODDELENI, ODDELENI_LABELS, KAPITOLY, KAPITOLA_LABELS, ODDELENI_KAPITOLA, jeDilna } from "@erp/core";
 import { USER_PALETTE, USER_PALETTE_NAMES } from "@erp/ui";
 import type { ProfilStav } from "@/app/(erp)/sprava/actions";
 
@@ -55,9 +55,9 @@ export function ProfilForm({
   const ch = stav.chyby ?? {};
   const isEdit = Boolean(initial?.id);
 
-  // Dílna se do systému nepřihlašuje → e-mail není povinný.
+  // Kapitola Dílna se do systému nepřihlašuje → e-mail není povinný.
   const [oddeleni, setOddeleni] = useState(initial?.oddeleni ?? "");
-  const emailNepovinny = oddeleni === "dilna";
+  const emailNepovinny = jeDilna(oddeleni);
 
   return (
     <form action={formAction} className="card max-w-2xl space-y-4 p-6">
@@ -111,8 +111,12 @@ export function ProfilForm({
             onChange={(e) => setOddeleni(e.target.value)}
           >
             <option value="">—</option>
-            {ODDELENI.map((o) => (
-              <option key={o} value={o}>{ODDELENI_LABELS[o]}</option>
+            {KAPITOLY.map((kap) => (
+              <optgroup key={kap} label={KAPITOLA_LABELS[kap]}>
+                {ODDELENI.filter((o) => ODDELENI_KAPITOLA[o] === kap).map((o) => (
+                  <option key={o} value={o}>{ODDELENI_LABELS[o]}</option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </div>

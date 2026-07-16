@@ -16,17 +16,57 @@ export const ROLE_LABELS: Record<Role, string> = {
   viewer: "Číst",
 };
 
-export const ODDELENI = ["obchod", "dilna", "kancelar", "elektro", "konstrukce", "projektak"] as const;
+// Oddělení jsou nově rozdělená do dvou hlavních kapitol – Dílna a Kancelář.
+export const ODDELENI = [
+  // Kapitola Dílna
+  "vyroba",
+  "montaz",
+  "elektro",
+  // Kapitola Kancelář
+  "kancelar",
+  "obchod",
+  "konstrukce",
+  "projektak",
+  "elektro_projektant",
+  "programator",
+] as const;
 export type Oddeleni = (typeof ODDELENI)[number];
 
 export const ODDELENI_LABELS: Record<Oddeleni, string> = {
-  obchod: "Obchod",
-  dilna: "Dílna",
-  kancelar: "Kancelář",
+  vyroba: "Výroba",
+  montaz: "Montáž",
   elektro: "Elektro",
+  kancelar: "Kancelář",
+  obchod: "Obchod",
   konstrukce: "Konstrukce",
   projektak: "Projekťák",
+  elektro_projektant: "Elektro projektant",
+  programator: "Programátor",
 };
+
+// Dvě hlavní kapitoly. Dílna = fyzická výroba (nepřihlašuje se), Kancelář = zbytek.
+export type Kapitola = "dilna" | "kancelar";
+export const KAPITOLY: Kapitola[] = ["dilna", "kancelar"];
+export const KAPITOLA_LABELS: Record<Kapitola, string> = {
+  dilna: "Dílna",
+  kancelar: "Kancelář",
+};
+export const ODDELENI_KAPITOLA: Record<Oddeleni, Kapitola> = {
+  vyroba: "dilna",
+  montaz: "dilna",
+  elektro: "dilna",
+  kancelar: "kancelar",
+  obchod: "kancelar",
+  konstrukce: "kancelar",
+  projektak: "kancelar",
+  elektro_projektant: "kancelar",
+  programator: "kancelar",
+};
+
+/** Patří oddělení pod kapitolu Dílna? (fyzická výroba – nepřihlašuje se) */
+export function jeDilna(oddeleni: string | null | undefined): boolean {
+  return !!oddeleni && ODDELENI_KAPITOLA[oddeleni as Oddeleni] === "dilna";
+}
 
 /** editor a admin smí zapisovat provozní data (vedoucí i viewer jen čtou) */
 export function canWrite(role: Role): boolean {

@@ -43,7 +43,7 @@ create table profiles (
   role          text not null default 'viewer'
                   check (role in ('admin', 'editor', 'vedouci', 'viewer')),
   oddeleni      text
-                  check (oddeleni in ('obchod', 'dilna', 'kancelar', 'elektro', 'konstrukce', 'projektak')),
+                  check (oddeleni in ('vyroba', 'montaz', 'elektro', 'kancelar', 'obchod', 'konstrukce', 'projektak', 'elektro_projektant', 'programator')),
   assignable    boolean not null default true,    -- lze přiřazovat na úkoly/zakázky (automatické u všech)
   color_index   int,                              -- 0–9, paleta dlaždic z Konstrukce
   tile_order    int,                              -- pořadí dlaždic členů (Konstrukce)

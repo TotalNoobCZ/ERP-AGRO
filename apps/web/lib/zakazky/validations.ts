@@ -1,6 +1,7 @@
 // Validace modulu Zakázky – převzato 1:1 z Planovani/src/lib/validations.ts
 // (jen část Osoba nahrazena validací profilu ve Správě).
 import { z } from "zod";
+import { jeDilna } from "@erp/core";
 
 const denRegex = /^\d{4}-\d{2}-\d{2}$/;
 const den = z.string().regex(denRegex, "Zadejte datum ve tvaru RRRR-MM-DD");
@@ -77,7 +78,10 @@ export const profilSchema = z
     // E-mail je nepovinný – lidé z dílny se nepřihlašují (viz superRefine níže).
     email: z.string().trim().optional().or(z.literal("")),
     role: z.enum(["admin", "editor", "vedouci", "viewer"]),
-    oddeleni: z.enum(["obchod", "dilna", "kancelar", "elektro", "konstrukce", "projektak"]).optional().or(z.literal("")),
+    oddeleni: z
+      .enum(["vyroba", "montaz", "elektro", "kancelar", "obchod", "konstrukce", "projektak", "elektro_projektant", "programator"])
+      .optional()
+      .or(z.literal("")),
     assignable: z.boolean(),
     colorIndex: z.coerce.number().int().min(0).max(9).optional(),
     active: z.boolean(),
@@ -87,8 +91,8 @@ export const profilSchema = z
   })
   .superRefine((data, ctx) => {
     const email = data.email?.trim() ?? "";
-    // Dílna se nepřihlašuje → e-mail nemusí mít. Ostatní oddělení ho vyžadují.
-    if (data.oddeleni !== "dilna" && email === "") {
+    // Kapitola Dílna se nepřihlašuje → e-mail nemusí mít. Ostatní ho vyžadují.
+    if (!jeDilna(data.oddeleni) && email === "") {
       ctx.addIssue({ path: ["email"], code: z.ZodIssueCode.custom, message: "Zadejte e-mail" });
     }
     // Pokud e-mail vyplněný je (i u dílny), musí být platný.
