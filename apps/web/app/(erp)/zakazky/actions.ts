@@ -120,6 +120,45 @@ async function nactiExistujiciPrirazeni(supabase: Db, osobaIds: string[]) {
   }[];
 }
 
+/**
+ * Zakázka k akci (child) se v Konstrukci NEzobrazuje jako samostatný projekt,
+ * ale jako podúkol v konstrukčním projektu hlavní akce – aby Konstrukce
+ * odpovídala tabuli (akce → zakázky k akci). Task.zakazka_id = child, takže
+ * konstruktér přiřazený k podúkolu se propíše ke správné zakázce k akci.
+ */
+async function pridatKonstrukcniPodukol(
+  supabase: Db,
+  parentZakazkaId: string,
+  childZakazkaId: string,
+  nazev: string,
+): Promise<void> {
+  let { data: hlavniProjekt } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("zakazka_id", parentZakazkaId)
+    .eq("status", "active")
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (!hlavniProjekt) {
+    const { data: parent } = await supabase
+      .from("zakazky").select("kod").eq("id", parentZakazkaId).maybeSingle();
+    const { data: novy } = await supabase
+      .from("projects")
+      .insert({ zakazka_id: parentZakazkaId, name: parent?.kod ?? "Akce", owner_id: null })
+      .select("id")
+      .single();
+    hlavniProjekt = novy;
+  }
+  if (hlavniProjekt) {
+    await supabase.from("tasks").insert({
+      project_id: hlavniProjekt.id,
+      zakazka_id: childZakazkaId,
+      name: nazev,
+    });
+  }
+}
+
 export async function vytvoritZakazku(_prev: ZakazkaStav, fd: FormData): Promise<ZakazkaStav> {
   const u = await writer();
   if (!u) return { obecna: "Nejste přihlášeni nebo nemáte právo zápisu." };
@@ -239,14 +278,20 @@ export async function vytvoritZakazku(_prev: ZakazkaStav, fd: FormData): Promise
   );
   if (prirErr) return { obecna: "Přiřazení se nepodařilo uložit." };
 
-  // Integrace s Konstrukcí: každá zakázka automaticky založí jeden konstrukční
-  // projekt. Je „volný“ (owner_id = null) – čeká na přidělení zodpovědného
-  // nebo na rozdělení do dalších projektů/úkolů v modulu Konstrukce.
-  await supabase.from("projects").insert({
-    zakazka_id: zakazka.id,
-    name: d.kod,
-    owner_id: null,
-  });
+  // Integrace s Konstrukcí:
+  //  – běžná akce → vlastní „volný“ konstrukční projekt (owner_id = null),
+  //  – zakázka k akci (má rodiče) → jen podúkol v projektu hlavní akce,
+  //    aby Konstrukce odpovídala tabuli (akce → zakázky k akci) a nevznikal
+  //    duplicitní samostatný projekt pro dceřinou zakázku.
+  if (d.parentId) {
+    await pridatKonstrukcniPodukol(supabase, d.parentId, zakazka.id, d.kod);
+  } else {
+    await supabase.from("projects").insert({
+      zakazka_id: zakazka.id,
+      name: d.kod,
+      owner_id: null,
+    });
+  }
 
   await zapisAudit(supabase, {
     entita: "zakazka", entitaId: zakazka.id, typZmeny: "VYTVORENI", uzivatelId: u.id,
@@ -301,31 +346,8 @@ export async function vytvoritPodzakazku(
   }
 
   // Konstrukce: zakázka k akci se NEzaloží jako samostatný projekt, ale přidá
-  // se jako podúkol do konstrukčního projektu hlavní akce.
-  let { data: hlavniProjekt } = await supabase
-    .from("projects")
-    .select("id")
-    .eq("zakazka_id", parentId)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  if (!hlavniProjekt) {
-    const { data: novy } = await supabase
-      .from("projects")
-      .insert({ zakazka_id: parentId, name: parent.kod, owner_id: null })
-      .select("id")
-      .single();
-    hlavniProjekt = novy;
-  }
-  if (hlavniProjekt) {
-    // Podúkol reprezentuje tuto zakázku k akci (zakazka_id = child.id), aby se
-    // konstruktér přiřazený k podúkolu propsal ke správné zakázce.
-    await supabase.from("tasks").insert({
-      project_id: hlavniProjekt.id,
-      zakazka_id: child.id,
-      name: cislo.trim(),
-    });
-  }
+  // se jako podúkol do konstrukčního projektu hlavní akce (sdílená logika).
+  await pridatKonstrukcniPodukol(supabase, parentId, child.id, cislo.trim());
 
   await zapisAudit(supabase, {
     entita: "zakazka",
