@@ -398,7 +398,7 @@ function ZakazkaTile({
             {p.name}
             {editable &&
               (p.oddeleni === "konstrukce" && !muzeOdebratKonstruktera ? (
-                <span className="text-black/40" title="Konstruktéra smí odebrat jen šéfkonstruktér nebo administrátor.">
+                <span className="text-black/40" data-tip="Konstruktéra smí odebrat jen šéfkonstruktér nebo administrátor" data-tip-pos="bottom">
                   🔒
                 </span>
               ) : (
@@ -406,7 +406,8 @@ function ZakazkaTile({
                   type="button"
                   onClick={() => onRemove(p.prirazeniId)}
                   className="text-black/60 hover:text-black"
-                  title="Odebrat"
+                  data-tip="Odebrat pracovníka ze zakázky"
+                  data-tip-pos="bottom"
                 >
                   ✕
                 </button>

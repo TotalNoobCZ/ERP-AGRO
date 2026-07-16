@@ -88,7 +88,7 @@ export default function PracovniciEditor({
                 <button type="button" className="text-link hover:underline" onClick={() => otevri(p, "termin")}>Termín</button>
                 <button type="button" className="text-link hover:underline" onClick={() => otevri(p, "nahradit")}>Nahradit</button>
                 {p.jeKonstrukter && !muzeOdebratKonstruktera ? (
-                  <span className="text-text-muted" title="Konstruktéra smí odebrat jen šéfkonstruktér nebo administrátor.">
+                  <span className="text-text-muted" data-tip="Konstruktéra smí odebrat jen šéfkonstruktér nebo administrátor">
                     Odebrat 🔒
                   </span>
                 ) : (

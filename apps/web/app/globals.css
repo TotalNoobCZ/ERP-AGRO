@@ -189,6 +189,74 @@ textarea.field {
 }
 }
 
+/* ---------------------------------------------------------------------------
+   Vysvětlivky (tooltip) k tlačítkům – atribut data-tip="text".
+   Ukáže se stylovaná bublina při najetí myší nebo při zaměření z klávesnice.
+   Volitelně data-tip-pos="bottom" umístí bublinu pod prvek (pro tlačítka
+   nahoře u okraje). Bez JS, sladěné s tématem.
+--------------------------------------------------------------------------- */
+[data-tip] {
+  position: relative;
+}
+[data-tip]::after,
+[data-tip]::before {
+  position: absolute;
+  left: 50%;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.12s ease 0.3s, visibility 0s linear 0.42s;
+  z-index: 60;
+}
+[data-tip]::after {
+  content: attr(data-tip);
+  bottom: calc(100% + 7px);
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 15rem;
+  white-space: normal;
+  border-radius: 0.375rem;
+  border: 1px solid var(--t-border);
+  background-color: var(--t-surface);
+  color: var(--t-text);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: center;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+}
+[data-tip]::before {
+  content: "";
+  bottom: calc(100% + 2px);
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--t-border);
+}
+[data-tip]:hover::after,
+[data-tip]:hover::before,
+[data-tip]:focus-visible::after,
+[data-tip]:focus-visible::before {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.12s ease 0.3s, visibility 0s;
+}
+/* Varianta: bublina pod prvkem. */
+[data-tip-pos="bottom"]::after {
+  bottom: auto;
+  top: calc(100% + 7px);
+}
+[data-tip-pos="bottom"]::before {
+  bottom: auto;
+  top: calc(100% + 2px);
+  border-top-color: transparent;
+  border-bottom-color: var(--t-border);
+}
+@media print {
+  [data-tip]::after,
+  [data-tip]::before { display: none; }
+}
+
 /* Tiskové stránky jsou světlé – viz route group (tisk). */
 @media print {
   body {

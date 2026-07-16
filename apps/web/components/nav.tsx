@@ -79,7 +79,8 @@ export function Nav({ name, role, colorIndex }: NavProps) {
         <ThemeToggle />
         <Link
           href="/napoveda"
-          title="Nápověda / manuál"
+          data-tip="Nápověda / manuál k aplikaci"
+          data-tip-pos="bottom"
           aria-label="Nápověda"
           className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-line text-sm font-bold text-text-muted transition hover:border-link hover:text-link"
         >
@@ -88,7 +89,8 @@ export function Nav({ name, role, colorIndex }: NavProps) {
         <span
           className="inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-on-accent"
           style={{ backgroundColor: userColor(colorIndex) }}
-          title={`${name} · ${ROLE_LABELS[role]}`}
+          data-tip={`${name} · ${ROLE_LABELS[role]}`}
+          data-tip-pos="bottom"
         >
           {name
             .split(" ")
