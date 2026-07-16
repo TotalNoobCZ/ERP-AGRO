@@ -128,23 +128,25 @@ export default function Timeline({
     );
   }
 
-  function radekEl(r: TRadek, podradek: boolean) {
+  function radekEl(r: TRadek, hloubka: number) {
     const vyska = r.pocetRad * LANE_H + 8;
     const maPodradky = !!r.podradky?.length;
     const otevreno = otevrene.has(r.id);
     return (
-      <div key={r.id + (podradek ? "-p" : "")} className="flex border-b border-line">
-        <div style={{ width: LABEL_W }} className={`sticky left-0 z-10 shrink-0 bg-surface px-3 py-2 ${podradek ? "pl-7" : ""}`}>
+      <div key={`${r.id}@${hloubka}`} className="flex border-b border-line">
+        <div style={{ width: LABEL_W, paddingLeft: 12 + hloubka * 16 }} className="sticky left-0 z-10 shrink-0 bg-surface py-2 pr-3">
           <div className="flex items-center gap-1">
-            {maPodradky && (
-              <button type="button" onClick={() => toggle(r.id)} className="w-4 shrink-0 text-text-muted hover:text-text" aria-label="Rozbalit pracovníky">
+            {maPodradky ? (
+              <button type="button" onClick={() => toggle(r.id)} className="w-4 shrink-0 text-text-muted hover:text-text" aria-label="Rozbalit">
                 {otevreno ? "▾" : "▸"}
               </button>
+            ) : (
+              hloubka > 0 && <span className="w-4 shrink-0" />
             )}
             {r.href ? (
               <Link href={r.href} className="text-sm font-medium text-link hover:underline">{r.label}</Link>
             ) : (
-              <span className={`text-sm ${podradek ? "text-text-muted" : "font-medium"}`}>{r.label}</span>
+              <span className={`text-sm ${hloubka > 0 ? "text-text-muted" : "font-medium"}`}>{r.label}</span>
             )}
           </div>
           {r.sublabel && <div className="truncate text-xs text-text-muted">{r.sublabel}</div>}
@@ -214,6 +216,15 @@ export default function Timeline({
     );
   }
 
+  function RadekStrom({ r, hloubka }: { r: TRadek; hloubka: number }) {
+    return (
+      <div>
+        {radekEl(r, hloubka)}
+        {otevrene.has(r.id) && r.podradky?.map((pr) => <RadekStrom key={`${pr.id}@${hloubka + 1}`} r={pr} hloubka={hloubka + 1} />)}
+      </div>
+    );
+  }
+
   return (
     <div className="card overflow-x-auto">
       <div style={{ minWidth: LABEL_W + sirka }}>
@@ -234,16 +245,11 @@ export default function Timeline({
           </div>
         </div>
 
-        {/* Řady */}
+        {/* Řady (rekurzivně – akce → zakázky k akci → pracovníci) */}
         {radky.length === 0 ? (
           <p className="px-3 py-6 text-sm text-text-muted">{prazdno}</p>
         ) : (
-          radky.map((r) => (
-            <div key={r.id}>
-              {radekEl(r, false)}
-              {otevrene.has(r.id) && r.podradky?.map((pr) => radekEl(pr, true))}
-            </div>
-          ))
+          radky.map((r) => <RadekStrom key={r.id} r={r} hloubka={0} />)
         )}
       </div>
     </div>

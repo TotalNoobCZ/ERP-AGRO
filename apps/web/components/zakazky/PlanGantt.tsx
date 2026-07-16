@@ -33,8 +33,17 @@ export default function PlanGantt({
   const [busy, setBusy] = useState(false);
   const [chyba, setChyba] = useState<string | null>(null);
 
+  function najdiRadek(rs: TRadek[], id: string): TRadek | undefined {
+    for (const r of rs) {
+      if (r.id === id) return r;
+      const f = r.podradky ? najdiRadek(r.podradky, id) : undefined;
+      if (f) return f;
+    }
+    return undefined;
+  }
+
   function onBarDrag(dragId: string, deltaDays: number, mode: DragMode) {
-    const radek = radky.find((r) => r.id === dragId);
+    const radek = najdiRadek(radky, dragId);
     const bar = radek?.bary[0];
     if (!radek || !bar) return;
     setPending({

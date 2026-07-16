@@ -48,6 +48,7 @@ type ZakazkaRowT = {
   id: string;
   kod: string;
   misto_plneni: string;
+  parent_id: string | null;
   zacatek: string;
   konec_puvodni: string;
   konec_aktualni: string;
@@ -78,7 +79,7 @@ export default async function PlanPage({
     const { data } = await supabase
       .from("zakazky")
       .select(
-        `id, kod, misto_plneni, zacatek, konec_puvodni, konec_aktualni, stav,
+        `id, kod, misto_plneni, parent_id, zacatek, konec_puvodni, konec_aktualni, stav,
          milniky(typ, datum, deleted_at),
          prirazeni:prirazeni_zakazka(osoba_id, datum_od, datum_do, deleted_at, osoba:profiles(name))`,
       )
@@ -91,7 +92,7 @@ export default async function PlanPage({
 
     const zakazky = (data ?? []) as unknown as ZakazkaRowT[];
 
-    radky = zakazky.map((z) => {
+    const naRadek = (z: ZakazkaRowT): TRadek => {
       const stavova = { konecAktualni: parseDay(z.konec_aktualni), stav: z.stav };
       const prodlouzeno = z.konec_aktualni !== z.konec_puvodni;
       const prirazeni = z.prirazeni
@@ -154,7 +155,29 @@ export default async function PlanPage({
         ],
         podradky: Array.from(podleOsoby.values()),
       };
-    });
+    };
+
+    // Zakázky k akci vnořené pod hlavní akci (rozbalovací řádek).
+    const radekById = new Map(zakazky.map((z) => [z.id, naRadek(z)]));
+    const idset = new Set(zakazky.map((z) => z.id));
+    const detiBy = new Map<string, string[]>();
+    for (const z of zakazky) {
+      if (z.parent_id && idset.has(z.parent_id)) {
+        if (!detiBy.has(z.parent_id)) detiBy.set(z.parent_id, []);
+        detiBy.get(z.parent_id)!.push(z.id);
+      }
+    }
+    radky = zakazky
+      .filter((z) => !z.parent_id || !idset.has(z.parent_id))
+      .map((z) => {
+        const r = radekById.get(z.id)!;
+        const detiIds = detiBy.get(z.id) ?? [];
+        if (detiIds.length > 0) {
+          // Pod akci: nejdřív zakázky k akci (každá se svými pracovníky), pak vlastní pracovníci akce.
+          r.podradky = [...detiIds.map((id) => radekById.get(id)!), ...(r.podradky ?? [])];
+        }
+        return r;
+      });
   } else {
     // Podle zaměstnance: všechna živá přiřazení v okně, seskupená podle osoby.
     const { data } = await supabase
