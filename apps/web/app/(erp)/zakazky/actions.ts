@@ -269,7 +269,7 @@ export async function vytvoritPodzakazku(
 
   const { data: parent } = await supabase
     .from("zakazky")
-    .select("id, misto_plneni, zacatek, konec_aktualni, priorita, customer_id, deleted_at")
+    .select("id, kod, misto_plneni, zacatek, konec_aktualni, priorita, customer_id, deleted_at")
     .eq("id", parentId)
     .maybeSingle();
   if (!parent || parent.deleted_at) return { ok: false, chyba: "Hlavní akce nenalezena." };
@@ -295,13 +295,33 @@ export async function vytvoritPodzakazku(
     return { ok: false, chyba: "Uložení se nezdařilo." };
   }
 
-  await supabase.from("projects").insert({ zakazka_id: child.id, name: cislo.trim(), owner_id: null });
+  // Konstrukce: zakázka k akci se NEzaloží jako samostatný projekt, ale přidá
+  // se jako podúkol do konstrukčního projektu hlavní akce.
+  let { data: hlavniProjekt } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("zakazka_id", parentId)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (!hlavniProjekt) {
+    const { data: novy } = await supabase
+      .from("projects")
+      .insert({ zakazka_id: parentId, name: parent.kod, owner_id: null })
+      .select("id")
+      .single();
+    hlavniProjekt = novy;
+  }
+  if (hlavniProjekt) {
+    await supabase.from("tasks").insert({ project_id: hlavniProjekt.id, name: cislo.trim() });
+  }
+
   await zapisAudit(supabase, {
     entita: "zakazka",
     entitaId: child.id,
     typZmeny: "VYTVORENI",
     uzivatelId: u.id,
-    nova: { kod: cislo.trim(), podzakazkaZ: parentId },
+    nova: { kod: cislo.trim(), zakazkaKAkci: parentId, konstrukcePodukol: true },
   });
   revalidatePath(`/zakazky/${parentId}`);
   revalidatePath("/zakazky");
