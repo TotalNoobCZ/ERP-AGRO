@@ -7,7 +7,7 @@ import { poTerminu } from "@/lib/zakazky/orders";
 import { okno, baleniDoRad } from "@/lib/zakazky/timeline";
 import Timeline, { type TRadek } from "@/components/zakazky/Timeline";
 import PlanGantt from "@/components/zakazky/PlanGantt";
-import { canWrite, MILNIK_LABELS, ODDELENI_LABELS, type Oddeleni, type Role, type StavZakazky, type TypMilniku } from "@erp/core";
+import { canWrite, MILNIK_LABELS, ODDELENI_LABELS, ODDELENI_KAPITOLA, type Oddeleni, type Role, type StavZakazky, type TypMilniku } from "@erp/core";
 
 export const dynamic = "force-dynamic";
 
@@ -59,10 +59,13 @@ type ZakazkaRowT = {
 export default async function PlanPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mode?: string; ref?: string }>;
+  searchParams: Promise<{ mode?: string; ref?: string; kap?: string }>;
 }) {
   const sp = await searchParams;
   const mode = sp.mode === "osoby" ? "osoby" : "zakazky";
+  // Filtr kapitoly v režimu „podle zaměstnance": Dílna (hlavní) / Kancelář / Vše.
+  const kap: "dilna" | "kancelar" | "vse" =
+    sp.kap === "kancelar" ? "kancelar" : sp.kap === "vse" ? "vse" : "dilna";
   const ref = refDatum(sp.ref);
   const { start, konec } = okno(ref, 3);
   const supabase = await createClient();
@@ -177,6 +180,10 @@ export default async function PlanPage({
     const podleOsoby = new Map<string, typeof prirazeni>();
     for (const p of prirazeni) {
       if (!p.osoba.active) continue;
+      if (kap !== "vse") {
+        const k = p.osoba.oddeleni ? ODDELENI_KAPITOLA[p.osoba.oddeleni as Oddeleni] : null;
+        if (k !== kap) continue;
+      }
       if (!podleOsoby.has(p.osoba_id)) podleOsoby.set(p.osoba_id, []);
       podleOsoby.get(p.osoba_id)!.push(p);
     }
@@ -207,7 +214,8 @@ export default async function PlanPage({
       });
   }
 
-  const odkaz = (m: string, r: string) => `/zakazky/plan?mode=${m}&ref=${r}`;
+  const odkaz = (m: string, r: string, k: string = kap) =>
+    `/zakazky/plan?mode=${m}&ref=${r}${m === "osoby" ? `&kap=${k}` : ""}`;
   const refStr = `${ref.getUTCFullYear()}-${String(ref.getUTCMonth() + 1).padStart(2, "0")}`;
 
   return (
@@ -221,6 +229,19 @@ export default async function PlanPage({
             Podle zaměstnance
           </Link>
         </div>
+        {mode === "osoby" && (
+          <div className="flex gap-1">
+            <Link href={odkaz("osoby", refStr, "dilna")} className={`btn-ghost ${kap === "dilna" ? "border-link text-link" : "border-transparent"}`}>
+              Dílna
+            </Link>
+            <Link href={odkaz("osoby", refStr, "kancelar")} className={`btn-ghost ${kap === "kancelar" ? "border-link text-link" : "border-transparent"}`}>
+              Kancelář
+            </Link>
+            <Link href={odkaz("osoby", refStr, "vse")} className={`btn-ghost ${kap === "vse" ? "border-link text-link" : "border-transparent"}`}>
+              Vše
+            </Link>
+          </div>
+        )}
         <div className="flex items-center gap-2">
           <Link href="/zakazky/plan/tisk?print=1" className="btn-ghost">🖨 Export do PDF</Link>
           <Link href={odkaz(mode, refPosun(ref, -1))} className="btn-ghost">◀</Link>
