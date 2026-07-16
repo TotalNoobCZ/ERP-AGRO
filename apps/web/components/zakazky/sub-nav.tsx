@@ -8,6 +8,7 @@ const TABS = [
   { href: "/zakazky/dashboard", label: "Přehled" },
   { href: "/zakazky/plan", label: "Plán" },
   { href: "/zakazky", label: "Akce" },
+  { href: "/zakazky/tabule", label: "Tabule" },
   { href: "/zakazky/archiv", label: "Archiv" },
 ] as const;
 
@@ -22,6 +23,7 @@ export function ZakazkySubNav({ canWrite }: { canWrite: boolean }) {
         (pathname.startsWith("/zakazky/") &&
           !pathname.startsWith("/zakazky/dashboard") &&
           !pathname.startsWith("/zakazky/plan") &&
+          !pathname.startsWith("/zakazky/tabule") &&
           !pathname.startsWith("/zakazky/archiv"))
       );
     }

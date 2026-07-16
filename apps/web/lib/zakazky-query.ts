@@ -51,3 +51,86 @@ export async function queryZakazky(
   }
   return rows;
 }
+
+// ---------- Tabule zakázek (obrácené drag & drop: osoba → zakázka) ----------
+
+export type BoardOsobaZ = { id: string; name: string; oddeleni: string | null; colorIndex: number | null };
+export type BoardPrirazeni = { prirazeniId: string; osobaId: string; name: string; colorIndex: number | null };
+export type BoardZakazka = {
+  id: string;
+  kod: string;
+  mistoPlneni: string;
+  zacatek: string;
+  konecAktualni: string;
+  odpovednaOsobaId: string | null;
+  pracovnici: BoardPrirazeni[];
+};
+
+/** Data pro tabuli zakázek: přiřaditelné osoby + otevřené zakázky s pracovníky. */
+export async function queryZakazkyBoard(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<{ osoby: BoardOsobaZ[]; zakazky: BoardZakazka[] }> {
+  const [osobyRes, zakRes] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, name, oddeleni, color_index")
+      .eq("active", true)
+      .eq("assignable", true)
+      .order("name", { ascending: true }),
+    supabase
+      .from("zakazky")
+      .select(
+        "id, kod, misto_plneni, zacatek, konec_aktualni, odpovedna_osoba_id, " +
+          "prirazeni:prirazeni_zakazka(id, osoba_id, deleted_at, osoba:profiles(id, name, color_index))",
+      )
+      .is("deleted_at", null)
+      .in("stav", ["AKTIVNI", "POZASTAVENO"])
+      .order("konec_aktualni", { ascending: true }),
+  ]);
+
+  const osoby: BoardOsobaZ[] = (osobyRes.data ?? []).map((o) => ({
+    id: o.id,
+    name: o.name,
+    oddeleni: o.oddeleni,
+    colorIndex: o.color_index,
+  }));
+
+  type RawZ = {
+    id: string;
+    kod: string;
+    misto_plneni: string;
+    zacatek: string;
+    konec_aktualni: string;
+    odpovedna_osoba_id: string | null;
+    prirazeni: Array<{
+      id: string;
+      osoba_id: string;
+      deleted_at: string | null;
+      osoba: { id: string; name: string; color_index: number | null } | null;
+    }> | null;
+  };
+  const rawZ = (zakRes.data ?? []) as unknown as RawZ[];
+
+  const zakazky: BoardZakazka[] = rawZ.map((z) => {
+    const prir = z.prirazeni ?? [];
+    const pracovnici: BoardPrirazeni[] = prir
+      .filter((p) => !p.deleted_at)
+      .map((p) => ({
+        prirazeniId: p.id,
+        osobaId: p.osoba_id,
+        name: p.osoba?.name ?? "?",
+        colorIndex: p.osoba?.color_index ?? null,
+      }));
+    return {
+      id: z.id,
+      kod: z.kod,
+      mistoPlneni: z.misto_plneni,
+      zacatek: z.zacatek,
+      konecAktualni: z.konec_aktualni,
+      odpovednaOsobaId: z.odpovedna_osoba_id,
+      pracovnici,
+    };
+  });
+
+  return { osoby, zakazky };
+}
