@@ -13,8 +13,8 @@ export default async function ArchivPage() {
     .from("zakazky")
     .select("id, kod, misto_plneni, konec_aktualni, stav, archivovano_kdy, prirazeni:prirazeni_zakazka(count)")
     .is("deleted_at", null)
-    .eq("stav", "ARCHIV")
-    .order("archivovano_kdy", { ascending: false });
+    .in("stav", ["ARCHIV", "DOKONCENO"])
+    .order("konec_aktualni", { ascending: false });
 
   const zakazky = (data ?? []) as unknown as {
     id: string;
@@ -29,7 +29,9 @@ export default async function ArchivPage() {
   return (
     <div>
       <h1 className="mb-1 text-2xl font-bold">Archiv</h1>
-      <p className="mb-4 text-sm text-text-muted">Archivované akce. Otevřením akce ji můžeš znovu aktivovat.</p>
+      <p className="mb-4 text-sm text-text-muted">
+        Dokončené a archivované akce. Otevřením akce ji můžeš znovu aktivovat.
+      </p>
 
       {zakazky.length === 0 ? (
         <p className="text-sm text-text-muted">Archiv je prázdný.</p>
@@ -41,7 +43,9 @@ export default async function ArchivPage() {
               <span className="flex-1 truncate text-sm text-text-muted">{z.misto_plneni}</span>
               <span className="hidden text-xs text-text-muted sm:inline">{z.prirazeni?.[0]?.count ?? 0} os.</span>
               <span className="text-sm text-text-muted">
-                {z.archivovano_kdy ? `archiv. ${formatCz(new Date(z.archivovano_kdy))}` : ""}
+                {z.archivovano_kdy
+                  ? `archiv. ${formatCz(new Date(z.archivovano_kdy))}`
+                  : `konec ${formatCz(parseDay(z.konec_aktualni))}`}
               </span>
               <StavBadge z={{ konecAktualni: parseDay(z.konec_aktualni), stav: z.stav }} />
             </Link>
