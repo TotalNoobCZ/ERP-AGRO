@@ -635,12 +635,19 @@ export async function smazatZakazku(zakazkaId: string, _fd?: FormData) {
   if (!z || z.deleted_at) return;
 
   const ted = new Date().toISOString();
-  await supabase.from("prirazeni_zakazka").update({ deleted_at: ted }).eq("zakazka_id", zakazkaId).is("deleted_at", null);
-  await supabase.from("milniky").update({ deleted_at: ted }).eq("zakazka_id", zakazkaId).is("deleted_at", null);
 
-  // Konstrukce: zarchivovat projekty této zakázky + jejich úkoly, ať akce
+  // Kaskáda na zakázky k akci: smazání akce vezme i její dceřiné zakázky,
+  // ať v systému nezůstanou osiřelé (parent bez rodiče) záznamy.
+  const { data: deti } = await supabase
+    .from("zakazky").select("id").eq("parent_id", zakazkaId).is("deleted_at", null);
+  const vsechnyIds = [zakazkaId, ...(deti ?? []).map((d) => d.id)];
+
+  await supabase.from("prirazeni_zakazka").update({ deleted_at: ted }).in("zakazka_id", vsechnyIds).is("deleted_at", null);
+  await supabase.from("milniky").update({ deleted_at: ted }).in("zakazka_id", vsechnyIds).is("deleted_at", null);
+
+  // Konstrukce: zarchivovat projekty těchto zakázek + jejich úkoly, ať akce
   // po smazání nezůstane viset v Plánování/Ganttu.
-  const { data: projs } = await supabase.from("projects").select("id").eq("zakazka_id", zakazkaId);
+  const { data: projs } = await supabase.from("projects").select("id").in("zakazka_id", vsechnyIds);
   const projIds = (projs ?? []).map((p) => p.id);
   if (projIds.length > 0) {
     await supabase
@@ -650,14 +657,14 @@ export async function smazatZakazku(zakazkaId: string, _fd?: FormData) {
       .eq("status", "active");
     await supabase.from("projects").update({ status: "archived" }).in("id", projIds).eq("status", "active");
   }
-  // Úkoly reprezentující tuto zakázku k akci (žijí v projektu hlavní akce).
+  // Úkoly reprezentující tyto zakázky k akci (žijí v projektu hlavní akce).
   await supabase
     .from("tasks")
     .update({ status: "archived", archived_at: ted, archived_by: u.id })
-    .eq("zakazka_id", zakazkaId)
+    .in("zakazka_id", vsechnyIds)
     .eq("status", "active");
 
-  await supabase.from("zakazky").update({ deleted_at: ted }).eq("id", zakazkaId);
+  await supabase.from("zakazky").update({ deleted_at: ted }).in("id", vsechnyIds);
 
   await zapisAudit(supabase, {
     entita: "zakazka", entitaId: zakazkaId, typZmeny: "SMAZANI", uzivatelId: u.id,
