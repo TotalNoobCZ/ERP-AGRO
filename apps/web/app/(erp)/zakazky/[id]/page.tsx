@@ -18,6 +18,8 @@ import { ProdlouzeniForm, PreruseniForm, PoznamkyAkce, MilnikyEditor } from "@/c
 import Timeline, { type TRadek } from "@/components/zakazky/Timeline";
 import { ZalozitProjekt } from "@/components/konstrukce/ZalozitProjekt";
 import { ZalozitPodzakazku } from "@/components/zakazky/ZalozitPodzakazku";
+import { nacistLidiZakazek, sjednotitOsoby, type Osoba } from "@/lib/zakazky/lide";
+import { userColor } from "@erp/ui";
 import type { StavZakazky } from "@erp/core";
 
 export const dynamic = "force-dynamic";
@@ -97,6 +99,10 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
     const { data: p } = await supabase.from("zakazky").select("id, kod").eq("id", z.parent_id).maybeSingle();
     if (p) rodic = { id: p.id, kod: p.kod };
   }
+
+  // Lidé na akci = přiřazení + odpovědní napříč akcí a jejími zakázkami k akci.
+  const lidiMap = await nacistLidiZakazek(supabase, [z.id, ...podzakazky.map((p) => p.id)]);
+  const lideAkce = sjednotitOsoby([lidiMap.get(z.id), ...podzakazky.map((p) => lidiMap.get(p.id))]);
 
   const prirazeni = z.prirazeni
     .filter((p) => !p.deleted_at)
@@ -258,16 +264,29 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
         </div>
       </section>
 
-      {/* Podzakázky (dceřiné akce) – rychlé založení pod Přiřazenými pracovníky */}
+      {/* Zakázky k akci + souhrn všech lidí na akci (rychlé založení pod pracovníky) */}
       <section className="card space-y-3 p-4">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-text-muted">Zakázky k akci</h2>
+
+        {podzakazky.length > 0 && lideAkce.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 rounded-md border border-line bg-bg p-2 text-sm">
+            <span className="text-text-muted">Lidé na akci:</span>
+            <Lide lide={lideAkce} />
+          </div>
+        )}
+
         {podzakazky.length > 0 && (
           <div className="divide-y divide-line rounded-md border border-line">
             {podzakazky.map((p) => (
-              <Link key={p.id} href={`/zakazky/${p.id}`} className="flex items-center gap-3 px-3 py-2 text-sm hover:bg-accent">
-                <span className="font-mono font-semibold">{p.kod}</span>
-                <span className="flex-1 truncate text-text-muted">{p.popis || p.misto_plneni}</span>
-                <StavBadge z={{ konecAktualni: parseDay(p.konec_aktualni), stav: p.stav }} />
+              <Link key={p.id} href={`/zakazky/${p.id}`} className="block px-3 py-2 hover:bg-accent">
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="font-mono font-semibold">{p.kod}</span>
+                  <span className="flex-1 truncate text-text-muted">{p.popis || p.misto_plneni}</span>
+                  <StavBadge z={{ konecAktualni: parseDay(p.konec_aktualni), stav: p.stav }} />
+                </div>
+                <div className="mt-1">
+                  <Lide lide={lidiMap.get(p.id) ?? []} />
+                </div>
               </Link>
             ))}
           </div>
@@ -380,6 +399,20 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
         <SmazatButton akce={akceSmazat} />
       </section>
     </div>
+  );
+}
+
+function Lide({ lide }: { lide: Osoba[] }) {
+  if (lide.length === 0) return <span className="text-xs text-text-muted">bez lidí</span>;
+  return (
+    <span className="flex flex-wrap items-center gap-1">
+      {lide.map((o) => (
+        <span key={o.id} className="inline-flex items-center gap-1 rounded-full bg-accent py-0.5 pl-1 pr-2 text-[11px]" title={o.name}>
+          <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: userColor(o.colorIndex) }} />
+          {o.name}
+        </span>
+      ))}
+    </span>
   );
 }
 

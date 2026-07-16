@@ -2,6 +2,7 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { queryZakazky, type ZakazkaListParams, type ZakazkaListRow } from "@/lib/zakazky-query";
+import { nacistLidiZakazek, sjednotitOsoby } from "@/lib/zakazky/lide";
 import { ZakazkyFilters, ZakazkyFilterRestore } from "@/components/zakazky/filters";
 import { ZakazkySeznam } from "@/components/zakazky/ZakazkySeznam";
 
@@ -25,9 +26,14 @@ export default async function ZakazkyPage({
       detiMap.get(z.parent_id)!.push(z);
     }
   }
+  const lidiMap = await nacistLidiZakazek(supabase, zakazky.map((z) => z.id));
   const uzly = zakazky
     .filter((z) => !z.parent_id || !ids.has(z.parent_id))
-    .map((row) => ({ row, deti: detiMap.get(row.id) ?? [] }));
+    .map((row) => {
+      const deti = (detiMap.get(row.id) ?? []).map((d) => ({ row: d, lide: lidiMap.get(d.id) ?? [] }));
+      const lideAkce = sjednotitOsoby([lidiMap.get(row.id), ...deti.map((d) => d.lide)]);
+      return { row, deti, lideAkce };
+    });
 
   return (
     <div>

@@ -249,6 +249,7 @@ export type ProjectRow = {
 export type TaskRow = {
   id: string;
   project_id: string;
+  zakazka_id: string | null;
   name: string;
   assignee_id: string | null;
   start_date: string | null;

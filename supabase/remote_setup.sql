@@ -366,6 +366,7 @@ create index projects_status_idx     on projects (status);
 create table tasks (
   id              uuid primary key default gen_random_uuid(),
   project_id      uuid not null references projects (id) on delete cascade,
+  zakazka_id      uuid references zakazky (id),         -- reprezentovaná zakázka k akci (null = obecný úkol)
   name            text not null,
   assignee_id     uuid references profiles (id),       -- "Přiřazeno" (nullable)
   start_date      date,
@@ -384,6 +385,7 @@ create table tasks (
 create index tasks_project_id_idx  on tasks (project_id);
 create index tasks_assignee_id_idx on tasks (assignee_id);
 create index tasks_status_idx      on tasks (status);
+create index tasks_zakazka_id_idx  on tasks (zakazka_id);
 
 -- Poznámky k úkolu (timeline: kdo a kdy zapsal).
 create table task_notes (

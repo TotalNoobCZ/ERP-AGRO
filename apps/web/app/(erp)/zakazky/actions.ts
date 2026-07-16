@@ -313,7 +313,13 @@ export async function vytvoritPodzakazku(
     hlavniProjekt = novy;
   }
   if (hlavniProjekt) {
-    await supabase.from("tasks").insert({ project_id: hlavniProjekt.id, name: cislo.trim() });
+    // Podúkol reprezentuje tuto zakázku k akci (zakazka_id = child.id), aby se
+    // konstruktér přiřazený k podúkolu propsal ke správné zakázce.
+    await supabase.from("tasks").insert({
+      project_id: hlavniProjekt.id,
+      zakazka_id: child.id,
+      name: cislo.trim(),
+    });
   }
 
   await zapisAudit(supabase, {

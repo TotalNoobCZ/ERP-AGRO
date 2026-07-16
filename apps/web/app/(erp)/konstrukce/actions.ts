@@ -44,14 +44,20 @@ function refreshKonstrukce() {
  * zakázky). Pokud už tam přiřazená je, neudělá nic.
  */
 async function propsatKonstrukteraDoZakazky(supabase: Db, taskId: string, osobaId: string): Promise<void> {
-  const { data: task } = await supabase.from("tasks").select("project_id").eq("id", taskId).maybeSingle();
+  const { data: task } = await supabase.from("tasks").select("project_id, zakazka_id").eq("id", taskId).maybeSingle();
   if (!task) return;
-  const { data: proj } = await supabase.from("projects").select("zakazka_id").eq("id", task.project_id).maybeSingle();
-  if (!proj) return;
+  // Podúkol může reprezentovat konkrétní zakázku k akci → propíšeme na ni;
+  // jinak na zakázku projektu (celou akci).
+  let cilZakazkaId = task.zakazka_id;
+  if (!cilZakazkaId) {
+    const { data: proj } = await supabase.from("projects").select("zakazka_id").eq("id", task.project_id).maybeSingle();
+    if (!proj) return;
+    cilZakazkaId = proj.zakazka_id;
+  }
   const { data: zak } = await supabase
     .from("zakazky")
     .select("id, zacatek, konec_aktualni, deleted_at")
-    .eq("id", proj.zakazka_id)
+    .eq("id", cilZakazkaId)
     .maybeSingle();
   if (!zak || zak.deleted_at) return;
 
