@@ -60,6 +60,21 @@ export default function ZakazkyBoard({
     return m;
   }, [osoby]);
 
+  // Zakázky seskupené pod hlavní akci (akce + její zakázky k akci).
+  const skupinyZakazek = useMemo(() => {
+    const idset = new Set(zakazky.map((z) => z.id));
+    const detiBy = new Map<string, BoardZakazka[]>();
+    for (const z of zakazky) {
+      if (z.parentId && idset.has(z.parentId)) {
+        if (!detiBy.has(z.parentId)) detiBy.set(z.parentId, []);
+        detiBy.get(z.parentId)!.push(z);
+      }
+    }
+    return zakazky
+      .filter((z) => !z.parentId || !idset.has(z.parentId))
+      .map((akce) => ({ akce, deti: detiBy.get(akce.id) ?? [] }));
+  }, [zakazky]);
+
   // Osoby v levém sloupci: dvě kapitoly (Dílna / Kancelář) → oddělení → lidé.
   const strom = useMemo(() => {
     const perDept = new Map<string, BoardOsobaZ[]>();
@@ -216,17 +231,33 @@ export default function ZakazkyBoard({
         {/* Pravá 2/3 – zakázky (drop zóny) */}
         <div className="flex-1">
           <div className="columns-1 gap-3 md:columns-2 2xl:columns-3 [&>*]:mb-3 [&>*]:break-inside-avoid">
-            {zakazky.filter(zakMatches).map((z) => (
-              <ZakazkaTile
-                key={z.id}
-                zakazka={z}
-                editable={editable}
-                onOpen={() => router.push(`/zakazky/${z.id}`)}
-                onRemove={odebrat}
-              />
-            ))}
+            {skupinyZakazek
+              .filter((g) => zakMatches(g.akce) || g.deti.some(zakMatches))
+              .map((g) => (
+                <div key={g.akce.id}>
+                  <ZakazkaTile
+                    zakazka={g.akce}
+                    editable={editable}
+                    onOpen={() => router.push(`/zakazky/${g.akce.id}`)}
+                    onRemove={odebrat}
+                  />
+                  {g.deti.length > 0 && (
+                    <div className="ml-3 mt-2 space-y-2 border-l-2 border-link/40 pl-3">
+                      {g.deti.map((d) => (
+                        <ZakazkaTile
+                          key={d.id}
+                          zakazka={d}
+                          editable={editable}
+                          onOpen={() => router.push(`/zakazky/${d.id}`)}
+                          onRemove={odebrat}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
           </div>
-          {zakazky.filter(zakMatches).length === 0 && (
+          {skupinyZakazek.filter((g) => zakMatches(g.akce) || g.deti.some(zakMatches)).length === 0 && (
             <p className="text-sm text-text-muted">
               {q ? "Nic neodpovídá hledání." : "Žádné otevřené zakázky."}
             </p>
@@ -310,7 +341,7 @@ function ZakazkaTile({
     >
       <button type="button" onClick={onOpen} className="mb-1 block text-left hover:underline">
         <p className="font-bold">{zakazka.kod}</p>
-        <p className="text-xs text-text-muted">{zakazka.mistoPlneni}</p>
+        <p className="text-xs text-text-muted">{zakazka.popis || zakazka.mistoPlneni}</p>
       </button>
       <p className="mb-2 text-[11px] text-text-muted">
         {formatDen(zakazka.zacatek)} – {formatDen(zakazka.konecAktualni)}
