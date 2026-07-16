@@ -41,7 +41,8 @@ export default function ZakazkaForm({
   const [zacatek, setZacatek] = useState("");
   const [konec, setKonec] = useState("");
   const [odpovedny, setOdpovedny] = useState("");
-  const kancelar = osoby.filter((o) => o.oddeleni === "kancelar");
+  // Odpovědná osoba akce = Kancelář nebo Projekťák.
+  const kancelar = osoby.filter((o) => o.oddeleni === "kancelar" || o.oddeleni === "projektak");
   const [radky, setRadky] = useState<Radek[]>([{ key: 1, osobaId: "", vyjimka: false, od: "", do: "" }]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const ch = stav.chyby ?? {};
@@ -82,7 +83,7 @@ export default function ZakazkaForm({
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="label">Kód akce</label>
+            <label className="label">Číslo zakázky</label>
             <input name="kod" className="field" required />
             {ch.kod && <p className="err">{ch.kod}</p>}
           </div>
@@ -106,7 +107,7 @@ export default function ZakazkaForm({
         </div>
 
         <div>
-          <label className="label">Odpovědná osoba (kancelář)</label>
+          <label className="label">Odpovědná osoba (kancelář / projekťák)</label>
           <OsobaSelect osoby={kancelar} value={odpovedny} onChange={setOdpovedny} name="odpovednaOsobaId" />
           <p className="mt-1 text-xs text-text-muted">Nepovinné. Vybírá se z lidí v Kanceláři.</p>
         </div>

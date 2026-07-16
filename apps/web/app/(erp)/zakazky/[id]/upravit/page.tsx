@@ -37,7 +37,7 @@ export default async function UpravitZakazkuPage({ params }: { params: Promise<{
     .filter((p) => !p.deleted_at)
     .sort((a, b) => a.datum_od.localeCompare(b.datum_od));
 
-  // Odpovědná osoba = Kancelář; pracovníci = přiřaditelní mimo Kancelář.
+  // Odpovědná osoba = Kancelář nebo Projekťák; pracovníci = přiřaditelní mimo Kancelář.
   const { data: vsichni } = await supabase
     .from("profiles")
     .select("id, name, oddeleni")
@@ -45,7 +45,7 @@ export default async function UpravitZakazkuPage({ params }: { params: Promise<{
     .eq("assignable", true)
     .order("name", { ascending: true });
   const osoby = (vsichni ?? []) as OsobaLite[];
-  const kancelar = osoby.filter((o) => o.oddeleni === "kancelar");
+  const kancelar = osoby.filter((o) => o.oddeleni === "kancelar" || o.oddeleni === "projektak");
   const pracovnici = osoby.filter((o) => o.oddeleni !== "kancelar");
 
   const akce = upravitZakazku.bind(null, z.id) as (prev: ZakazkaStav, fd: FormData) => Promise<ZakazkaStav>;

@@ -48,7 +48,7 @@ export function ZakazkyFilters() {
     <div className="mb-4 flex flex-wrap items-center gap-2">
       <div className="relative min-w-[220px] flex-1">
         <span className="absolute left-2.5 top-2 text-text-muted">🔍</span>
-        <Input className="pl-8" placeholder="Hledat (kód / místo)…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <Input className="pl-8" placeholder="Hledat (číslo / místo)…" value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
 
       <Select className="w-auto" value={stav} onChange={(e) => setParam("stav", e.target.value)}>

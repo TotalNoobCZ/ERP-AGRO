@@ -58,7 +58,7 @@ export function ZakazkaEditForm({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className="label">Kód akce</label>
+          <label className="label">Číslo zakázky</label>
           <input name="kod" className="field" defaultValue={zakazka.kod} required />
           {ch.kod && <p className="err">{ch.kod}</p>}
         </div>
