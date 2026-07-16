@@ -149,9 +149,6 @@ export default async function InquiryDetailPage({ params }: { params: Promise<{ 
               <Row label="Předmět" value={inquiry.subject} />
               <Row label="Popis" value={inquiry.description || "—"} />
               <Row label="Druh poptávky" value={inquiry.source || "—"} />
-              <Row label="Kontaktní osoba" value={inquiry.contact_name || "—"} />
-              <Row label="Telefon kontaktu" value={inquiry.contact_phone ? formatPhone(inquiry.contact_phone) : "—"} />
-              <Row label="E-mail kontaktu" value={inquiry.contact_email || "—"} />
               <Row label="Datum přijetí" value={formatDate(inquiry.received_at)} />
               <Row label="Termín nabídky" value={inquiry.deadline ? formatDate(inquiry.deadline) : "—"} />
               <Row label="Odpovědná osoba" value={person ? `${person.name} (${person.email})` : "—"} />
@@ -200,11 +197,15 @@ export default async function InquiryDetailPage({ params }: { params: Promise<{ 
             <CardHeader><CardTitle>Zákazník</CardTitle></CardHeader>
             <CardContent className="space-y-1.5 text-sm">
               <p className="font-medium">{customer?.name ?? "—"}</p>
-              {customer?.email && (
-                <p className="flex items-center gap-2 text-muted-foreground">✉️ {customer.email}</p>
+              {/* Kontaktní osoba a její údaje (telefon, e-mail, stát). */}
+              {inquiry.contact_name && (
+                <p className="flex items-center gap-2">👤 {inquiry.contact_name}</p>
               )}
-              {customer?.phone && (
-                <p className="flex items-center gap-2 text-muted-foreground">📞 {formatPhone(customer.phone)}</p>
+              {inquiry.contact_phone && (
+                <p className="flex items-center gap-2 text-muted-foreground">📞 {formatPhone(inquiry.contact_phone)}</p>
+              )}
+              {inquiry.contact_email && (
+                <p className="flex items-center gap-2 text-muted-foreground">✉️ {inquiry.contact_email}</p>
               )}
               {customer?.address && (
                 <p className="flex items-center gap-2 text-muted-foreground">📍 {customer.address}</p>

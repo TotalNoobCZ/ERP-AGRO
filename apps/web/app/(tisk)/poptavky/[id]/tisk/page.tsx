@@ -16,7 +16,10 @@ type PrintDetail = {
   status: string;
   deadline: string | null;
   received_at: string;
-  customer: { name: string; email: string | null; phone: string | null; address: string | null } | null;
+  contact_name: string | null;
+  contact_phone: string | null;
+  contact_email: string | null;
+  customer: { name: string; email: string | null; phone: string | null; address: string | null; country: string | null } | null;
   person: { name: string; email: string } | null;
   comments: { id: string; text: string; author: string; created_at: string }[];
   status_logs: { id: string; from_status: string | null; to_status: string; changed_by: string; created_at: string }[];
@@ -37,7 +40,8 @@ export default async function InquiryPrintPage({
     .from("inquiries")
     .select(
       `id, number, subject, description, source, status, deadline, received_at,
-       customer:customers(name, email, phone, address),
+       contact_name, contact_phone, contact_email,
+       customer:customers(name, email, phone, address, country),
        person:profiles(name, email),
        comments(id, text, author, created_at),
        status_logs(id, from_status, to_status, changed_by, created_at)`,
@@ -84,9 +88,11 @@ export default async function InquiryPrintPage({
         <table className="w-full text-sm">
           <tbody>
             <PrintRow label="Název / jméno" value={inquiry.customer?.name ?? "—"} />
-            <PrintRow label="E-mail" value={inquiry.customer?.email || "—"} />
-            <PrintRow label="Telefon" value={inquiry.customer?.phone || "—"} />
+            <PrintRow label="Kontaktní osoba" value={inquiry.contact_name || "—"} />
+            <PrintRow label="Telefon" value={inquiry.contact_phone || "—"} />
+            <PrintRow label="E-mail" value={inquiry.contact_email || "—"} />
             <PrintRow label="Adresa" value={inquiry.customer?.address || "—"} />
+            <PrintRow label="Stát" value={inquiry.customer?.country || "—"} />
           </tbody>
         </table>
       </section>
