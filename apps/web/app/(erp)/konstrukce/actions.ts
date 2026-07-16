@@ -128,7 +128,21 @@ export async function upravitProjekt(
     if (!patch.name.trim()) return { ok: false, chyba: "Název nesmí být prázdný." };
     update.name = patch.name.trim();
   }
-  if (patch.ownerId !== undefined) update.owner_id = patch.ownerId || null;
+  if (patch.ownerId !== undefined) {
+    const ownerId = patch.ownerId || null;
+    if (ownerId) {
+      // Vedoucím projektu smí být jen člověk z oddělení „Projekťák".
+      const { data: owner } = await supabase
+        .from("profiles")
+        .select("oddeleni")
+        .eq("id", ownerId)
+        .maybeSingle();
+      if (owner?.oddeleni !== "projektak") {
+        return { ok: false, chyba: "Vedoucím projektu může být jen uživatel z oddělení Projekťák." };
+      }
+    }
+    update.owner_id = ownerId;
+  }
   const { error } = await supabase.from("projects").update(update).eq("id", id);
   if (error) return { ok: false, chyba: "Uložení se nezdařilo." };
   refreshKonstrukce();

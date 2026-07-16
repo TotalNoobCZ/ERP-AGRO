@@ -15,7 +15,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   viewer: "Číst",
 };
 
-export const ODDELENI = ["obchod", "dilna", "kancelar", "elektro", "konstrukce"] as const;
+export const ODDELENI = ["obchod", "dilna", "kancelar", "elektro", "konstrukce", "projektak"] as const;
 export type Oddeleni = (typeof ODDELENI)[number];
 
 export const ODDELENI_LABELS: Record<Oddeleni, string> = {
@@ -24,6 +24,7 @@ export const ODDELENI_LABELS: Record<Oddeleni, string> = {
   kancelar: "Kancelář",
   elektro: "Elektro",
   konstrukce: "Konstrukce",
+  projektak: "Projekťák",
 };
 
 /** editor a admin smí zapisovat provozní data */

@@ -6,12 +6,13 @@ type Db = Awaited<ReturnType<typeof createClient>>;
 
 export async function nactiKonstrukci(supabase: Db): Promise<{
   clenove: Clen[];
+  projektaci: Clen[];
   projekty: Projekt[];
   ukoly: Ukol[];
   absence: Absence[];
 }> {
-  const [clenoveRes, projektyRes, ukolyRes, absenceRes] = await Promise.all([
-    // Dlaždice: přiřaditelní členové konstrukčního týmu.
+  const [clenoveRes, projektaciRes, projektyRes, ukolyRes, absenceRes] = await Promise.all([
+    // Dlaždice: přiřaditelní členové konstrukčního týmu (oddělení Konstrukce).
     supabase
       .from("profiles")
       .select("id, name, color_index, tile_order")
@@ -19,6 +20,13 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
       .eq("assignable", true)
       .eq("oddeleni", "konstrukce")
       .order("tile_order", { ascending: true, nullsFirst: false })
+      .order("name", { ascending: true }),
+    // Projekťáci: možní vedoucí projektu (oddělení Projekťák).
+    supabase
+      .from("profiles")
+      .select("id, name, color_index, tile_order")
+      .eq("active", true)
+      .eq("oddeleni", "projektak")
       .order("name", { ascending: true }),
     supabase
       .from("projects")
@@ -45,12 +53,14 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
     supabase.from("absences").select("id, profile_id, type, start_date, end_date"),
   ]);
 
-  const clenove: Clen[] = (clenoveRes.data ?? []).map((c) => ({
+  const mapClen = (c: { id: string; name: string; color_index: number | null; tile_order: number | null }): Clen => ({
     id: c.id,
     name: c.name,
     colorIndex: c.color_index,
     tileOrder: c.tile_order,
-  }));
+  });
+  const clenove: Clen[] = (clenoveRes.data ?? []).map(mapClen);
+  const projektaci: Clen[] = (projektaciRes.data ?? []).map(mapClen);
 
   type NoteRow = { id: string; body: string; created_at: string; author: { name: string } | null };
   type TodoRow = { id: string; body: string; done: boolean; position: number | null };
@@ -117,5 +127,5 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
     endDate: a.end_date,
   }));
 
-  return { clenove, projekty, ukoly, absence };
+  return { clenove, projektaci, projekty, ukoly, absence };
 }

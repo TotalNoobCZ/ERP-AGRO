@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function KonstrukcePage() {
   const supabase = await createClient();
-  const [{ clenove, projekty, ukoly, absence }, profile, zakazkyRes] = await Promise.all([
+  const [{ clenove, projektaci, projekty, ukoly, absence }, profile, zakazkyRes] = await Promise.all([
     nactiKonstrukci(supabase),
     getCurrentProfile(),
     supabase
@@ -23,6 +23,7 @@ export default async function KonstrukcePage() {
   return (
     <PlanBoard
       clenove={clenove}
+      projektaci={projektaci}
       projekty={projekty}
       ukoly={ukoly}
       absence={absence}

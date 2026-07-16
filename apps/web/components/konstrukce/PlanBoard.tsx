@@ -33,6 +33,7 @@ type ZakazkaLite = { id: string; kod: string; mistoPlneni: string };
 
 export default function PlanBoard({
   clenove,
+  projektaci,
   projekty,
   ukoly,
   absence,
@@ -40,6 +41,7 @@ export default function PlanBoard({
   editable,
 }: {
   clenove: Clen[];
+  projektaci: Clen[];
   projekty: Projekt[];
   ukoly: Ukol[];
   absence: Absence[];
@@ -237,6 +239,7 @@ export default function PlanBoard({
                 projekt={p}
                 ukoly={(ukolyProjektu.get(p.id) ?? []).filter(taskMatches)}
                 clenove={clenove}
+                projektaci={projektaci}
                 editable={editable}
                 onOpen={() => setOpenProject(p.id)}
                 onTaskClick={(id) => setOpenTask(id)}
@@ -271,7 +274,7 @@ export default function PlanBoard({
       {openProjectData && (
         <ProjectDialog
           projekt={openProjectData}
-          clenove={clenove}
+          projektaci={projektaci}
           aktivniUkoly={ukolyProjektu.get(openProjectData.id) ?? []}
           onClose={() => setOpenProject(null)}
         />
@@ -446,6 +449,7 @@ function ProjectTile({
   projekt,
   ukoly,
   clenove,
+  projektaci,
   editable,
   onOpen,
   onTaskClick,
@@ -453,6 +457,7 @@ function ProjectTile({
   projekt: Projekt;
   ukoly: Ukol[];
   clenove: Clen[];
+  projektaci: Clen[];
   editable: boolean;
   onOpen: () => void;
   onTaskClick: (id: string) => void;
@@ -462,8 +467,9 @@ function ProjectTile({
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const owner = clenove.find((c) => c.id === projekt.ownerId);
-  // Dlaždice projektu má barvu zodpovědného; bez něj neutrální (kap. 7).
+  // Vedoucí projektu je Projekťák (ne člen konstrukčního týmu).
+  const owner = projektaci.find((c) => c.id === projekt.ownerId);
+  // Dlaždice projektu má barvu vedoucího; bez něj neutrální (kap. 7).
   const tileColor = owner ? userColor(owner.colorIndex) : COLOR_TOKENS.neutral;
 
   async function addTask() {

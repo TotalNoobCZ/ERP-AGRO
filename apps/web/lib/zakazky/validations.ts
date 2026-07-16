@@ -77,7 +77,7 @@ export const profilSchema = z
     // E-mail je nepovinný – lidé z dílny se nepřihlašují (viz superRefine níže).
     email: z.string().trim().optional().or(z.literal("")),
     role: z.enum(["admin", "editor", "viewer"]),
-    oddeleni: z.enum(["obchod", "dilna", "kancelar", "elektro", "konstrukce"]).optional().or(z.literal("")),
+    oddeleni: z.enum(["obchod", "dilna", "kancelar", "elektro", "konstrukce", "projektak"]).optional().or(z.literal("")),
     assignable: z.boolean(),
     colorIndex: z.coerce.number().int().min(0).max(9).optional(),
     active: z.boolean(),

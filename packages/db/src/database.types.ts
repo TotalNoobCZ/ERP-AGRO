@@ -40,7 +40,7 @@ export type ProfileRow = {
   email: string | null;
   name: string;
   role: "admin" | "editor" | "viewer";
-  oddeleni: "obchod" | "dilna" | "kancelar" | "elektro" | "konstrukce" | null;
+  oddeleni: "obchod" | "dilna" | "kancelar" | "elektro" | "konstrukce" | "projektak" | null;
   assignable: boolean;
   color_index: number | null;
   tile_order: number | null;

@@ -313,12 +313,12 @@ export function TaskDialog({
 // ---------- Dialog projektu ----------
 export function ProjectDialog({
   projekt,
-  clenove,
+  projektaci,
   aktivniUkoly,
   onClose,
 }: {
   projekt: Projekt;
-  clenove: Clen[];
+  projektaci: Clen[]; // možní vedoucí projektu (oddělení Projekťák)
   aktivniUkoly: Ukol[]; // aktivní úkoly projektu (pro Vyčistit/Archivovat)
   onClose: () => void;
 }) {
@@ -364,7 +364,7 @@ export function ProjectDialog({
     onClose();
   }
 
-  const vlastnik = clenove.find((c) => c.id === owner);
+  const vlastnik = projektaci.find((c) => c.id === owner);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
@@ -388,11 +388,16 @@ export function ProjectDialog({
             )}
             <select className="field" value={owner} onChange={(e) => setOwner(e.target.value)}>
               <option value="">— nikdo —</option>
-              {clenove.map((c) => (
+              {projektaci.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
           </div>
+          {projektaci.length === 0 && (
+            <p className="mt-1 text-xs text-text-muted">
+              Zatím není nikdo s oddělením „Projekťák". Přiřaď ho ve Správě uživatele.
+            </p>
+          )}
         </div>
 
         <PoznamkyBlok cil="project" cilId={projekt.id} notes={projekt.notes} />
