@@ -70,19 +70,60 @@ async function ensureCustomer(
   return data.id;
 }
 
+/**
+ * Uloží kontaktní osobu k zákazníkovi do tabulky contacts, pokud tam ještě
+ * není (shoda podle jména, bez ohledu na velikost písmen). U existujícího
+ * kontaktu jen doplní dosud prázdný telefon/e-mail (nepřepisuje). Používá se
+ * jak u nového zákazníka, tak u nové kontaktní osoby stálého zákazníka.
+ */
+async function ensureContact(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  customerId: string,
+  name?: string,
+  phone?: string,
+  email?: string,
+): Promise<void> {
+  const jmeno = name?.trim();
+  if (!jmeno) return;
+  const tel = phone?.trim() || null;
+  const mail = email?.trim() || null;
+
+  const { data: existujici } = await supabase
+    .from("contacts")
+    .select("id, phone, email")
+    .eq("customer_id", customerId)
+    .ilike("name", jmeno)
+    .limit(1);
+  const nalezeny = existujici?.[0];
+  if (nalezeny) {
+    const patch: { phone?: string; email?: string } = {};
+    if (!nalezeny.phone && tel) patch.phone = tel;
+    if (!nalezeny.email && mail) patch.email = mail;
+    if (Object.keys(patch).length > 0) await supabase.from("contacts").update(patch).eq("id", nalezeny.id);
+    return;
+  }
+  await supabase.from("contacts").insert({ customer_id: customerId, name: jmeno, phone: tel, email: mail });
+}
+
 // POST /api/inquiries → createInquiry
 export async function createInquiry(input: InquiryInput): Promise<ActionResult> {
   const auth = await requireWriter();
   if (auth.error !== undefined) return { ok: false, error: auth.error };
 
   // Odpovědná osoba je nepovinná (lze doplnit později přetažením na Tabuli).
+  // Kontaktní osoba je povinná.
   if (!input.subject || (!input.customerId && !input.newCustomer?.name)) {
     return { ok: false, error: "Vyplňte předmět a zákazníka." };
+  }
+  if (!input.contactName?.trim()) {
+    return { ok: false, error: "Vyplňte kontaktní osobu." };
   }
 
   const supabase = await createClient();
   const customerId = await ensureCustomer(supabase, input);
   if (!customerId) return { ok: false, error: "Zákazníka se nepodařilo uložit." };
+  // Nový zákazník i nová kontaktní osoba stálého zákazníka → uložit do contacts.
+  await ensureContact(supabase, customerId, input.contactName, input.contactPhone, input.contactEmail);
 
   const { data: created, error } = await supabase
     .from("inquiries")
@@ -112,6 +153,7 @@ export async function createInquiry(input: InquiryInput): Promise<ActionResult> 
   });
 
   revalidatePath("/poptavky");
+  revalidatePath("/zakaznici");
   return { ok: true, id: created.id };
 }
 
@@ -120,9 +162,12 @@ export async function updateInquiry(id: string, input: InquiryInput): Promise<Ac
   const auth = await requireWriter();
   if (auth.error !== undefined) return { ok: false, error: auth.error };
 
-  // Odpovědná osoba je nepovinná.
+  // Odpovědná osoba je nepovinná; kontaktní osoba je povinná.
   if (!input.subject || (!input.customerId && !input.newCustomer?.name)) {
     return { ok: false, error: "Chybí povinná pole." };
+  }
+  if (!input.contactName?.trim()) {
+    return { ok: false, error: "Vyplňte kontaktní osobu." };
   }
 
   const supabase = await createClient();
@@ -135,6 +180,7 @@ export async function updateInquiry(id: string, input: InquiryInput): Promise<Ac
 
   const customerId = await ensureCustomer(supabase, input);
   if (!customerId) return { ok: false, error: "Zákazníka se nepodařilo uložit." };
+  await ensureContact(supabase, customerId, input.contactName, input.contactPhone, input.contactEmail);
 
   // Při změně termínu resetujeme příznaky notifikací (chování původní app).
   const newDeadline = input.deadline ? new Date(input.deadline).toISOString() : null;
@@ -164,6 +210,7 @@ export async function updateInquiry(id: string, input: InquiryInput): Promise<Ac
 
   revalidatePath("/poptavky");
   revalidatePath(`/poptavky/${id}`);
+  revalidatePath("/zakaznici");
   return { ok: true, id };
 }
 
