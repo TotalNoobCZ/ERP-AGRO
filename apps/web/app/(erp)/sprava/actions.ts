@@ -43,7 +43,7 @@ export async function vytvoritProfil(_prev: ProfilStav, fd: FormData): Promise<P
   const supabase = await createClient();
   const { error } = await supabase.from("profiles").insert({
     name: d.name,
-    email: d.email,
+    email: d.email || null, // prázdný e-mail (dílna) → NULL kvůli unique
     role: d.role,
     oddeleni: d.oddeleni || null,
     assignable: d.assignable,
@@ -78,7 +78,7 @@ export async function upravitProfil(id: string, _prev: ProfilStav, fd: FormData)
     .from("profiles")
     .update({
       name: d.name,
-      email: d.email,
+      email: d.email || null, // prázdný e-mail (dílna) → NULL kvůli unique
       role: d.role,
       oddeleni: d.oddeleni || null,
       assignable: d.assignable,

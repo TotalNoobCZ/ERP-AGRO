@@ -6,10 +6,12 @@ import { nastavitHesloUzivateli } from "@/app/(erp)/sprava/heslo-actions";
 export function HesloSprava({
   profileId,
   maUcet,
+  maEmail,
   jmeno,
 }: {
   profileId: string;
   maUcet: boolean;
+  maEmail: boolean;
   jmeno: string;
 }) {
   const [heslo, setHeslo] = useState("");
@@ -59,6 +61,22 @@ export function HesloSprava({
     } catch {
       // Schránka nemusí být dostupná – heslo je stejně vidět.
     }
+  }
+
+  // Bez e-mailu se uživatel nepřihlašuje (typicky dílna) → heslo nedává smysl.
+  if (!maEmail) {
+    return (
+      <div className="card max-w-2xl space-y-2 p-6">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-text-muted">
+          Heslo uživatele
+        </h2>
+        <p className="text-xs text-text-muted">
+          Tento uživatel nemá e-mail, do systému se nepřihlašuje (slouží jen pro
+          přiřazování na zakázky/úkoly). Chceš-li mu přístup zřídit, doplň v profilu
+          e-mail a ulož.
+        </p>
+      </div>
+    );
   }
 
   return (

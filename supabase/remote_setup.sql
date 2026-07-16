@@ -38,7 +38,7 @@ $$;
 create table profiles (
   id            uuid primary key default gen_random_uuid(),
   auth_user_id  uuid unique references auth.users (id) on delete set null,
-  email         text not null unique,
+  email         text unique,   -- nepovinné: dílna se nepřihlašuje
   name          text not null,
   role          text not null default 'viewer'
                   check (role in ('admin', 'editor', 'viewer')),

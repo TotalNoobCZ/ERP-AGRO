@@ -37,7 +37,7 @@ type Fk<Col extends string, Table extends string> = {
 export type ProfileRow = {
   id: string;
   auth_user_id: string | null;
-  email: string;
+  email: string | null;
   name: string;
   role: "admin" | "editor" | "viewer";
   oddeleni: "obchod" | "dilna" | "kancelar" | "elektro" | "konstrukce" | null;
@@ -296,7 +296,7 @@ export type AbsenceRow = {
 export type Database = {
   public: {
     Tables: {
-      profiles: TableShape<ProfileRow, "email" | "name">;
+      profiles: TableShape<ProfileRow, "name">;
       customers: TableShape<CustomerRow, "name">;
       contacts: TableShape<ContactRow, "customer_id" | "name", [Fk<"customer_id", "customers">]>;
       inquiries: TableShape<

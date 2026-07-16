@@ -52,6 +52,9 @@ export async function nastavitHesloUzivateli(
     .maybeSingle();
   if (pErr) return { ok: false, chyba: "Chyba databáze." };
   if (!p) return { ok: false, chyba: "Uživatel nenalezen." };
+  if (!p.email) {
+    return { ok: false, chyba: "Uživatel nemá e-mail – nepřihlašuje se, heslo nelze nastavit." };
+  }
 
   if (p.auth_user_id) {
     // Účet existuje → jen změnit heslo.

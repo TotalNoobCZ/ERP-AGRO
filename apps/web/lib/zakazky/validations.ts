@@ -71,17 +71,30 @@ export const milnikSchema = z.object({
 });
 
 // Profil (Správa) – sjednocená náhrada za osobaSchema.
-export const profilSchema = z.object({
-  name: z.string().trim().min(1, "Zadejte jméno"),
-  email: z.string().trim().email("Neplatný e-mail"),
-  role: z.enum(["admin", "editor", "viewer"]),
-  oddeleni: z.enum(["obchod", "dilna", "kancelar", "elektro", "konstrukce"]).optional().or(z.literal("")),
-  assignable: z.boolean(),
-  colorIndex: z.coerce.number().int().min(0).max(9).optional(),
-  active: z.boolean(),
-  pozice: z.string().trim().optional(),
-  osobniCislo: z.string().trim().optional(),
-  poznamka: z.string().trim().optional(),
-});
+export const profilSchema = z
+  .object({
+    name: z.string().trim().min(1, "Zadejte jméno"),
+    // E-mail je nepovinný – lidé z dílny se nepřihlašují (viz superRefine níže).
+    email: z.string().trim().optional().or(z.literal("")),
+    role: z.enum(["admin", "editor", "viewer"]),
+    oddeleni: z.enum(["obchod", "dilna", "kancelar", "elektro", "konstrukce"]).optional().or(z.literal("")),
+    assignable: z.boolean(),
+    colorIndex: z.coerce.number().int().min(0).max(9).optional(),
+    active: z.boolean(),
+    pozice: z.string().trim().optional(),
+    osobniCislo: z.string().trim().optional(),
+    poznamka: z.string().trim().optional(),
+  })
+  .superRefine((data, ctx) => {
+    const email = data.email?.trim() ?? "";
+    // Dílna se nepřihlašuje → e-mail nemusí mít. Ostatní oddělení ho vyžadují.
+    if (data.oddeleni !== "dilna" && email === "") {
+      ctx.addIssue({ path: ["email"], code: z.ZodIssueCode.custom, message: "Zadejte e-mail" });
+    }
+    // Pokud e-mail vyplněný je (i u dílny), musí být platný.
+    if (email !== "" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      ctx.addIssue({ path: ["email"], code: z.ZodIssueCode.custom, message: "Neplatný e-mail" });
+    }
+  });
 
 export type ProfilInput = z.infer<typeof profilSchema>;

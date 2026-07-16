@@ -31,7 +31,7 @@ export default async function UpravitProfilPage({ params }: { params: Promise<{ 
         initial={{
           id: p.id,
           name: p.name,
-          email: p.email,
+          email: p.email ?? "",
           role: p.role,
           oddeleni: p.oddeleni,
           assignable: p.assignable,
@@ -43,7 +43,12 @@ export default async function UpravitProfilPage({ params }: { params: Promise<{ 
           maUcet: Boolean(p.auth_user_id),
         }}
       />
-      <HesloSprava profileId={p.id} maUcet={Boolean(p.auth_user_id)} jmeno={p.name} />
+      <HesloSprava
+        profileId={p.id}
+        maUcet={Boolean(p.auth_user_id)}
+        maEmail={Boolean(p.email)}
+        jmeno={p.name}
+      />
     </div>
   );
 }

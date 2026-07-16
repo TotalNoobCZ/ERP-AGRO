@@ -55,6 +55,10 @@ export function ProfilForm({
   const ch = stav.chyby ?? {};
   const isEdit = Boolean(initial?.id);
 
+  // Dílna se do systému nepřihlašuje → e-mail není povinný.
+  const [oddeleni, setOddeleni] = useState(initial?.oddeleni ?? "");
+  const emailNepovinny = oddeleni === "dilna";
+
   return (
     <form action={formAction} className="card max-w-2xl space-y-4 p-6">
       {stav.obecna && <p className="err">{stav.obecna}</p>}
@@ -66,9 +70,23 @@ export function ProfilForm({
           {ch.name && <p className="err">{ch.name}</p>}
         </div>
         <div>
-          <label className="label">E-mail (slouží k přihlášení)</label>
-          <input name="email" type="email" className="field" defaultValue={initial?.email ?? ""} required />
+          <label className="label">
+            E-mail {emailNepovinny ? "(nepovinné)" : "(slouží k přihlášení)"}
+          </label>
+          <input
+            name="email"
+            type="email"
+            className="field"
+            defaultValue={initial?.email ?? ""}
+            required={!emailNepovinny}
+            placeholder={emailNepovinny ? "dílna se nepřihlašuje – lze nechat prázdné" : ""}
+          />
           {ch.email && <p className="err">{ch.email}</p>}
+          {emailNepovinny && (
+            <p className="mt-1 text-xs text-text-muted">
+              Bez e-mailu se uživatel nepřihlašuje – slouží jen pro přiřazování na zakázky/úkoly.
+            </p>
+          )}
           {isEdit && initial?.maUcet && (
             <p className="mt-1 text-xs text-text-muted">Uživatel už má nastavené heslo.</p>
           )}
@@ -86,7 +104,12 @@ export function ProfilForm({
         </div>
         <div>
           <label className="label">Oddělení</label>
-          <select name="oddeleni" className="field" defaultValue={initial?.oddeleni ?? ""}>
+          <select
+            name="oddeleni"
+            className="field"
+            value={oddeleni}
+            onChange={(e) => setOddeleni(e.target.value)}
+          >
             <option value="">—</option>
             {ODDELENI.map((o) => (
               <option key={o} value={o}>{ODDELENI_LABELS[o]}</option>

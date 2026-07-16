@@ -68,14 +68,14 @@ export default async function SpravaPage() {
                 <TableCell className="font-medium">
                   <Link href={`/sprava/${p.id}`} className="hover:underline">{p.name}</Link>
                 </TableCell>
-                <TableCell className="text-muted-foreground">{p.email}</TableCell>
+                <TableCell className="text-muted-foreground">{p.email || "—"}</TableCell>
                 <TableCell>{ROLE_LABELS[p.role as Role]}</TableCell>
                 <TableCell className="text-muted-foreground">
                   {p.oddeleni ? ODDELENI_LABELS[p.oddeleni as Oddeleni] : "—"}
                 </TableCell>
                 <TableCell>{p.assignable ? "✓" : "—"}</TableCell>
                 <TableCell className="text-muted-foreground">
-                  {p.auth_user_id ? "má heslo" : "bez hesla"}
+                  {!p.email ? "nepřihlašuje se" : p.auth_user_id ? "má heslo" : "bez hesla"}
                 </TableCell>
                 <TableCell>
                   {p.active ? (
