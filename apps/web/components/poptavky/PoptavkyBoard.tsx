@@ -65,6 +65,13 @@ export default function PoptavkyBoard({
     return map;
   }, [osoby, poptavky]);
 
+  // Pravý sloupec = nepřidělené poptávky (bez osoby nebo s osobou mimo dlaždice).
+  // Jakmile poptávku přiřadíš, z pravého sloupce zmizí a zůstane jen v dlaždici.
+  const nezarazene = useMemo(
+    () => poptavky.filter((p) => !p.personId || !barvaOsoby.has(p.personId)),
+    [poptavky, barvaOsoby],
+  );
+
   async function priradit(inquiryId: string, personId: string) {
     setBusy(true);
     setChyba(null);
@@ -129,10 +136,10 @@ export default function PoptavkyBoard({
           )}
         </div>
 
-        {/* Pravá 2/3 – otevřené poptávky */}
+        {/* Pravá 2/3 – nepřidělené otevřené poptávky */}
         <div className="flex-1">
           <div className="columns-1 gap-3 md:columns-2 2xl:columns-3 [&>*]:mb-3 [&>*]:break-inside-avoid">
-            {poptavky.filter(matches).map((p) => (
+            {nezarazene.filter(matches).map((p) => (
               <PoptCard
                 key={p.id}
                 popt={p}
@@ -142,8 +149,10 @@ export default function PoptavkyBoard({
               />
             ))}
           </div>
-          {poptavky.filter(matches).length === 0 && (
-            <p className="text-sm text-text-muted">Žádné otevřené poptávky.</p>
+          {nezarazene.filter(matches).length === 0 && (
+            <p className="text-sm text-text-muted">
+              {q ? "Nic neodpovídá hledání." : "Všechny otevřené poptávky jsou přidělené. 🎉"}
+            </p>
           )}
         </div>
       </div>
