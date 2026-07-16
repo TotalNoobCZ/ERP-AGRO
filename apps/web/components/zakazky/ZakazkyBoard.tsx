@@ -17,6 +17,7 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { userColor } from "@erp/ui";
+import { ODDELENI, ODDELENI_LABELS, type Oddeleni } from "@erp/core";
 import { formatDen } from "@/lib/format";
 import { pridatPracovnika, odebratPracovnika } from "@/app/(erp)/zakazky/actions";
 import type { BoardOsobaZ, BoardZakazka } from "@/lib/zakazky-query";
@@ -56,6 +57,25 @@ export default function ZakazkyBoard({
     for (const o of osoby) m.set(o.id, o);
     return m;
   }, [osoby]);
+
+  // Osoby v levém sloupci rozdělené podle oddělení (dle hledání).
+  const skupiny = useMemo(() => {
+    const map = new Map<string, BoardOsobaZ[]>();
+    for (const o of osoby.filter(osobaMatches)) {
+      const key = o.oddeleni ?? "";
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(o);
+    }
+    const poradi = [...ODDELENI, ""];
+    return poradi
+      .filter((k) => map.has(k))
+      .map((k) => ({
+        key: k,
+        label: k ? ODDELENI_LABELS[k as Oddeleni] : "Bez oddělení",
+        lidi: map.get(k)!,
+      }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [osoby, q]);
 
   async function priradit(zakId: string, osobaId: string, vynutit: boolean) {
     setBusy(true);
@@ -121,16 +141,23 @@ export default function ZakazkyBoard({
       </div>
 
       <div className="flex gap-4">
-        {/* Levá 1/3 – přiřaditelné osoby (táhnou se) */}
-        <div className="w-1/3 min-w-[220px] space-y-1.5">
-          <p className="mb-1 text-sm font-semibold text-text-muted">Osoby</p>
-          {osoby.filter(osobaMatches).map((o) => (
-            <OsobaChip key={o.id} osoba={o} editable={editable} />
+        {/* Levá 1/3 – osoby rozdělené podle oddělení (táhnou se) */}
+        <div className="w-1/3 min-w-[220px] space-y-3">
+          {skupiny.map((g) => (
+            <div key={g.key} className="space-y-1.5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{g.label}</p>
+              {g.lidi.map((o) => (
+                <OsobaChip key={o.id} osoba={o} editable={editable} />
+              ))}
+            </div>
           ))}
           {osoby.length === 0 && (
             <p className="text-sm text-text-muted">
-              Žádné přiřaditelné osoby. Ve Správě zaškrtni „lze přiřazovat".
+              Žádné osoby. Přidej uživatele ve Správě.
             </p>
+          )}
+          {osoby.length > 0 && skupiny.length === 0 && (
+            <p className="text-sm text-text-muted">Nikdo neodpovídá hledání.</p>
           )}
         </div>
 
