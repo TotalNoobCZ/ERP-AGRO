@@ -44,7 +44,7 @@ create table profiles (
                   check (role in ('admin', 'editor', 'vedouci', 'viewer')),
   oddeleni      text
                   check (oddeleni in ('obchod', 'dilna', 'kancelar', 'elektro', 'konstrukce', 'projektak')),
-  assignable    boolean not null default false,   -- lze přiřazovat na úkoly/zakázky (dřívější has_tile / řešitel)
+  assignable    boolean not null default true,    -- lze přiřazovat na úkoly/zakázky (automatické u všech)
   color_index   int,                              -- 0–9, paleta dlaždic z Konstrukce
   tile_order    int,                              -- pořadí dlaždic členů (Konstrukce)
   active        boolean not null default true,

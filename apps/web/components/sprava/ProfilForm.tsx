@@ -128,10 +128,6 @@ export function ProfilForm({
 
       <div className="flex flex-wrap gap-6">
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" name="assignable" defaultChecked={initial?.assignable ?? false} />
-          Lze přiřazovat (řešitel / pracovník / dlaždice)
-        </label>
-        <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" name="active" defaultChecked={initial?.active ?? true} />
           Aktivní
         </label>

@@ -50,7 +50,6 @@ export default async function SpravaPage() {
               <TableHead>E-mail</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Oddělení</TableHead>
-              <TableHead>Přiřaditelný</TableHead>
               <TableHead>Účet</TableHead>
               <TableHead>Stav</TableHead>
             </TableRow>
@@ -73,7 +72,6 @@ export default async function SpravaPage() {
                 <TableCell className="text-muted-foreground">
                   {p.oddeleni ? ODDELENI_LABELS[p.oddeleni as Oddeleni] : "—"}
                 </TableCell>
-                <TableCell>{p.assignable ? "✓" : "—"}</TableCell>
                 <TableCell className="text-muted-foreground">
                   {!p.email ? "nepřihlašuje se" : p.auth_user_id ? "má heslo" : "bez hesla"}
                 </TableCell>

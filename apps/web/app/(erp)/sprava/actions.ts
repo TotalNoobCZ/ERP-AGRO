@@ -19,7 +19,7 @@ function ziskat(fd: FormData) {
     email: String(fd.get("email") ?? "").toLowerCase(),
     role: String(fd.get("role") ?? "viewer"),
     oddeleni: String(fd.get("oddeleni") ?? ""),
-    assignable: fd.get("assignable") === "on",
+    assignable: true, // automaticky u všech (pole ve formuláři zrušeno)
     colorIndex: Number(fd.get("colorIndex") ?? 0),
     active: fd.get("active") !== null ? fd.get("active") === "on" : true,
     pozice: String(fd.get("pozice") ?? ""),
