@@ -59,6 +59,8 @@ export default function PlanBoard({
   const [busy, setBusy] = useState(false);
   const [chyba, setChyba] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  // Sbalené akce v pravém sloupci (skryjí své projekty).
+  const [sbaleneAkce, setSbaleneAkce] = useState<Set<string>>(new Set());
 
   const q = query.trim().toLowerCase();
   const taskMatches = (u: Ukol) =>
@@ -188,6 +190,16 @@ export default function PlanBoard({
       )
     : projekty;
 
+  // Projekty seskupené pod akci (nadřazenou zakázku); pořadí dle prvního výskytu.
+  const akceSkupiny = useMemo(() => {
+    const map = new Map<string, { akceId: string; akceKod: string; projekty: Projekt[] }>();
+    for (const p of visibleProjekty) {
+      if (!map.has(p.akceId)) map.set(p.akceId, { akceId: p.akceId, akceKod: p.akceKod, projekty: [] });
+      map.get(p.akceId)!.projekty.push(p);
+    }
+    return Array.from(map.values());
+  }, [visibleProjekty]);
+
   return (
     <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
       {chyba && <p className="err mb-2">{chyba}</p>}
@@ -232,19 +244,46 @@ export default function PlanBoard({
               </button>
             )}
           </div>
-          <div className="columns-1 gap-3 md:columns-2 2xl:columns-3 [&>*]:mb-3 [&>*]:break-inside-avoid">
-            {visibleProjekty.map((p) => (
-              <ProjectTile
-                key={p.id}
-                projekt={p}
-                ukoly={(ukolyProjektu.get(p.id) ?? []).filter(taskMatches)}
-                clenove={clenove}
-                projektaci={projektaci}
-                editable={editable}
-                onOpen={() => setOpenProject(p.id)}
-                onTaskClick={(id) => setOpenTask(id)}
-              />
-            ))}
+          <div className="space-y-4">
+            {akceSkupiny.map((g) => {
+              const zavreno = sbaleneAkce.has(g.akceId);
+              return (
+                <div key={g.akceId}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSbaleneAkce((s) => {
+                        const n = new Set(s);
+                        if (n.has(g.akceId)) n.delete(g.akceId);
+                        else n.add(g.akceId);
+                        return n;
+                      })
+                    }
+                    className="mb-2 flex w-full items-center gap-2 border-b border-line pb-1 text-left text-sm font-bold hover:text-link"
+                  >
+                    <span className="inline-block w-3">{zavreno ? "▸" : "▾"}</span>
+                    <span className="font-mono">{g.akceKod}</span>
+                    <span className="font-normal text-text-muted">({g.projekty.length})</span>
+                  </button>
+                  {!zavreno && (
+                    <div className="columns-1 gap-3 md:columns-2 [&>*]:mb-3 [&>*]:break-inside-avoid">
+                      {g.projekty.map((p) => (
+                        <ProjectTile
+                          key={p.id}
+                          projekt={p}
+                          ukoly={(ukolyProjektu.get(p.id) ?? []).filter(taskMatches)}
+                          clenove={clenove}
+                          projektaci={projektaci}
+                          editable={editable}
+                          onOpen={() => setOpenProject(p.id)}
+                          onTaskClick={(id) => setOpenTask(id)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
           {q && visibleProjekty.length === 0 && (
             <p className="text-sm text-text-muted">Nic neodpovídá hledání.</p>

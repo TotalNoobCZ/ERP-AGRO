@@ -30,6 +30,8 @@ export type Projekt = {
   name: string;
   zakazkaId: string;
   zakazkaKod: string;
+  akceId: string;
+  akceKod: string;
   ownerId: string | null;
   ownerName: string | null;
   notes: Poznamka[];

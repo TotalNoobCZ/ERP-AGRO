@@ -125,7 +125,7 @@ export default function NapovedaPage() {
       <UL>
         <li><strong>Projekt vzniká automaticky se zakázkou</strong>; v detailu zakázky ho lze rozdělit na víc projektů.</li>
         <li><strong>Vedoucí projektu</strong> může být jen Projekťák nebo role Vedoucí.</li>
-        <li><strong>Plánovací tabule:</strong> vlevo dlaždice členů, vpravo projekty s úkoly. Přetáhni úkol na člena = přiřadíš řešitele; zpět doprava = odebereš; uvnitř dlaždice řadíš tažením.</li>
+        <li><strong>Plánovací tabule:</strong> vlevo dlaždice členů, vpravo projekty <strong>seskupené pod akci</strong> (sbalitelné). Přetáhni úkol na člena = přiřadíš řešitele; zpět doprava = odebereš; uvnitř dlaždice řadíš tažením.</li>
         <li><strong>Propojení:</strong> přiřazením řešitele k úkolu se <strong>konstruktér propíše k zakázce</strong> a je vidět v jejím detailu.</li>
         <li><strong>Gantt:</strong> termíny úkolů posouváš tažením; zobrazují se absence. Kolize systém vždy nahlásí (uložit lze i tak).</li>
         <li><strong>Absence</strong> se zadávají v dialogu člena (klik na dlaždici).</li>

@@ -31,7 +31,7 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
       .from("projects")
       .select(
         `id, name, zakazka_id, owner_id, status,
-         zakazka:zakazky(kod),
+         zakazka:zakazky(kod, parent_id, parent:zakazky!zakazky_parent_id_fkey(id, kod)),
          owner:profiles!projects_owner_id_fkey(name),
          project_notes(id, body, created_at, author:profiles(name)),
          project_todos(id, body, done, position)`,
@@ -75,7 +75,7 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
     name: string;
     zakazka_id: string;
     owner_id: string | null;
-    zakazka: { kod: string } | null;
+    zakazka: { kod: string; parent_id: string | null; parent: { id: string; kod: string } | null } | null;
     owner: { name: string } | null;
     project_notes: NoteRow[];
     project_todos: TodoRow[];
@@ -84,6 +84,9 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
     name: p.name,
     zakazkaId: p.zakazka_id,
     zakazkaKod: p.zakazka?.kod ?? "?",
+    // Akce = nadřazená zakázka (parent), jinak zakázka sama.
+    akceId: p.zakazka?.parent_id ?? p.zakazka_id,
+    akceKod: p.zakazka?.parent?.kod ?? p.zakazka?.kod ?? "?",
     ownerId: p.owner_id,
     ownerName: p.owner?.name ?? null,
     notes: mapNotes(p.project_notes),
