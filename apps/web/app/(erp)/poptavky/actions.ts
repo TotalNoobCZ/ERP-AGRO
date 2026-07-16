@@ -75,8 +75,9 @@ export async function createInquiry(input: InquiryInput): Promise<ActionResult> 
   const auth = await requireWriter();
   if (auth.error !== undefined) return { ok: false, error: auth.error };
 
-  if (!input.subject || !input.personId || (!input.customerId && !input.newCustomer?.name)) {
-    return { ok: false, error: "Vyplňte předmět, zákazníka a odpovědnou osobu." };
+  // Odpovědná osoba je nepovinná (lze doplnit později přetažením na Tabuli).
+  if (!input.subject || (!input.customerId && !input.newCustomer?.name)) {
+    return { ok: false, error: "Vyplňte předmět a zákazníka." };
   }
 
   const supabase = await createClient();
@@ -119,7 +120,8 @@ export async function updateInquiry(id: string, input: InquiryInput): Promise<Ac
   const auth = await requireWriter();
   if (auth.error !== undefined) return { ok: false, error: auth.error };
 
-  if (!input.subject || !input.personId || (!input.customerId && !input.newCustomer?.name)) {
+  // Odpovědná osoba je nepovinná.
+  if (!input.subject || (!input.customerId && !input.newCustomer?.name)) {
     return { ok: false, error: "Chybí povinná pole." };
   }
 
