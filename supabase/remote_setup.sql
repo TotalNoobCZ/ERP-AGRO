@@ -41,7 +41,7 @@ create table profiles (
   email         text unique,   -- nepovinné: dílna se nepřihlašuje
   name          text not null,
   role          text not null default 'viewer'
-                  check (role in ('admin', 'editor', 'viewer')),
+                  check (role in ('admin', 'editor', 'vedouci', 'viewer')),
   oddeleni      text
                   check (oddeleni in ('obchod', 'dilna', 'kancelar', 'elektro', 'konstrukce', 'projektak')),
   assignable    boolean not null default false,   -- lze přiřazovat na úkoly/zakázky (dřívější has_tile / řešitel)

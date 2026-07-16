@@ -1,17 +1,18 @@
 // Nová poptávka – načte číselníky a předá je formuláři.
 import { createClient, getCurrentProfile } from "@/lib/supabase/server";
-import { queryPersons } from "@/lib/poptavky-query";
+import { queryPersons, queryResponsibles } from "@/lib/poptavky-query";
 import { InquiryForm } from "@/components/poptavky/inquiry-form";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewInquiryPage() {
   const supabase = await createClient();
-  const [customersRes, persons, profile] = await Promise.all([
+  const [customersRes, persons, authors, profile] = await Promise.all([
     supabase
       .from("customers")
       .select("id, name, contacts(id, name, phone, email)")
       .order("name", { ascending: true }),
+    queryResponsibles(supabase),
     queryPersons(supabase),
     getCurrentProfile(),
   ]);
@@ -22,6 +23,7 @@ export default async function NewInquiryPage() {
       <InquiryForm
         customers={customersRes.data ?? []}
         persons={persons}
+        authors={authors}
         defaultAuthor={profile?.name ?? ""}
       />
     </div>

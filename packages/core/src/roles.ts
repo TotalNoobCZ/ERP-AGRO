@@ -6,12 +6,13 @@
 //    Poptávky Person (účet) → editor
 // ----------------------------------------------------------------------------
 
-export const ROLES = ["admin", "editor", "viewer"] as const;
+export const ROLES = ["admin", "editor", "vedouci", "viewer"] as const;
 export type Role = (typeof ROLES)[number];
 
 export const ROLE_LABELS: Record<Role, string> = {
   admin: "Administrátor",
   editor: "Zapisovat",
+  vedouci: "Vedoucí",
   viewer: "Číst",
 };
 
@@ -27,7 +28,7 @@ export const ODDELENI_LABELS: Record<Oddeleni, string> = {
   projektak: "Projekťák",
 };
 
-/** editor a admin smí zapisovat provozní data */
+/** editor a admin smí zapisovat provozní data (vedoucí i viewer jen čtou) */
 export function canWrite(role: Role): boolean {
   return role === "editor" || role === "admin";
 }

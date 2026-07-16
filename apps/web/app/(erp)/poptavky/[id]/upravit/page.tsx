@@ -1,7 +1,7 @@
 // Editace poptávky – načte data a předvyplní formulář.
 import { notFound } from "next/navigation";
 import { createClient, getCurrentProfile } from "@/lib/supabase/server";
-import { queryPersons } from "@/lib/poptavky-query";
+import { queryPersons, queryResponsibles } from "@/lib/poptavky-query";
 import { InquiryForm } from "@/components/poptavky/inquiry-form";
 
 export const dynamic = "force-dynamic";
@@ -10,18 +10,20 @@ export default async function EditInquiryPage({ params }: { params: Promise<{ id
   const { id } = await params;
   const supabase = await createClient();
 
-  const [inquiryRes, customersRes, persons, profile] = await Promise.all([
-    supabase.from("inquiries").select("*").eq("id", id).maybeSingle(),
+  const inquiryRes = await supabase.from("inquiries").select("*").eq("id", id).maybeSingle();
+  const inquiry = inquiryRes.data;
+  if (!inquiry) notFound();
+
+  const [customersRes, persons, authors, profile] = await Promise.all([
     supabase
       .from("customers")
       .select("id, name, contacts(id, name, phone, email)")
       .order("name", { ascending: true }),
+    // Zachovej už přiřazenou osobu, i kdyby dnes pravidlo nesplňovala.
+    queryResponsibles(supabase, inquiry.person_id),
     queryPersons(supabase),
     getCurrentProfile(),
   ]);
-
-  const inquiry = inquiryRes.data;
-  if (!inquiry) notFound();
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
@@ -29,6 +31,7 @@ export default async function EditInquiryPage({ params }: { params: Promise<{ id
       <InquiryForm
         customers={customersRes.data ?? []}
         persons={persons}
+        authors={authors}
         defaultAuthor={profile?.name ?? ""}
         initial={{
           id: inquiry.id,

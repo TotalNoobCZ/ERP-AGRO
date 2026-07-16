@@ -39,7 +39,7 @@ export type ProfileRow = {
   auth_user_id: string | null;
   email: string | null;
   name: string;
-  role: "admin" | "editor" | "viewer";
+  role: "admin" | "editor" | "vedouci" | "viewer";
   oddeleni: "obchod" | "dilna" | "kancelar" | "elektro" | "konstrukce" | "projektak" | null;
   assignable: boolean;
   color_index: number | null;

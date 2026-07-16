@@ -131,14 +131,14 @@ export async function upravitProjekt(
   if (patch.ownerId !== undefined) {
     const ownerId = patch.ownerId || null;
     if (ownerId) {
-      // Vedoucím projektu smí být jen člověk z oddělení „Projekťák".
+      // Vedoucím projektu smí být jen Projekťák (oddělení) nebo role Vedoucí.
       const { data: owner } = await supabase
         .from("profiles")
-        .select("oddeleni")
+        .select("oddeleni, role")
         .eq("id", ownerId)
         .maybeSingle();
-      if (owner?.oddeleni !== "projektak") {
-        return { ok: false, chyba: "Vedoucím projektu může být jen uživatel z oddělení Projekťák." };
+      if (owner?.oddeleni !== "projektak" && owner?.role !== "vedouci") {
+        return { ok: false, chyba: "Vedoucím projektu může být jen Projekťák nebo uživatel s rolí Vedoucí." };
       }
     }
     update.owner_id = ownerId;

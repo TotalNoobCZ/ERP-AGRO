@@ -21,12 +21,12 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
       .eq("oddeleni", "konstrukce")
       .order("tile_order", { ascending: true, nullsFirst: false })
       .order("name", { ascending: true }),
-    // Projekťáci: možní vedoucí projektu (oddělení Projekťák).
+    // Možní vedoucí projektu: oddělení Projekťák NEBO role Vedoucí.
     supabase
       .from("profiles")
       .select("id, name, color_index, tile_order")
       .eq("active", true)
-      .eq("oddeleni", "projektak")
+      .or("oddeleni.eq.projektak,role.eq.vedouci")
       .order("name", { ascending: true }),
     supabase
       .from("projects")

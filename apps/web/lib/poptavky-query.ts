@@ -88,7 +88,7 @@ export async function queryInquiries(
   return (data ?? []) as unknown as InquiryListRow[];
 }
 
-/** Číselník osob pro filtry a formuláře = aktivní profily. */
+/** Číselník osob pro filtry a autora = aktivní profily. */
 export async function queryPersons(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data } = await supabase
     .from("profiles")
@@ -96,4 +96,32 @@ export async function queryPersons(supabase: Awaited<ReturnType<typeof createCli
     .eq("active", true)
     .order("name", { ascending: true });
   return data ?? [];
+}
+
+/**
+ * Osoby, které smí být odpovědné za poptávku = role Vedoucí NEBO oddělení
+ * Projekťák. `includeId` navíc přidá už přiřazenou osobu, i kdyby dnes
+ * pravidlo nesplňovala (aby se v editaci neztratila).
+ */
+export async function queryResponsibles(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  includeId?: string | null,
+) {
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, name, email")
+    .eq("active", true)
+    .or("role.eq.vedouci,oddeleni.eq.projektak")
+    .order("name", { ascending: true });
+  const list = data ?? [];
+
+  if (includeId && !list.some((p) => p.id === includeId)) {
+    const { data: current } = await supabase
+      .from("profiles")
+      .select("id, name, email")
+      .eq("id", includeId)
+      .maybeSingle();
+    if (current) list.push(current);
+  }
+  return list;
 }

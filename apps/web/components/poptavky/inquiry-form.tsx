@@ -38,14 +38,17 @@ const SOURCE_OPTIONS = ["Mail", "Telefon", "Přímé oslovení"];
 export function InquiryForm({
   customers,
   persons,
+  authors,
   initial,
   defaultAuthor,
 }: {
   customers: Customer[];
-  persons: Person[];
+  persons: Person[]; // odpovědná osoba = vedoucí / Projekťák
+  authors?: Person[]; // autor (pro historii) = kdokoli aktivní; fallback na persons
   initial?: InitialValues;
   defaultAuthor: string;
 }) {
+  const authorList = authors ?? persons;
   const router = useRouter();
   const isEdit = Boolean(initial?.id);
 
@@ -75,7 +78,7 @@ export function InquiryForm({
     }));
   }
 
-  const [author, setAuthor] = useState(defaultAuthor || persons[0]?.name || "");
+  const [author, setAuthor] = useState(defaultAuthor || authorList[0]?.name || "");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -209,6 +212,11 @@ export function InquiryForm({
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </Select>
+            {persons.length === 0 && (
+              <p className="mt-1 text-xs text-text-muted">
+                Odpovědnou osobou může být jen uživatel s rolí „Vedoucí" nebo z oddělení „Projekťák". Přiřaď je ve Správě.
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -262,7 +270,7 @@ export function InquiryForm({
           <CardContent className="pt-6">
             <Label htmlFor="author">Zakládá (pro historii)</Label>
             <Select id="author" value={author} onChange={(e) => setAuthor(e.target.value)}>
-              {persons.map((p) => (
+              {authorList.map((p) => (
                 <option key={p.id} value={p.name}>{p.name}</option>
               ))}
             </Select>
