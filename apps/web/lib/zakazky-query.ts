@@ -10,6 +10,8 @@ export type ZakazkaListRow = {
   id: string;
   kod: string;
   misto_plneni: string;
+  popis: string | null;
+  parent_id: string | null;
   priorita: number;
   zacatek: string;
   konec_aktualni: string;
@@ -30,7 +32,7 @@ export async function queryZakazky(
   let query = supabase
     .from("zakazky")
     .select(
-      "id, kod, misto_plneni, priorita, zacatek, konec_aktualni, stav, inquiry_id, odpovedna:profiles!zakazky_odpovedna_osoba_id_fkey(name), prirazeni:prirazeni_zakazka(count)",
+      "id, kod, misto_plneni, popis, parent_id, priorita, zacatek, konec_aktualni, stav, inquiry_id, odpovedna:profiles!zakazky_odpovedna_osoba_id_fkey(name), prirazeni:prirazeni_zakazka(count)",
     )
     .is("deleted_at", null)
     .order("priorita", { ascending: true })

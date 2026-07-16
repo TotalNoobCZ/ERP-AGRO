@@ -252,6 +252,63 @@ export async function vytvoritZakazku(_prev: ZakazkaStav, fd: FormData): Promise
   redirect(`/zakazky/${zakazka.id}`);
 }
 
+/**
+ * Rychlé založení podzakázky z detailu hlavní akce (inline lišta).
+ * Podzakázka je plnohodnotná zakázka s vlastním číslem; místo, termíny,
+ * prioritu a zákazníka zdědí od hlavní akce (lze později upravit).
+ */
+export async function vytvoritPodzakazku(
+  parentId: string,
+  cislo: string,
+  popis: string,
+): Promise<{ ok: boolean; chyba?: string }> {
+  const u = await writer();
+  if (!u) return { ok: false, chyba: "Nemáte právo zápisu." };
+  if (!cislo.trim()) return { ok: false, chyba: "Zadejte číslo zakázky." };
+  const supabase = await createClient();
+
+  const { data: parent } = await supabase
+    .from("zakazky")
+    .select("id, misto_plneni, zacatek, konec_aktualni, priorita, customer_id, deleted_at")
+    .eq("id", parentId)
+    .maybeSingle();
+  if (!parent || parent.deleted_at) return { ok: false, chyba: "Hlavní akce nenalezena." };
+
+  const { data: child, error } = await supabase
+    .from("zakazky")
+    .insert({
+      kod: cislo.trim(),
+      misto_plneni: parent.misto_plneni,
+      popis: popis.trim() || null,
+      priorita: parent.priorita,
+      zacatek: parent.zacatek,
+      konec_puvodni: parent.konec_aktualni,
+      konec_aktualni: parent.konec_aktualni,
+      parent_id: parentId,
+      customer_id: parent.customer_id,
+      zalozil_id: u.id,
+    })
+    .select("id")
+    .single();
+  if (error || !child) {
+    if (error?.code === "23505") return { ok: false, chyba: "Zakázka s tímto číslem už existuje." };
+    return { ok: false, chyba: "Uložení se nezdařilo." };
+  }
+
+  await supabase.from("projects").insert({ zakazka_id: child.id, name: cislo.trim(), owner_id: null });
+  await zapisAudit(supabase, {
+    entita: "zakazka",
+    entitaId: child.id,
+    typZmeny: "VYTVORENI",
+    uzivatelId: u.id,
+    nova: { kod: cislo.trim(), podzakazkaZ: parentId },
+  });
+  revalidatePath(`/zakazky/${parentId}`);
+  revalidatePath("/zakazky");
+  revalidatePath("/konstrukce");
+  return { ok: true };
+}
+
 /** Řešitel kolize – rozdělení původního nasazení kolem nového období + náhradník. */
 export async function vyresitKolizi(
   prirazeniId: string,

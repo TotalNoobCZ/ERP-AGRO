@@ -205,6 +205,7 @@ create table zakazky (
                        check (stav in ('AKTIVNI','POZASTAVENO','DOKONCENO','ARCHIV')),
   archivovano_kdy    timestamptz,
   poznamka           text,
+  popis              text,                          -- „oč se jedná" (hlavně u podzakázek)
 
   zalozil_id         uuid not null references profiles (id) on delete restrict, -- dřívější zalozilUzivatel
   archivoval_id      uuid references profiles (id),

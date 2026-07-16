@@ -17,6 +17,7 @@ import {
 import { ProdlouzeniForm, PreruseniForm, PoznamkyAkce, MilnikyEditor } from "@/components/zakazky/formulare";
 import Timeline, { type TRadek } from "@/components/zakazky/Timeline";
 import { ZalozitProjekt } from "@/components/konstrukce/ZalozitProjekt";
+import { ZalozitPodzakazku } from "@/components/zakazky/ZalozitPodzakazku";
 import type { StavZakazky } from "@erp/core";
 
 export const dynamic = "force-dynamic";
@@ -78,7 +79,7 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
   // Podzakázky (dceřiné) + odkaz na hlavní akci.
   const { data: podzakazkyData } = await supabase
     .from("zakazky")
-    .select("id, kod, misto_plneni, stav, konec_aktualni")
+    .select("id, kod, misto_plneni, popis, stav, konec_aktualni")
     .eq("parent_id", z.id)
     .is("deleted_at", null)
     .order("kod", { ascending: true });
@@ -86,6 +87,7 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
     id: string;
     kod: string;
     misto_plneni: string;
+    popis: string | null;
     stav: StavZakazky;
     konec_aktualni: string;
   }[];
@@ -256,6 +258,23 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
         </div>
       </section>
 
+      {/* Podzakázky (dceřiné akce) – rychlé založení pod Přiřazenými pracovníky */}
+      <section className="card space-y-3 p-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-text-muted">Podzakázky</h2>
+        {podzakazky.length > 0 && (
+          <div className="divide-y divide-line rounded-md border border-line">
+            {podzakazky.map((p) => (
+              <Link key={p.id} href={`/zakazky/${p.id}`} className="flex items-center gap-3 px-3 py-2 text-sm hover:bg-accent">
+                <span className="font-mono font-semibold">{p.kod}</span>
+                <span className="flex-1 truncate text-text-muted">{p.popis || p.misto_plneni}</span>
+                <StavBadge z={{ konecAktualni: parseDay(p.konec_aktualni), stav: p.stav }} />
+              </Link>
+            ))}
+          </div>
+        )}
+        <ZalozitPodzakazku parentId={z.id} />
+      </section>
+
       <MilnikyEditor
         zakazkaId={z.id}
         milniky={milniky.map((m) => ({
@@ -320,28 +339,6 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
         )}
       </section>
 
-      {/* Podzakázky (dceřiné akce) */}
-      <section className="card p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-text-muted">Podzakázky</h2>
-          <Link href={`/zakazky/nova?parent=${z.id}`} className="btn-ghost px-2 py-1 text-sm">
-            + Přidat podzakázku
-          </Link>
-        </div>
-        {podzakazky.length === 0 ? (
-          <p className="text-sm text-text-muted">Žádné podzakázky. Rozděl akci na dceřiné zakázky tlačítkem výše.</p>
-        ) : (
-          <div className="divide-y divide-line rounded-md border border-line">
-            {podzakazky.map((p) => (
-              <Link key={p.id} href={`/zakazky/${p.id}`} className="flex items-center gap-3 px-3 py-2 text-sm hover:bg-accent">
-                <span className="font-mono font-semibold">{p.kod}</span>
-                <span className="flex-1 truncate text-text-muted">{p.misto_plneni}</span>
-                <StavBadge z={{ konecAktualni: parseDay(p.konec_aktualni), stav: p.stav }} />
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
 
       {/* Integrace: konstrukční projekty této zakázky */}
       <section className="card p-4">
