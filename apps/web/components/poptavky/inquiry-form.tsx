@@ -166,32 +166,51 @@ export function InquiryForm({
             </Select>
           </div>
 
-          {/* Kontakt firmy – předvyplní kontaktní pole */}
-          {customerMode === "existing" && selectedCustomer && (selectedCustomer.contacts?.length ?? 0) > 0 && (
-            <div>
-              <Label htmlFor="contactPick">Kontakt firmy</Label>
-              <Select id="contactPick" value={selectedContactId} onChange={(e) => selectContact(e.target.value)}>
-                <option value="">— vyberte / zadat ručně —</option>
-                {selectedCustomer.contacts!.map((ct) => (
-                  <option key={ct.id} value={ct.id}>{ct.name}{ct.phone ? ` (${ct.phone})` : ""}</option>
-                ))}
-              </Select>
+          {/* Kontaktní osoba – u existujícího zákazníka jen jeho kontakty */}
+          {customerMode === "existing" && selectedCustomer && (selectedCustomer.contacts?.length ?? 0) > 0 ? (
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div>
+                <Label htmlFor="contactPick">Kontaktní osoba</Label>
+                <Select id="contactPick" value={selectedContactId} onChange={(e) => selectContact(e.target.value)}>
+                  <option value="">— zadat ručně —</option>
+                  {selectedCustomer.contacts!.map((ct) => (
+                    <option key={ct.id} value={ct.id}>{ct.name}</option>
+                  ))}
+                </Select>
+                {!selectedContactId && (
+                  <Input
+                    className="mt-2"
+                    placeholder="Jméno kontaktu"
+                    value={contactName ?? ""}
+                    onChange={(e) => setContactName(e.target.value)}
+                  />
+                )}
+              </div>
+              <div>
+                <Label htmlFor="contactPhone">Telefon kontaktu</Label>
+                <Input id="contactPhone" value={contactPhone ?? ""} onChange={(e) => setContactPhone(e.target.value)} />
+              </div>
+              <div>
+                <Label htmlFor="contactEmail">E-mail kontaktu</Label>
+                <Input id="contactEmail" value={contactEmail ?? ""} onChange={(e) => setContactEmail(e.target.value)} />
+              </div>
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div>
+                <Label htmlFor="contactName">Kontaktní osoba</Label>
+                <Input id="contactName" value={contactName ?? ""} onChange={(e) => setContactName(e.target.value)} />
+              </div>
+              <div>
+                <Label htmlFor="contactPhone">Telefon kontaktu</Label>
+                <Input id="contactPhone" value={contactPhone ?? ""} onChange={(e) => setContactPhone(e.target.value)} />
+              </div>
+              <div>
+                <Label htmlFor="contactEmail">E-mail kontaktu</Label>
+                <Input id="contactEmail" value={contactEmail ?? ""} onChange={(e) => setContactEmail(e.target.value)} />
+              </div>
             </div>
           )}
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div>
-              <Label htmlFor="contactName">Kontaktní osoba</Label>
-              <Input id="contactName" value={contactName ?? ""} onChange={(e) => setContactName(e.target.value)} />
-            </div>
-            <div>
-              <Label htmlFor="contactPhone">Telefon kontaktu</Label>
-              <Input id="contactPhone" value={contactPhone ?? ""} onChange={(e) => setContactPhone(e.target.value)} />
-            </div>
-            <div>
-              <Label htmlFor="contactEmail">E-mail kontaktu</Label>
-              <Input id="contactEmail" value={contactEmail ?? ""} onChange={(e) => setContactEmail(e.target.value)} />
-            </div>
-          </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -205,18 +224,17 @@ export function InquiryForm({
           </div>
 
           <div>
-            <Label htmlFor="person">Odpovědná osoba *</Label>
-            <Select id="person" value={personId} onChange={(e) => setPersonId(e.target.value)} required>
-              <option value="">— vyberte —</option>
+            <Label htmlFor="person">Odpovědná osoba</Label>
+            <Select id="person" value={personId} onChange={(e) => setPersonId(e.target.value)}>
+              <option value="">— nepřiřazeno —</option>
               {persons.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </Select>
-            {persons.length === 0 && (
-              <p className="mt-1 text-xs text-text-muted">
-                Odpovědnou osobou může být jen uživatel s rolí „Vedoucí" nebo z oddělení „Projekťák". Přiřaď je ve Správě.
-              </p>
-            )}
+            <p className="mt-1 text-xs text-text-muted">
+              Nepovinné – můžeš doplnit později přetažením na Tabuli poptávek.
+              Vybrat lze jen roli „Vedoucí" nebo oddělení „Projekťák".
+            </p>
           </div>
         </CardContent>
       </Card>

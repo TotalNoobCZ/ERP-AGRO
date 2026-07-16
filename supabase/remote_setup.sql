@@ -131,7 +131,7 @@ create table inquiries (
   deadline         timestamptz,                  -- termín pro vypracování nabídky
 
   customer_id      uuid not null references customers (id) on delete restrict,
-  person_id        uuid not null references profiles (id)  on delete restrict, -- dřívější Person
+  person_id        uuid references profiles (id)  on delete restrict, -- dřívější Person (nepovinné)
 
   -- Příznaky notifikací (v Poptávkách existovaly; v ERP se maily neposílají,
   -- pole ale ponecháváme kvůli 1:1 migraci historických dat).

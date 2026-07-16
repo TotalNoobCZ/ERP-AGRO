@@ -42,7 +42,7 @@ export type InquiryInput = {
   contactEmail?: string;
   customerId?: string;
   newCustomer?: NewCustomerInput;
-  personId: string;
+  personId?: string; // odpovědná osoba – nepovinná (lze doplnit později na Tabuli)
   deadline?: string; // YYYY-MM-DD
   receivedAt?: string; // YYYY-MM-DD
   author?: string; // kdo zakládá (pro historii)
@@ -93,7 +93,7 @@ export async function createInquiry(input: InquiryInput): Promise<ActionResult> 
       contact_phone: input.contactPhone || null,
       contact_email: input.contactEmail || null,
       customer_id: customerId,
-      person_id: input.personId,
+      person_id: input.personId || null,
       deadline: input.deadline ? new Date(input.deadline).toISOString() : null,
       received_at: input.receivedAt ? new Date(input.receivedAt).toISOString() : new Date().toISOString(),
       status: "NOVA",
@@ -150,7 +150,7 @@ export async function updateInquiry(id: string, input: InquiryInput): Promise<Ac
       contact_phone: input.contactPhone || null,
       contact_email: input.contactEmail || null,
       customer_id: customerId,
-      person_id: input.personId,
+      person_id: input.personId || null,
       deadline: newDeadline,
       received_at: input.receivedAt
         ? new Date(input.receivedAt).toISOString()

@@ -96,7 +96,7 @@ export type InquiryRow = {
   status: InquiryStatusDb;
   deadline: string | null;
   customer_id: string;
-  person_id: string;
+  person_id: string | null;
   reminder_sent: boolean;
   expired_notified: boolean;
   needs_contact: boolean;
@@ -301,7 +301,7 @@ export type Database = {
       contacts: TableShape<ContactRow, "customer_id" | "name", [Fk<"customer_id", "customers">]>;
       inquiries: TableShape<
         InquiryRow,
-        "subject" | "customer_id" | "person_id",
+        "subject" | "customer_id",
         [Fk<"customer_id", "customers">, Fk<"person_id", "profiles">]
       >;
       comments: TableShape<CommentRow, "inquiry_id" | "text" | "author", [Fk<"inquiry_id", "inquiries">]>;

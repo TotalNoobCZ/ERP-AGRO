@@ -42,7 +42,7 @@ export default async function EditInquiryPage({ params }: { params: Promise<{ id
           contactPhone: inquiry.contact_phone,
           contactEmail: inquiry.contact_email,
           customerId: inquiry.customer_id,
-          personId: inquiry.person_id,
+          personId: inquiry.person_id ?? "",
           deadline: inquiry.deadline ? inquiry.deadline.slice(0, 10) : "",
           receivedAt: inquiry.received_at.slice(0, 10),
         }}
