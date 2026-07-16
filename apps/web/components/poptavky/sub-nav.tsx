@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { cn } from "@/lib/cn";
 import { LinkSpinner } from "@/components/LinkSpinner";
+import { PinButton } from "@/components/PinButton";
 
 const TABS = [
   { href: "/poptavky/dashboard", label: "Přehled" },
@@ -29,17 +30,19 @@ function Tabs({ canWrite }: { canWrite: boolean }) {
   return (
     <div className="mb-4 flex flex-wrap items-center gap-1 border-b pb-3">
       {TABS.map((t) => (
-        <Link
-          key={t.href}
-          href={t.href}
-          className={cn(
-            "rounded-md px-3 py-1.5 text-sm font-medium transition",
-            isActive(t.href) ? "bg-accent text-text" : "text-text-muted hover:text-text",
-          )}
-        >
-          {t.label}
-          <LinkSpinner />
-        </Link>
+        <span key={t.href} className="inline-flex items-center">
+          <Link
+            href={t.href}
+            className={cn(
+              "rounded-md px-3 py-1.5 text-sm font-medium transition",
+              isActive(t.href) ? "bg-accent text-text" : "text-text-muted hover:text-text",
+            )}
+          >
+            {t.label}
+            <LinkSpinner />
+          </Link>
+          <PinButton modul="poptavky" href={t.href} />
+        </span>
       ))}
       {canWrite && (
         <Link

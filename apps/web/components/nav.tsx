@@ -7,6 +7,7 @@ import { userColor } from "@erp/ui";
 import { ROLE_LABELS, isAdmin, type Role } from "@erp/core";
 import { ThemeToggle } from "@/components/theme";
 import { LinkSpinner } from "@/components/LinkSpinner";
+import { pinKey } from "@/components/PinButton";
 
 // Hlavní karty vždy otevřou záložku Přehled; `match` řídí zvýraznění pro
 // celý modul (i ostatní jeho podstránky). Správa jen pro administrátory.
@@ -48,6 +49,18 @@ export function Nav({ name, role, colorIndex }: NavProps) {
             <Link
               key={m.href}
               href={m.href}
+              onClick={(e) => {
+                // Otevři přišpendlenou záložku uživatele, pokud nějakou má.
+                try {
+                  const pin = localStorage.getItem(pinKey(m.match.slice(1)));
+                  if (pin && pin !== m.href) {
+                    e.preventDefault();
+                    router.push(pin);
+                  }
+                } catch {
+                  /* ignore */
+                }
+              }}
               className={
                 "inline-flex items-center rounded-lg border px-4 py-2 text-sm font-semibold transition " +
                 (active
