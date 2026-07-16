@@ -77,6 +77,14 @@ export function Nav({ name, role, colorIndex }: NavProps) {
 
       <div className="flex items-center gap-3">
         <ThemeToggle />
+        <Link
+          href="/napoveda"
+          title="Nápověda / manuál"
+          aria-label="Nápověda"
+          className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-line text-sm font-bold text-text-muted transition hover:border-link hover:text-link"
+        >
+          i
+        </Link>
         <span
           className="inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-on-accent"
           style={{ backgroundColor: userColor(colorIndex) }}
