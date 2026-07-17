@@ -18,6 +18,7 @@ import {
 import { KONSTRUKCE_LABELS } from "@erp/core";
 import { COLOR_TOKENS, userColor } from "@erp/ui";
 import { formatDen } from "@/lib/format";
+import { usePersistentSet } from "@/lib/usePersistentSet";
 import {
   upravitUkol,
   vytvoritUkol,
@@ -63,7 +64,7 @@ export default function PlanBoard({
   const [chyba, setChyba] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   // Sbalené akce v pravém sloupci (skryjí své projekty).
-  const [sbaleneAkce, setSbaleneAkce] = useState<Set<string>>(new Set());
+  const { has: jeAkceZavrena, toggle: prepnoutAkci } = usePersistentSet("erp_konstrukce_plan_sbaleneAkce");
 
   const q = query.trim().toLowerCase();
   const taskMatches = (u: Ukol) =>
@@ -255,19 +256,12 @@ export default function PlanBoard({
           </div>
           <div className="space-y-4">
             {akceSkupiny.map((g) => {
-              const zavreno = sbaleneAkce.has(g.akceId);
+              const zavreno = jeAkceZavrena(g.akceId);
               return (
                 <div key={g.akceId}>
                   <button
                     type="button"
-                    onClick={() =>
-                      setSbaleneAkce((s) => {
-                        const n = new Set(s);
-                        if (n.has(g.akceId)) n.delete(g.akceId);
-                        else n.add(g.akceId);
-                        return n;
-                      })
-                    }
+                    onClick={() => prepnoutAkci(g.akceId)}
                     className="mb-2 flex w-full items-center gap-2 border-b border-line pb-1 text-left text-sm font-bold hover:text-link"
                   >
                     <span className="inline-block w-3">{zavreno ? "▸" : "▾"}</span>

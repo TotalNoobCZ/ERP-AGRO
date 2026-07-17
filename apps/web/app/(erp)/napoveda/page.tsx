@@ -2,7 +2,7 @@
 // při změnách funkcí aktualizuj tuto stránku i datum níže.
 import type { ReactNode } from "react";
 
-const AKTUALIZOVANO = "16. 7. 2026 (kontakt povinný a ukládaný, termín poptávky ze seznamu i tabule)";
+const AKTUALIZOVANO = "17. 7. 2026 (odpovědné osoby na tabuli, trvalé sbalení skupin, Gantt předěly)";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +56,7 @@ export default function NapovedaPage() {
         <li><strong>Vstupní rozcestník</strong> — klikni na název <strong>„ERP Strojírenská divize"</strong> v hlavičce; zobrazí se dlaždice modulů.</li>
         <li><strong>Hlavní karty</strong> (Poptávky · Zakázky · Konstrukce; Správa jen admin) tě pustí na <strong>Přehled</strong> modulu.</li>
         <li><strong>Podnavigace</strong> — záložky uvnitř modulu (Přehled / Gantt / Akce / Tabule / Archiv…).</li>
+        <li><strong>Sbalení se pamatuje:</strong> sbalené/rozbalené skupiny (akce, oddělení, zakázky k akci, seznamy) zůstanou i po přechodu na jinou kartu nebo obnovení stránky.</li>
         <li><strong>📌 Přišpendlení záložky</strong> — klikni na špendlík u záložky; ta se stane výchozí a otevře se jako první po kliknutí na kartu modulu. Nastavení je osobní (drží se v prohlížeči).</li>
         <li><strong>Světlý/tmavý režim</strong> — přepínač 🌙/☀️ v hlavičce.</li>
         <li><strong>Načítání</strong> — po kliknutí je hned vidět indikátor „Načítám…".</li>

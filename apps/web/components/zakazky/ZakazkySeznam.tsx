@@ -1,9 +1,9 @@
 "use client";
 // Seznam akcí. U hlavní akce se zobrazí VŠICHNI lidé (napříč jejími zakázkami),
 // šipkou se rozbalí zakázky k akci a u každé jsou její lidé.
-import { useState } from "react";
 import Link from "next/link";
 import { parseDay, formatCz } from "@/lib/zakazky/dates";
+import { usePersistentSet } from "@/lib/usePersistentSet";
 import { StavBadge } from "@/components/zakazky/common";
 import { userColor } from "@erp/ui";
 import type { ZakazkaListRow } from "@/lib/zakazky-query";
@@ -47,19 +47,12 @@ function Zahlavi({ z }: { z: ZakazkaListRow }) {
 }
 
 export function ZakazkySeznam({ uzly }: { uzly: Uzel[] }) {
-  const [open, setOpen] = useState<Set<string>>(new Set());
-  const toggle = (id: string) =>
-    setOpen((s) => {
-      const n = new Set(s);
-      if (n.has(id)) n.delete(id);
-      else n.add(id);
-      return n;
-    });
+  const { has: jeOtevreno, toggle } = usePersistentSet("erp_zakazky_seznam_open");
 
   return (
     <div className="card divide-y divide-line">
       {uzly.map(({ row, deti, lideAkce }) => {
-        const otevreno = open.has(row.id);
+        const otevreno = jeOtevreno(row.id);
         return (
           <div key={row.id}>
             <div className="flex items-start hover:bg-accent">

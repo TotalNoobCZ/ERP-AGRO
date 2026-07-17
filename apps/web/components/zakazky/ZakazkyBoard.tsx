@@ -19,6 +19,7 @@ import {
 import { userColor } from "@erp/ui";
 import { ODDELENI, ODDELENI_LABELS, KAPITOLY, KAPITOLA_LABELS, ODDELENI_KAPITOLA } from "@erp/core";
 import { formatDen } from "@/lib/format";
+import { usePersistentSet } from "@/lib/usePersistentSet";
 import { pridatPracovnika, odebratPracovnika, nastavitOdpovednouOsobu } from "@/app/(erp)/zakazky/actions";
 import type { BoardOsobaZ, BoardZakazka } from "@/lib/zakazky-query";
 
@@ -50,9 +51,9 @@ export default function ZakazkyBoard({
   const [chyba, setChyba] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   // Sbalená oddělení v levém sloupci (klíč oddělení, "" = bez oddělení).
-  const [sbalene, setSbalene] = useState<Set<string>>(new Set());
+  const { has: jeSbaleno, toggle: prepnoutSkupinu } = usePersistentSet("erp_zakazky_tabule_sbalene");
   // Sbalené seznamy zakázek k akci (v pravém sloupci).
-  const [sbaleneAkce, setSbaleneAkce] = useState<Set<string>>(new Set());
+  const { has: jeAkceSbalena, toggle: prepnoutAkci } = usePersistentSet("erp_zakazky_tabule_sbaleneAkce");
   // Potvrzení kolize (osoba obsazená u jiné akce).
   const [potvrzeni, setPotvrzeni] = useState<{ zakId: string; osobaId: string; text: string } | null>(null);
 
@@ -129,15 +130,6 @@ export default function ZakazkyBoard({
     return kapitoly;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [osoby, q]);
-
-  function prepnoutSkupinu(key: string) {
-    setSbalene((s) => {
-      const next = new Set(s);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  }
 
   async function priradit(zakId: string, osobaId: string, vynutit: boolean) {
     setBusy(true);
@@ -222,7 +214,7 @@ export default function ZakazkyBoard({
         <div className="w-1/3 min-w-[220px] space-y-3">
           {/* Odpovědné osoby (projekťák / vedoucí) – přetažením = odpovědná osoba. */}
           {odpovedneOsoby.length > 0 && (() => {
-            const zavreno = sbalene.has("kap:_odpovedne");
+            const zavreno = jeSbaleno("kap:_odpovedne");
             return (
               <div className="space-y-1.5 rounded-lg border border-link/30 bg-link/5 p-2">
                 <button
@@ -246,7 +238,7 @@ export default function ZakazkyBoard({
             );
           })()}
           {strom.map((kap) => {
-            const kapZavreno = sbalene.has(`kap:${kap.key}`);
+            const kapZavreno = jeSbaleno(`kap:${kap.key}`);
             return (
               <div key={kap.key} className="space-y-1.5">
                 <button
@@ -260,7 +252,7 @@ export default function ZakazkyBoard({
                 </button>
                 {!kapZavreno &&
                   kap.depts.map((d) => {
-                    const depZavreno = sbalene.has(`dep:${d.key}`);
+                    const depZavreno = jeSbaleno(`dep:${d.key}`);
                     return (
                       <div key={d.key} className="ml-3 space-y-1.5">
                         <button
@@ -315,20 +307,13 @@ export default function ZakazkyBoard({
                     <div className="ml-3 mt-1 border-l-2 border-link/40 pl-3">
                       <button
                         type="button"
-                        onClick={() =>
-                          setSbaleneAkce((s) => {
-                            const n = new Set(s);
-                            if (n.has(g.akce.id)) n.delete(g.akce.id);
-                            else n.add(g.akce.id);
-                            return n;
-                          })
-                        }
+                        onClick={() => prepnoutAkci(g.akce.id)}
                         className="flex items-center gap-1 py-1 text-xs font-medium text-text-muted hover:text-text"
                       >
-                        <span className="inline-block w-3">{sbaleneAkce.has(g.akce.id) ? "▸" : "▾"}</span>
+                        <span className="inline-block w-3">{jeAkceSbalena(g.akce.id) ? "▸" : "▾"}</span>
                         Zakázky k akci ({g.deti.length})
                       </button>
-                      {!sbaleneAkce.has(g.akce.id) && (
+                      {!jeAkceSbalena(g.akce.id) && (
                         <div className="mt-1 space-y-2">
                           {g.deti.map((d) => (
                             <ZakazkaTile

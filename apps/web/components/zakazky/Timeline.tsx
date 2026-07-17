@@ -3,6 +3,7 @@
 // barvy dle tématu, logika 1:1. Navíc: volitelné tažení pruhů
 // (posun celé akce / roztažení konce) přes pointer events.
 import { useRef, useState } from "react";
+import { usePersistentSet } from "@/lib/usePersistentSet";
 import Link from "next/link";
 import { celkovaSirka, offsetPx, sirkaPx, mesicniZnacky, PX_ZA_DEN } from "@/lib/zakazky/timeline";
 import { today, formatCz, addDays } from "@/lib/zakazky/dates";
@@ -48,18 +49,10 @@ export default function Timeline({
   /** volá se po puštění taženého pruhu s posunem ve dnech (≠ 0) */
   onBarDrag?: (dragId: string, deltaDays: number, mode: DragMode) => void;
 }) {
-  const [otevrene, setOtevrene] = useState<Set<string>>(new Set());
+  const { has: jeOtevreno, toggle } = usePersistentSet("erp_zakazky_plan_otevrene");
   const [drag, setDrag] = useState<DragState | null>(null);
   const dragRef = useRef<DragState | null>(null);
   const movedRef = useRef(false);
-
-  const toggle = (id: string) =>
-    setOtevrene((s) => {
-      const n = new Set(s);
-      if (n.has(id)) n.delete(id);
-      else n.add(id);
-      return n;
-    });
 
   const sirka = celkovaSirka(start, konec);
   const znacky = mesicniZnacky(start, konec);
@@ -131,7 +124,7 @@ export default function Timeline({
   function radekEl(r: TRadek, hloubka: number) {
     const vyska = r.pocetRad * LANE_H + 8;
     const maPodradky = !!r.podradky?.length;
-    const otevreno = otevrene.has(r.id);
+    const otevreno = jeOtevreno(r.id);
     return (
       <div key={`${r.id}@${hloubka}`} className="flex border-b border-line">
         <div style={{ width: LABEL_W, paddingLeft: 12 + hloubka * 16 }} className="sticky left-0 z-10 shrink-0 bg-surface py-2 pr-3">
@@ -220,7 +213,7 @@ export default function Timeline({
     return (
       <div>
         {radekEl(r, hloubka)}
-        {otevrene.has(r.id) && r.podradky?.map((pr) => <RadekStrom key={`${pr.id}@${hloubka + 1}`} r={pr} hloubka={hloubka + 1} />)}
+        {jeOtevreno(r.id) && r.podradky?.map((pr) => <RadekStrom key={`${pr.id}@${hloubka + 1}`} r={pr} hloubka={hloubka + 1} />)}
       </div>
     );
   }
