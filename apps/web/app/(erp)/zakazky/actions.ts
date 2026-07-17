@@ -955,6 +955,42 @@ export async function odebratPracovnika(prirazeniId: string, duvod: string): Pro
   return { ok: true };
 }
 
+/**
+ * Nastaví (nebo zruší) odpovědnou osobu zakázky – z tabule přetažením
+ * projekťáka / vedoucího. Odpovědnou osobou smí být jen Projekťák nebo Vedoucí.
+ */
+export async function nastavitOdpovednouOsobu(zakazkaId: string, osobaId: string | null): Promise<PracVysledek> {
+  const u = await writer();
+  if (!u) return { ok: false, chyba: "Nejste přihlášeni nebo nemáte právo zápisu." };
+  const supabase = await createClient();
+
+  const { data: z } = await supabase.from("zakazky").select("id, deleted_at").eq("id", zakazkaId).maybeSingle();
+  if (!z || z.deleted_at) return { ok: false, chyba: "Akce nenalezena." };
+
+  let jmeno = "—";
+  if (osobaId) {
+    const { data: osoba } = await supabase
+      .from("profiles").select("name, oddeleni, role, active").eq("id", osobaId).maybeSingle();
+    if (!osoba || !osoba.active) return { ok: false, chyba: "Osoba nenalezena." };
+    if (osoba.oddeleni !== "projektak" && osoba.role !== "vedouci") {
+      return { ok: false, chyba: "Odpovědnou osobou může být jen Projekťák nebo Vedoucí." };
+    }
+    jmeno = osoba.name;
+  }
+
+  const { error } = await supabase.from("zakazky").update({ odpovedna_osoba_id: osobaId }).eq("id", zakazkaId);
+  if (error) return { ok: false, chyba: "Uložení se nezdařilo." };
+  await zapisAudit(supabase, {
+    entita: "zakazka", entitaId: zakazkaId, typZmeny: "UPRAVA", uzivatelId: u.id,
+    nova: { popis: osobaId ? `Odpovědná osoba: ${jmeno}` : "Odpovědná osoba zrušena" },
+  });
+  revalidatePath(`/zakazky/${zakazkaId}`);
+  revalidatePath(`/zakazky/${zakazkaId}/upravit`);
+  revalidatePath("/zakazky/tabule");
+  revalidatePath("/zakazky/plan");
+  return { ok: true };
+}
+
 export async function zmenitTerminPracovnika(
   prirazeniId: string, od: string, doStr: string, duvod: string, vynutit = false,
 ): Promise<PracVysledek> {

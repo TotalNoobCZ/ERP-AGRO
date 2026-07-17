@@ -56,8 +56,9 @@ export async function queryZakazky(
 
 // ---------- Tabule zakázek (obrácené drag & drop: osoba → zakázka) ----------
 
-export type BoardOsobaZ = { id: string; name: string; oddeleni: string | null; colorIndex: number | null };
+export type BoardOsobaZ = { id: string; name: string; oddeleni: string | null; role: string | null; colorIndex: number | null };
 export type BoardPrirazeni = { prirazeniId: string; osobaId: string; name: string; oddeleni: string | null; colorIndex: number | null };
+export type BoardOdpovedna = { id: string; name: string; colorIndex: number | null };
 export type BoardZakazka = {
   id: string;
   kod: string;
@@ -67,6 +68,7 @@ export type BoardZakazka = {
   zacatek: string;
   konecAktualni: string;
   odpovednaOsobaId: string | null;
+  odpovednaOsoba: BoardOdpovedna | null;
   pracovnici: BoardPrirazeni[];
 };
 
@@ -77,7 +79,7 @@ export async function queryZakazkyBoard(
   const [osobyRes, zakRes] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, name, oddeleni, color_index")
+      .select("id, name, oddeleni, role, color_index")
       .eq("active", true)
       .eq("assignable", true)
       .order("name", { ascending: true }),
@@ -85,6 +87,7 @@ export async function queryZakazkyBoard(
       .from("zakazky")
       .select(
         "id, kod, misto_plneni, popis, parent_id, zacatek, konec_aktualni, odpovedna_osoba_id, " +
+          "odpovedna:profiles!zakazky_odpovedna_osoba_id_fkey(id, name, color_index), " +
           "prirazeni:prirazeni_zakazka(id, osoba_id, deleted_at, osoba:profiles(id, name, oddeleni, color_index))",
       )
       .is("deleted_at", null)
@@ -96,6 +99,7 @@ export async function queryZakazkyBoard(
     id: o.id,
     name: o.name,
     oddeleni: o.oddeleni,
+    role: o.role,
     colorIndex: o.color_index,
   }));
 
@@ -108,6 +112,7 @@ export async function queryZakazkyBoard(
     zacatek: string;
     konec_aktualni: string;
     odpovedna_osoba_id: string | null;
+    odpovedna: { id: string; name: string; color_index: number | null } | null;
     prirazeni: Array<{
       id: string;
       osoba_id: string;
@@ -137,6 +142,9 @@ export async function queryZakazkyBoard(
       zacatek: z.zacatek,
       konecAktualni: z.konec_aktualni,
       odpovednaOsobaId: z.odpovedna_osoba_id,
+      odpovednaOsoba: z.odpovedna
+        ? { id: z.odpovedna.id, name: z.odpovedna.name, colorIndex: z.odpovedna.color_index }
+        : null,
       pracovnici,
     };
   });
