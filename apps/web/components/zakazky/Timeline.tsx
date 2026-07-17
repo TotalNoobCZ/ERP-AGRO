@@ -163,7 +163,7 @@ export default function Timeline({
 
             const bar = (
               <div
-                className={`relative flex h-[20px] items-center overflow-hidden whitespace-nowrap rounded px-2 text-[11px] font-medium text-white ${draggable ? "cursor-grab active:cursor-grabbing" : ""} ${isDragged ? "opacity-80 ring-2 ring-link" : ""}`}
+                className={`relative mx-px flex h-[20px] items-center overflow-hidden whitespace-nowrap rounded border border-white/25 px-2 text-[11px] font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_0_0_1px_rgba(0,0,0,0.25)] ${draggable ? "cursor-grab active:cursor-grabbing" : ""} ${isDragged ? "opacity-80 ring-2 ring-link" : ""}`}
                 style={{ backgroundColor: b.barva }}
                 title={b.titulek}
                 onPointerDown={draggable ? (e) => startDrag(e, b.dragId!, "move") : undefined}

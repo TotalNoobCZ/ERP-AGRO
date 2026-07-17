@@ -263,7 +263,7 @@ export default function Gantt({
                           style={{ left, width: Math.max(PX_ZA_DEN, width) }}
                         >
                           <div
-                            className={`relative flex h-[20px] items-center gap-1 overflow-hidden whitespace-nowrap rounded px-2 text-[11px] text-black/85 ${editable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}`}
+                            className={`relative mx-px flex h-[20px] items-center gap-1 overflow-hidden whitespace-nowrap rounded border border-black/20 px-2 text-[11px] text-black/85 shadow-[0_0_0_1px_rgba(0,0,0,0.2)] ${editable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}`}
                             style={{ backgroundColor: barva }}
                             title={`${u.name} — ${u.projectName} (${formatCz(od)} – ${formatCz(doo)}${u.durationDays ? `, ${u.durationDays} prac. dní` : ""})`}
                             onPointerDown={editable ? (e) => startDrag(e, u.id, "move") : undefined}
