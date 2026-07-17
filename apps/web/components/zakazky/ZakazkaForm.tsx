@@ -42,6 +42,12 @@ export default function ZakazkaForm({
   parent?: { id: string; kod: string } | null; // hlavní akce (zakládám podzakázku)
 }) {
   const [stav, formAction] = useActionState<ZakazkaStav, FormData>(vytvoritZakazku, {});
+  // Řízená pole – aby se po neúspěšném odeslání (React 19 resetuje formulář
+  // se server akcí) zadané údaje nesmazaly.
+  const [kod, setKod] = useState(inquiry?.subject ?? "");
+  const [mistoPlneni, setMistoPlneni] = useState("");
+  const [priorita, setPriorita] = useState("3");
+  const [poznamka, setPoznamka] = useState("");
   const [zacatek, setZacatek] = useState("");
   const [konec, setKonec] = useState("");
   const [odpovedny, setOdpovedny] = useState("");
@@ -98,12 +104,12 @@ export default function ZakazkaForm({
           <div>
             <label className="label">Název akce *</label>
             {/* Z poptávky předvyplníme názvem poptávky – lze změnit. */}
-            <input name="kod" className="field" required defaultValue={inquiry?.subject ?? ""} />
+            <input name="kod" className="field" required value={kod} onChange={(e) => setKod(e.target.value)} />
             {ch.kod && <p className="err">{ch.kod}</p>}
           </div>
           <div>
             <label className="label">Priorita</label>
-            <select name="priorita" className="field" defaultValue="3">
+            <select name="priorita" className="field" value={priorita} onChange={(e) => setPriorita(e.target.value)}>
               <option value={1}>1 – nejvyšší</option>
               <option value={2}>2</option>
               <option value={3}>3</option>
@@ -116,7 +122,7 @@ export default function ZakazkaForm({
 
         <div>
           <label className="label">Místo plnění *</label>
-          <input name="mistoPlneni" className="field" required />
+          <input name="mistoPlneni" className="field" required value={mistoPlneni} onChange={(e) => setMistoPlneni(e.target.value)} />
           {ch.mistoPlneni && <p className="err">{ch.mistoPlneni}</p>}
         </div>
 
@@ -188,7 +194,7 @@ export default function ZakazkaForm({
 
         <div>
           <label className="label">Poznámka</label>
-          <textarea name="poznamka" className="field" rows={2} />
+          <textarea name="poznamka" className="field" rows={2} value={poznamka} onChange={(e) => setPoznamka(e.target.value)} />
         </div>
 
         <div className="flex gap-3 pt-2">

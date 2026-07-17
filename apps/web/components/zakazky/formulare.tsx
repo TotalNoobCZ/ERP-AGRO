@@ -50,6 +50,11 @@ export function ZakazkaEditForm({
   const [stav, formAction] = useActionState<ZakazkaStav, FormData>(akce, {});
   const [odpovedny, setOdpovedny] = useState(zakazka.odpovednaOsobaId ?? "");
   const [zacatek, setZacatek] = useState(zakazka.zacatek);
+  // Řízená pole – aby se po neúspěšném uložení zadané údaje nesmazaly (React 19).
+  const [kod, setKod] = useState(zakazka.kod);
+  const [priorita, setPriorita] = useState(String(zakazka.priorita));
+  const [mistoPlneni, setMistoPlneni] = useState(zakazka.mistoPlneni);
+  const [poznamka, setPoznamka] = useState(zakazka.poznamka ?? "");
   const ch = stav.chyby ?? {};
 
   return (
@@ -59,12 +64,12 @@ export function ZakazkaEditForm({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="label">Název akce *</label>
-          <input name="kod" className="field" defaultValue={zakazka.kod} required />
+          <input name="kod" className="field" value={kod} onChange={(e) => setKod(e.target.value)} required />
           {ch.kod && <p className="err">{ch.kod}</p>}
         </div>
         <div>
           <label className="label">Priorita</label>
-          <select name="priorita" className="field" defaultValue={String(zakazka.priorita)}>
+          <select name="priorita" className="field" value={priorita} onChange={(e) => setPriorita(e.target.value)}>
             <option value={1}>1 – nejvyšší</option>
             <option value={2}>2</option>
             <option value={3}>3</option>
@@ -76,7 +81,7 @@ export function ZakazkaEditForm({
 
       <div>
         <label className="label">Místo plnění *</label>
-        <input name="mistoPlneni" className="field" defaultValue={zakazka.mistoPlneni} required />
+        <input name="mistoPlneni" className="field" value={mistoPlneni} onChange={(e) => setMistoPlneni(e.target.value)} required />
         {ch.mistoPlneni && <p className="err">{ch.mistoPlneni}</p>}
       </div>
 
@@ -99,7 +104,7 @@ export function ZakazkaEditForm({
 
       <div>
         <label className="label">Poznámka</label>
-        <textarea name="poznamka" className="field" rows={2} defaultValue={zakazka.poznamka ?? ""} />
+        <textarea name="poznamka" className="field" rows={2} value={poznamka} onChange={(e) => setPoznamka(e.target.value)} />
       </div>
 
       <div className="flex gap-3 pt-2">
@@ -118,6 +123,7 @@ export function ProdlouzeniForm({
 }) {
   const [stav, formAction] = useActionState<ZakazkaStav, FormData>(akce, {});
   const [novyKonec, setNovyKonec] = useState("");
+  const [duvod, setDuvod] = useState("");
   const ch = stav.chyby ?? {};
   return (
     <form action={formAction} className="flex flex-wrap items-end gap-3">
@@ -129,7 +135,7 @@ export function ProdlouzeniForm({
       </div>
       <div className="grow">
         <label className="label">Důvod (povinný)</label>
-        <input name="duvod" className="field" required />
+        <input name="duvod" className="field" value={duvod} onChange={(e) => setDuvod(e.target.value)} required />
         {ch.duvod && <p className="err">{ch.duvod}</p>}
       </div>
       <Btn label="Uložit termín" />
@@ -147,6 +153,7 @@ export function PreruseniForm({
 }) {
   const [stav, formAction] = useActionState<ZakazkaStav, FormData>(akce, {});
   const [datum, setDatum] = useState("");
+  const [duvod, setDuvod] = useState("");
   const ch = stav.chyby ?? {};
 
   return (
@@ -161,7 +168,7 @@ export function PreruseniForm({
           </div>
           <div className="grow">
             <label className="label">Důvod (povinný)</label>
-            <input name="duvod" className="field" required />
+            <input name="duvod" className="field" value={duvod} onChange={(e) => setDuvod(e.target.value)} required />
             {ch.duvod && <p className="err">{ch.duvod}</p>}
           </div>
           <Btn label="Přerušit akci" />

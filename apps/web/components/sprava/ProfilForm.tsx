@@ -56,8 +56,18 @@ export function ProfilForm({
   const ch = stav.chyby ?? {};
   const isEdit = Boolean(initial?.id);
 
-  // Kapitola Dílna se do systému nepřihlašuje → e-mail není povinný.
+  // Řízená pole – aby se po neúspěšném uložení (React 19 resetuje formulář se
+  // server akcí) zadané údaje nesmazaly.
+  const [name, setName] = useState(initial?.name ?? "");
+  const [email, setEmail] = useState(initial?.email ?? "");
+  const [role, setRole] = useState(initial?.role ?? "viewer");
   const [oddeleni, setOddeleni] = useState(initial?.oddeleni ?? "");
+  const [colorIndex, setColorIndex] = useState(String(initial?.colorIndex ?? 0));
+  const [active, setActive] = useState(initial?.active ?? true);
+  const [sefkonstrukter, setSefkonstrukter] = useState(initial?.sefkonstrukter ?? false);
+  const [pozice, setPozice] = useState(initial?.pozice ?? "");
+  const [osobniCislo, setOsobniCislo] = useState(initial?.osobniCislo ?? "");
+  const [poznamka, setPoznamka] = useState(initial?.poznamka ?? "");
   const emailNepovinny = jeDilna(oddeleni);
 
   return (
@@ -67,7 +77,7 @@ export function ProfilForm({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="label">Jméno a příjmení</label>
-          <input name="name" className="field" defaultValue={initial?.name ?? ""} required />
+          <input name="name" className="field" value={name} onChange={(e) => setName(e.target.value)} required />
           {ch.name && <p className="err">{ch.name}</p>}
         </div>
         <div>
@@ -78,7 +88,8 @@ export function ProfilForm({
             name="email"
             type="email"
             className="field"
-            defaultValue={initial?.email ?? ""}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required={!emailNepovinny}
             placeholder={emailNepovinny ? "dílna se nepřihlašuje – lze nechat prázdné" : ""}
           />
@@ -97,7 +108,7 @@ export function ProfilForm({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div>
           <label className="label">Role</label>
-          <select name="role" className="field" defaultValue={initial?.role ?? "viewer"}>
+          <select name="role" className="field" value={role} onChange={(e) => setRole(e.target.value)}>
             {ROLES.map((r) => (
               <option key={r} value={r}>{ROLE_LABELS[r]}</option>
             ))}
@@ -123,7 +134,7 @@ export function ProfilForm({
         </div>
         <div>
           <label className="label">Barva (dlaždice)</label>
-          <select name="colorIndex" className="field" defaultValue={String(initial?.colorIndex ?? 0)}>
+          <select name="colorIndex" className="field" value={colorIndex} onChange={(e) => setColorIndex(e.target.value)}>
             {USER_PALETTE.map((hex, i) => (
               <option key={hex} value={i}>{USER_PALETTE_NAMES[i]}</option>
             ))}
@@ -133,12 +144,12 @@ export function ProfilForm({
 
       <div className="flex flex-wrap gap-6">
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" name="active" defaultChecked={initial?.active ?? true} />
+          <input type="checkbox" name="active" checked={active} onChange={(e) => setActive(e.target.checked)} />
           Aktivní
         </label>
         {oddeleni === "konstrukce" && (
           <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" name="sefkonstrukter" defaultChecked={initial?.sefkonstrukter ?? false} />
+            <input type="checkbox" name="sefkonstrukter" checked={sefkonstrukter} onChange={(e) => setSefkonstrukter(e.target.checked)} />
             Šéfkonstruktér
             <span className="text-xs text-text-muted">(smí odebírat konstruktéry ze zakázek)</span>
           </label>
@@ -148,17 +159,17 @@ export function ProfilForm({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="label">Pozice (nepovinné)</label>
-          <input name="pozice" className="field" defaultValue={initial?.pozice ?? ""} />
+          <input name="pozice" className="field" value={pozice} onChange={(e) => setPozice(e.target.value)} />
         </div>
         <div>
           <label className="label">Osobní číslo (nepovinné)</label>
-          <input name="osobniCislo" className="field" defaultValue={initial?.osobniCislo ?? ""} />
+          <input name="osobniCislo" className="field" value={osobniCislo} onChange={(e) => setOsobniCislo(e.target.value)} />
         </div>
       </div>
 
       <div>
         <label className="label">Poznámka</label>
-        <textarea name="poznamka" className="field" rows={2} defaultValue={initial?.poznamka ?? ""} />
+        <textarea name="poznamka" className="field" rows={2} value={poznamka} onChange={(e) => setPoznamka(e.target.value)} />
       </div>
 
       <div className="flex gap-3 pt-2">
