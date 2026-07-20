@@ -280,7 +280,7 @@ function PoptCard({
       onClick={onOpen}
       className={`cursor-pointer rounded-md p-2 text-sm shadow-sm transition ${isDragging ? "opacity-40" : ""} ${editable ? "hover:brightness-110" : ""}`}
       style={{ backgroundColor: barva, color: "#16181b" }}
-      title={popt.subject}
+      data-tip={popt.description || popt.subject}
     >
       <p className="truncate font-semibold">#{popt.number} · {popt.subject}</p>
       <p className="truncate text-xs opacity-75">{popt.customerName}</p>

@@ -49,7 +49,12 @@ export default async function OdlozenePage() {
                 <TableRow key={inq.id} className={due ? "bg-amber-50" : undefined}>
                   <TableCell className="font-mono text-muted-foreground">{inq.number}</TableCell>
                   <TableCell>
-                    <Link href={`/poptavky/${inq.id}`} className="font-medium hover:underline">
+                    <Link
+                      href={`/poptavky/${inq.id}`}
+                      className="font-medium hover:underline"
+                      data-tip={inq.description || undefined}
+                      data-tip-pos="bottom"
+                    >
                       {inq.subject}
                     </Link>
                   </TableCell>

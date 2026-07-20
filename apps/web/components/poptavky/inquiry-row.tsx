@@ -15,6 +15,7 @@ export type InquiryRowData = {
   id: string;
   number: number;
   subject: string;
+  description: string | null;
   customerName: string;
   contactName: string | null;
   contactPhone: string | null;
@@ -116,7 +117,11 @@ export function InquiryRow({ inq }: { inq: InquiryRowData }) {
     <>
       <TableRow className={`cursor-pointer hover:bg-accent ${hasContact ? "border-0" : ""}`} onClick={open}>
         <TableCell className="text-muted-foreground">#{inq.number}</TableCell>
-        <TableCell className="font-medium">{inq.subject}</TableCell>
+        <TableCell className="font-medium">
+          <span data-tip={inq.description || undefined} data-tip-pos="bottom">
+            {inq.subject}
+          </span>
+        </TableCell>
         <TableCell>{inq.customerName}</TableCell>
         <TableCell>{inq.personName}</TableCell>
         <TableCell className="whitespace-nowrap">{formatDate(inq.receivedAt)}</TableCell>

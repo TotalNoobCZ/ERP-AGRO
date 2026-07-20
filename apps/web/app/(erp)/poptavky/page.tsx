@@ -76,6 +76,7 @@ export default async function InquiriesPage({
                   id: inq.id,
                   number: inq.number,
                   subject: inq.subject,
+                  description: inq.description,
                   customerName: inq.customer?.name ?? "—",
                   contactName: inq.contact_name,
                   contactPhone: inq.contact_phone,

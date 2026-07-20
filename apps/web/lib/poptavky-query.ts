@@ -93,6 +93,7 @@ export type OdlozenaRow = {
   id: string;
   number: number;
   subject: string;
+  description: string | null;
   status: InquiryStatus;
   remind_at: string | null;
   deadline: string | null;
@@ -106,7 +107,7 @@ export async function queryOdlozene(
 ): Promise<OdlozenaRow[]> {
   const { data } = await supabase
     .from("inquiries")
-    .select("id, number, subject, status, remind_at, deadline, customer:customers(name), person:profiles(id, name)")
+    .select("id, number, subject, description, status, remind_at, deadline, customer:customers(name), person:profiles(id, name)")
     .eq("status", "ODLOZENO")
     .order("remind_at", { ascending: true, nullsFirst: false });
   return (data ?? []) as unknown as OdlozenaRow[];
@@ -177,6 +178,7 @@ export type BoardPoptavka = {
   id: string;
   number: number;
   subject: string;
+  description: string | null;
   status: InquiryStatus;
   deadline: string | null;
   personId: string | null;
@@ -197,7 +199,7 @@ export async function queryPoptavkyBoard(
     // Jen otevřené poptávky (uzavřené se nepřiřazují).
     supabase
       .from("inquiries")
-      .select("id, number, subject, status, deadline, person_id, customer:customers(name)")
+      .select("id, number, subject, description, status, deadline, person_id, customer:customers(name)")
       .not("status", "in", `(${INQUIRY_CLOSED_STATUSES.join(",")})`)
       .order("number", { ascending: false }),
   ]);
@@ -215,6 +217,7 @@ export async function queryPoptavkyBoard(
       id: p.id,
       number: p.number,
       subject: p.subject,
+      description: p.description,
       status: p.status as InquiryStatus,
       deadline: p.deadline,
       personId: p.person_id,

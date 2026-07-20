@@ -38,7 +38,13 @@ function Zahlavi({ z }: { z: ZakazkaListRow }) {
       <span title="Priorita (1 = nejvyšší, 5 = nejnižší)" className="w-8 shrink-0 text-center text-xs font-semibold text-text-muted">
         P{z.priorita}
       </span>
-      <span className="font-mono text-sm font-semibold">{z.kod}</span>
+      <span
+        className="font-mono text-sm font-semibold"
+        data-tip={z.popis || z.misto_plneni || undefined}
+        data-tip-pos="bottom"
+      >
+        {z.kod}
+      </span>
       <span className="min-w-0 flex-1 truncate text-sm text-text-muted">{z.popis || z.misto_plneni}</span>
       <span className="hidden text-sm text-text-muted sm:inline">{formatCz(parseDay(z.konec_aktualni))}</span>
       <StavBadge z={{ konecAktualni: parseDay(z.konec_aktualni), stav: z.stav }} />
