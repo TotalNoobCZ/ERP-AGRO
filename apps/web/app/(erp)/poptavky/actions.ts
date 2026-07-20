@@ -299,6 +299,10 @@ export async function deleteInquiry(id: string): Promise<ActionResult> {
   if (auth.error !== undefined) return { ok: false, error: auth.error };
 
   const supabase = await createClient();
+  // Zakázky vzniklé z poptávky odkazují na inquiries bez kaskády (RESTRICT) –
+  // odpojíme je (i měkce smazané), jinak by FK bránil smazání. Komentáře a
+  // historii stavů smaže databáze kaskádou.
+  await supabase.from("zakazky").update({ inquiry_id: null }).eq("inquiry_id", id);
   const { error } = await supabase.from("inquiries").delete().eq("id", id);
   if (error) return { ok: false, error: "Smazání se nezdařilo." };
   revalidatePath("/poptavky");
