@@ -67,8 +67,9 @@ export async function queryInquiries(
   } else if (contact === "1") {
     // Pohled "ke kontaktování" – stav neomezujeme.
   } else {
-    // Hlavní seznam NEzobrazuje "Objednáno" – mají vlastní záložku.
-    query = query.neq("status", "OBJEDNANO");
+    // Hlavní seznam NEzobrazuje „Objednáno" (vlastní záložka) ani „Odloženo"
+    // (skryté, dokud nepřijde připomenutí – vlastní záložka „Odložené").
+    query = query.not("status", "in", "(OBJEDNANO,ODLOZENO)");
   }
   if (personId) query = query.eq("person_id", personId);
   if (contact === "1") query = query.eq("needs_contact", true);
@@ -86,6 +87,49 @@ export async function queryInquiries(
 
   const { data } = await query;
   return (data ?? []) as unknown as InquiryListRow[];
+}
+
+export type OdlozenaRow = {
+  id: string;
+  number: number;
+  subject: string;
+  status: InquiryStatus;
+  remind_at: string | null;
+  deadline: string | null;
+  customer: { name: string } | null;
+  person: { id: string; name: string } | null;
+};
+
+/** Seznam všech odložených poptávek, seřazený podle data připomenutí. */
+export async function queryOdlozene(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<OdlozenaRow[]> {
+  const { data } = await supabase
+    .from("inquiries")
+    .select("id, number, subject, status, remind_at, deadline, customer:customers(name), person:profiles(id, name)")
+    .eq("status", "ODLOZENO")
+    .order("remind_at", { ascending: true, nullsFirst: false });
+  return (data ?? []) as unknown as OdlozenaRow[];
+}
+
+/**
+ * Odložené poptávky, u kterých už nastal čas připomenutí (remind_at <= dnes),
+ * přiřazené konkrétní odpovědné osobě. Slouží k in-app upozornění.
+ */
+export async function queryDueReminders(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  personId: string,
+): Promise<{ id: string; number: number; subject: string; remind_at: string | null }[]> {
+  const today = new Date().toISOString().slice(0, 10);
+  const { data } = await supabase
+    .from("inquiries")
+    .select("id, number, subject, remind_at")
+    .eq("status", "ODLOZENO")
+    .eq("person_id", personId)
+    .not("remind_at", "is", null)
+    .lte("remind_at", today)
+    .order("remind_at", { ascending: true });
+  return data ?? [];
 }
 
 /** Číselník osob pro filtry a autora = aktivní profily. */

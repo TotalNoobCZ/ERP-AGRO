@@ -8,6 +8,7 @@ export const INQUIRY_STATUSES = [
   "V_JEDNANI",
   "ODESLANA",
   "NEREAGUJE",
+  "ODLOZENO",
   "OBJEDNANO",
   "ZAMITNUTO",
 ] as const;
@@ -18,6 +19,7 @@ export const INQUIRY_STATUS_LABELS: Record<InquiryStatus, string> = {
   V_JEDNANI: "V jednání",
   ODESLANA: "Odeslána",
   NEREAGUJE: "Nereaguje",
+  ODLOZENO: "Odloženo",
   OBJEDNANO: "Objednáno",
   ZAMITNUTO: "Zamítnuto",
 };
@@ -25,8 +27,11 @@ export const INQUIRY_STATUS_LABELS: Record<InquiryStatus, string> = {
 /** Pořadí stavů pro výběr v rozbalovacím menu a na dashboardu. */
 export const INQUIRY_STATUS_ORDER: InquiryStatus[] = [...INQUIRY_STATUSES];
 
-/** Ukončené stavy – bez notifikací, nefigurují v „po termínu". */
-export const INQUIRY_CLOSED_STATUSES: InquiryStatus[] = ["OBJEDNANO", "ZAMITNUTO"];
+/**
+ * Ukončené / skryté stavy – nezobrazují se v hlavním seznamu ani na tabuli,
+ * nefigurují v „po termínu". „Odloženo" je skryté, dokud nepřijde připomenutí.
+ */
+export const INQUIRY_CLOSED_STATUSES: InquiryStatus[] = ["ODLOZENO", "OBJEDNANO", "ZAMITNUTO"];
 
 /**
  * Přechod stavu, který spouští tok mezi moduly:

@@ -93,6 +93,7 @@ export type InquiryStatusDb =
   | "V_JEDNANI"
   | "ODESLANA"
   | "NEREAGUJE"
+  | "ODLOZENO"
   | "OBJEDNANO"
   | "ZAMITNUTO";
 
@@ -108,6 +109,7 @@ export type InquiryRow = {
   contact_email: string | null;
   status: InquiryStatusDb;
   deadline: string | null;
+  remind_at: string | null;
   customer_id: string;
   person_id: string | null;
   reminder_sent: boolean;

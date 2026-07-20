@@ -128,8 +128,9 @@ create table inquiries (
   contact_phone    text,
   contact_email    text,
   status           text not null default 'NOVA'
-                     check (status in ('NOVA','V_JEDNANI','ODESLANA','NEREAGUJE','OBJEDNANO','ZAMITNUTO')),
+                     check (status in ('NOVA','V_JEDNANI','ODESLANA','NEREAGUJE','ODLOZENO','OBJEDNANO','ZAMITNUTO')),
   deadline         timestamptz,                  -- termín pro vypracování nabídky
+  remind_at        date,                          -- datum připomenutí odložené poptávky
 
   customer_id      uuid not null references customers (id) on delete restrict,
   person_id        uuid references profiles (id)  on delete restrict, -- dřívější Person (nepovinné)
@@ -169,9 +170,9 @@ create table status_logs (
   id          uuid primary key default gen_random_uuid(),
   inquiry_id  uuid not null references inquiries (id) on delete cascade,
   from_status text
-                check (from_status in ('NOVA','V_JEDNANI','ODESLANA','NEREAGUJE','OBJEDNANO','ZAMITNUTO')),
+                check (from_status in ('NOVA','V_JEDNANI','ODESLANA','NEREAGUJE','ODLOZENO','OBJEDNANO','ZAMITNUTO')),
   to_status   text not null
-                check (to_status in ('NOVA','V_JEDNANI','ODESLANA','NEREAGUJE','OBJEDNANO','ZAMITNUTO')),
+                check (to_status in ('NOVA','V_JEDNANI','ODESLANA','NEREAGUJE','ODLOZENO','OBJEDNANO','ZAMITNUTO')),
   changed_by  text not null,
   note        text,
   created_at  timestamptz not null default now()

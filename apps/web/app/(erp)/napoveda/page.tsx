@@ -99,13 +99,16 @@ export default function NapovedaPage() {
       </UL>
 
       <H2>6. Poptávky</H2>
-      <P>Záložky: Přehled · Poptávky · Tabule · Objednáno · Zákazníci.</P>
+      <P>Záložky: Přehled · Poptávky · Tabule · Odložené · Objednáno · Zákazníci.</P>
       <UL>
         <li><strong>Nová poptávka:</strong> Předmět, Zákazník a <strong>Kontaktní osoba</strong> jsou povinné (<Code>*</Code>). U existujícího zákazníka se v kontaktech nabízejí jen jeho kontakty.</li>
         <li><strong>Kontakty se ukládají:</strong> nový zákazník se uloží i s kontaktní osobou; u stálého zákazníka se nová kontaktní osoba automaticky přidá mezi jeho kontakty (příště se nabídne v seznamu).</li>
         <li><strong>Odpovědná osoba je nepovinná</strong> — doplníš i později; vybírá se z role Vedoucí nebo oddělení Projekťák / Obchodní manažer.</li>
         <li><strong>Termín přímo ze seznamu:</strong> u každé poptávky lze termín přidat/změnit tužkou <Code>✎</Code> ve sloupci Termín – bez otvírání detailu.</li>
         <li><strong>Tabule (drag &amp; drop):</strong> vlevo odpovědné osoby, vpravo nepřidělené poptávky. Přetáhni poptávku na osobu = přiřadíš (z pravého sloupce zmizí). Mezi osobami přeřadíš. <strong>Přidělená poptávka musí mít termín</strong> – když ho poptávka nemá, tabule si při přetažení vyžádá termín v okně.</li>
+        <li><strong>Odložit poptávku:</strong> v detailu vyber stav <strong>Odloženo</strong>. Poptávka se skryje ze seznamu i tabule a v okně zvolíš připomenutí: <em>k datu</em>, <em>za 6 měsíců</em>, nebo <em>nepřipomínat</em>.</li>
+        <li><strong>Odložené:</strong> záložka se všemi odloženými poptávkami a datem připomenutí; ty, u kterých už čas nastal, jsou zvýrazněné. Tlačítkem <Code>↩ Obnovit</Code> se poptávka vrátí zpět mezi aktivní.</li>
+        <li><strong>Připomenutí:</strong> jakmile nastane datum připomenutí, odpovědné osobě se nahoře v Poptávkách ukáže upozornění „⏰ Nastal čas kontaktovat".</li>
         <li><strong>Objednáno:</strong> poptávky, ze kterých se tvoří zakázky.</li>
         <li>Seznam má filtry a <strong>Export do PDF</strong>.</li>
       </UL>

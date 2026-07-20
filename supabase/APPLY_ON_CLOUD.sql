@@ -41,3 +41,19 @@ alter table public.zakazky add column if not exists popis text;
 -- 8) Konstrukční podúkol může reprezentovat konkrétní zakázku k akci
 alter table public.tasks add column if not exists zakazka_id uuid references public.zakazky (id);
 create index if not exists tasks_zakazka_id_idx on public.tasks (zakazka_id);
+
+-- 9) Poptávka: nový stav „Odloženo" + datum připomenutí
+alter table public.inquiries drop constraint if exists inquiries_status_check;
+alter table public.inquiries add constraint inquiries_status_check
+  check (status in ('NOVA','V_JEDNANI','ODESLANA','NEREAGUJE','ODLOZENO','OBJEDNANO','ZAMITNUTO'));
+
+alter table public.status_logs drop constraint if exists status_logs_from_status_check;
+alter table public.status_logs add constraint status_logs_from_status_check
+  check (from_status in ('NOVA','V_JEDNANI','ODESLANA','NEREAGUJE','ODLOZENO','OBJEDNANO','ZAMITNUTO'));
+
+alter table public.status_logs drop constraint if exists status_logs_to_status_check;
+alter table public.status_logs add constraint status_logs_to_status_check
+  check (to_status in ('NOVA','V_JEDNANI','ODESLANA','NEREAGUJE','ODLOZENO','OBJEDNANO','ZAMITNUTO'));
+
+alter table public.inquiries add column if not exists remind_at date;
+create index if not exists inquiries_remind_at_idx on public.inquiries (remind_at);

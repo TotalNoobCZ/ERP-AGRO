@@ -5,13 +5,16 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Textarea, Select } from "@/components/ui";
+import { DateField } from "@/components/DateField";
 import { INQUIRY_STATUS_ORDER, INQUIRY_STATUS_LABELS, type InquiryStatus } from "@erp/core";
 import {
   changeInquiryStatus,
+  odlozitPoptavku,
   setNeedsContact,
   clearNeedsContact,
   addComment,
   deleteInquiry,
+  type OdlozeniVolba,
 } from "@/app/(erp)/poptavky/actions";
 
 type Person = { id: string; name: string };
@@ -33,7 +36,23 @@ export function StatusChanger({
   const [saving, setSaving] = useState(false);
   const [showReason, setShowReason] = useState(false);
   const [reason, setReason] = useState("");
+  const [showOdlozit, setShowOdlozit] = useState(false);
+  const [odlozVolba, setOdlozVolba] = useState<OdlozeniVolba>("datum");
+  const [odlozDatum, setOdlozDatum] = useState("");
   const [error, setError] = useState("");
+
+  async function doOdlozit() {
+    setSaving(true);
+    setError("");
+    const res = await odlozitPoptavku(inquiryId, author, odlozVolba, odlozDatum || undefined);
+    setSaving(false);
+    if (!res.ok) {
+      setError(res.error);
+      return;
+    }
+    setShowOdlozit(false);
+    router.refresh();
+  }
 
   async function doSave(note?: string) {
     setSaving(true);
@@ -60,6 +79,10 @@ export function StatusChanger({
     if (status === current) return;
     if (status === "ZAMITNUTO") {
       setShowReason(true);
+      return;
+    }
+    if (status === "ODLOZENO") {
+      setShowOdlozit(true);
       return;
     }
     doSave();
@@ -113,6 +136,72 @@ export function StatusChanger({
               </Button>
               <Button size="sm" onClick={() => doSave(reason.trim())} disabled={saving || !reason.trim()}>
                 {saving ? "Ukládám…" : "Zamítnout"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Vyskakovací okno pro odložení poptávky */}
+      {showOdlozit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-lg border bg-surface p-4 shadow-lg">
+            <h3 className="mb-1 font-medium">Odložit poptávku</h3>
+            <p className="mb-3 text-sm text-muted-foreground">
+              Poptávka se skryje ze seznamu. Kdy ji chcete připomenout?
+            </p>
+            <div className="space-y-3">
+              <label className="flex items-start gap-2">
+                <input
+                  type="radio"
+                  className="mt-1"
+                  checked={odlozVolba === "datum"}
+                  onChange={() => setOdlozVolba("datum")}
+                />
+                <span className="flex-1">
+                  <span className="block text-sm font-medium">Připomenout k datu</span>
+                  <span className="mt-1 block">
+                    <DateField
+                      value={odlozDatum}
+                      onChange={setOdlozDatum}
+                      className="w-40"
+                    />
+                  </span>
+                </span>
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  checked={odlozVolba === "6m"}
+                  onChange={() => setOdlozVolba("6m")}
+                />
+                <span className="text-sm font-medium">Připomenout za 6 měsíců</span>
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  checked={odlozVolba === "ne"}
+                  onChange={() => setOdlozVolba("ne")}
+                />
+                <span className="text-sm font-medium">Nepřipomínat</span>
+              </label>
+            </div>
+            {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+            <div className="mt-4 flex justify-end gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => { setShowOdlozit(false); setStatus(current); setError(""); }}
+                disabled={saving}
+              >
+                Zrušit
+              </Button>
+              <Button
+                size="sm"
+                onClick={doOdlozit}
+                disabled={saving || (odlozVolba === "datum" && !odlozDatum)}
+              >
+                {saving ? "Ukládám…" : "Odložit"}
               </Button>
             </div>
           </div>

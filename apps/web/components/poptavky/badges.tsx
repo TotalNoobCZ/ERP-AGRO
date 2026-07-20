@@ -9,6 +9,7 @@ export const STATUS_STYLES: Record<InquiryStatus, string> = {
   V_JEDNANI: "bg-amber-100 text-amber-800 border-amber-200",
   ODESLANA: "bg-green-700 text-white border-green-800",
   NEREAGUJE: "bg-orange-100 text-orange-800 border-orange-200",
+  ODLOZENO: "bg-purple-100 text-purple-800 border-purple-200",
   OBJEDNANO: "bg-green-100 text-green-800 border-green-200",
   ZAMITNUTO: "bg-red-100 text-red-800 border-red-200",
 };

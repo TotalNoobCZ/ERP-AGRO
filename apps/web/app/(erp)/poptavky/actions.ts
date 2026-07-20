@@ -349,6 +349,104 @@ export async function changeInquiryStatus(
   return { ok: true };
 }
 
+/** Volba připomenutí při odložení poptávky. */
+export type OdlozeniVolba = "datum" | "6m" | "ne";
+
+/**
+ * Odloží poptávku (status → ODLOZENO) a nastaví, kdy (a zda) se má připomenout:
+ *  - „datum" – konkrétní datum připomenutí (YYYY-MM-DD),
+ *  - „6m"    – připomenout za 6 měsíců od odložení (dopočítá server),
+ *  - „ne"    – nepřipomínat (remind_at zůstane prázdné).
+ * Odložená poptávka se skryje z hlavního seznamu i tabule; objeví se v záložce
+ * „Odložené" a po datu připomenutí upozorní odpovědnou osobu.
+ */
+export async function odlozitPoptavku(
+  id: string,
+  author: string,
+  volba: OdlozeniVolba,
+  datum?: string,
+): Promise<ActionResult> {
+  const auth = await requireWriter();
+  if (auth.error !== undefined) return { ok: false, error: auth.error };
+
+  let remindAt: string | null = null;
+  if (volba === "datum") {
+    const val = datum?.trim() ?? "";
+    if (!DEN_RE.test(val)) return { ok: false, error: "Zadejte platné datum připomenutí." };
+    remindAt = val;
+  } else if (volba === "6m") {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 6);
+    remindAt = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  } // "ne" → remindAt zůstává null
+
+  const supabase = await createClient();
+  const { data: inquiry } = await supabase
+    .from("inquiries")
+    .select("status")
+    .eq("id", id)
+    .maybeSingle();
+  if (!inquiry) return { ok: false, error: "Poptávka nenalezena." };
+
+  const { error } = await supabase
+    .from("inquiries")
+    .update({ status: "ODLOZENO", remind_at: remindAt, reminder_sent: false })
+    .eq("id", id);
+  if (error) return { ok: false, error: "Odložení se nezdařilo." };
+
+  if (inquiry.status !== "ODLOZENO") {
+    await supabase.from("status_logs").insert({
+      inquiry_id: id,
+      from_status: inquiry.status,
+      to_status: "ODLOZENO",
+      changed_by: author || auth.profile.name,
+      note: remindAt ? `Připomenout ${remindAt}` : "Bez připomenutí",
+    });
+  }
+
+  revalidatePath(`/poptavky/${id}`);
+  revalidatePath("/poptavky");
+  revalidatePath("/poptavky/odlozene");
+  revalidatePath("/poptavky/tabule");
+  return { ok: true };
+}
+
+/** Vrátí odloženou poptávku zpět do hry (status → V_JEDNANI, smaže remind_at). */
+export async function obnovitPoptavku(id: string, author: string): Promise<ActionResult> {
+  const auth = await requireWriter();
+  if (auth.error !== undefined) return { ok: false, error: auth.error };
+
+  const supabase = await createClient();
+  const { data: inquiry } = await supabase
+    .from("inquiries")
+    .select("status")
+    .eq("id", id)
+    .maybeSingle();
+  if (!inquiry) return { ok: false, error: "Poptávka nenalezena." };
+
+  const { error } = await supabase
+    .from("inquiries")
+    .update({ status: "V_JEDNANI", remind_at: null, reminder_sent: false })
+    .eq("id", id);
+  if (error) return { ok: false, error: "Obnovení se nezdařilo." };
+
+  if (inquiry.status !== "V_JEDNANI") {
+    await supabase.from("status_logs").insert({
+      inquiry_id: id,
+      from_status: inquiry.status,
+      to_status: "V_JEDNANI",
+      changed_by: author || auth.profile.name,
+      note: "Obnoveno z odložení",
+    });
+  }
+
+  revalidatePath(`/poptavky/${id}`);
+  revalidatePath("/poptavky");
+  revalidatePath("/poptavky/odlozene");
+  revalidatePath("/poptavky/tabule");
+  return { ok: true };
+}
+
 // PATCH /api/inquiries/[id]/contact → setNeedsContact / clearNeedsContact
 export async function setNeedsContact(id: string): Promise<ActionResult> {
   const auth = await requireWriter();
