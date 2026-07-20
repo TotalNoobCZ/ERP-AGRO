@@ -238,7 +238,7 @@ export function InquiryForm({
             </Select>
             <p className="mt-1 text-xs text-text-muted">
               Nepovinné – můžeš doplnit později přetažením na Tabuli poptávek.
-              Vybrat lze jen roli „Vedoucí" nebo oddělení „Projekťák".
+              Vybrat lze roli „Vedoucí", oddělení „Projekťák" nebo pozici „obchodní manažer".
             </p>
           </div>
         </CardContent>

@@ -111,7 +111,7 @@ export async function queryResponsibles(
     .from("profiles")
     .select("id, name, email")
     .eq("active", true)
-    .or("role.eq.vedouci,oddeleni.eq.projektak")
+    .or("role.eq.vedouci,oddeleni.eq.projektak,pozice.ilike.obchodní manažer")
     .order("name", { ascending: true });
   const list = data ?? [];
 
@@ -148,7 +148,7 @@ export async function queryPoptavkyBoard(
       .from("profiles")
       .select("id, name, color_index")
       .eq("active", true)
-      .or("role.eq.vedouci,oddeleni.eq.projektak")
+      .or("role.eq.vedouci,oddeleni.eq.projektak,pozice.ilike.obchodní manažer")
       .order("name", { ascending: true }),
     // Jen otevřené poptávky (uzavřené se nepřiřazují).
     supabase
