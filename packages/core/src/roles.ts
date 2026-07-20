@@ -25,6 +25,7 @@ export const ODDELENI = [
   // Kapitola Kancelář
   "kancelar",
   "obchod",
+  "obchodni_manazer",
   "konstrukce",
   "projektak",
   "elektro_projektant",
@@ -38,6 +39,7 @@ export const ODDELENI_LABELS: Record<Oddeleni, string> = {
   elektro: "Elektro",
   kancelar: "Kancelář",
   obchod: "Obchod",
+  obchodni_manazer: "Obchodní manažer",
   konstrukce: "Konstrukce",
   projektak: "Projekťák",
   elektro_projektant: "Elektro projektant",
@@ -57,6 +59,7 @@ export const ODDELENI_KAPITOLA: Record<Oddeleni, Kapitola> = {
   elektro: "dilna",
   kancelar: "kancelar",
   obchod: "kancelar",
+  obchodni_manazer: "kancelar",
   konstrukce: "kancelar",
   projektak: "kancelar",
   elektro_projektant: "kancelar",

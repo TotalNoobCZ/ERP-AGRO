@@ -80,7 +80,7 @@ export const profilSchema = z
     email: z.string().trim().optional().or(z.literal("")),
     role: z.enum(["admin", "editor", "vedouci", "viewer"]),
     oddeleni: z
-      .enum(["vyroba", "montaz", "elektro", "kancelar", "obchod", "konstrukce", "projektak", "elektro_projektant", "programator"])
+      .enum(["vyroba", "montaz", "elektro", "kancelar", "obchod", "obchodni_manazer", "konstrukce", "projektak", "elektro_projektant", "programator"])
       .optional()
       .or(z.literal("")),
     assignable: z.boolean(),

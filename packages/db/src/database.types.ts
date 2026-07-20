@@ -46,6 +46,7 @@ export type ProfileRow = {
     | "elektro"
     | "kancelar"
     | "obchod"
+    | "obchodni_manazer"
     | "konstrukce"
     | "projektak"
     | "elektro_projektant"

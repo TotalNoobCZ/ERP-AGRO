@@ -149,7 +149,7 @@ export default function PoptavkyBoard({
           ))}
           {osoby.length === 0 && (
             <p className="text-sm text-text-muted">
-              Žádné odpovědné osoby. Ve Správě dej někomu roli „Vedoucí", oddělení „Projekťák" nebo pozici „obchodní manažer".
+              Žádné odpovědné osoby. Ve Správě dej někomu roli „Vedoucí" nebo oddělení „Projekťák" / „Obchodní manažer".
             </p>
           )}
         </div>

@@ -103,7 +103,7 @@ export default function NapovedaPage() {
       <UL>
         <li><strong>Nová poptávka:</strong> Předmět, Zákazník a <strong>Kontaktní osoba</strong> jsou povinné (<Code>*</Code>). U existujícího zákazníka se v kontaktech nabízejí jen jeho kontakty.</li>
         <li><strong>Kontakty se ukládají:</strong> nový zákazník se uloží i s kontaktní osobou; u stálého zákazníka se nová kontaktní osoba automaticky přidá mezi jeho kontakty (příště se nabídne v seznamu).</li>
-        <li><strong>Odpovědná osoba je nepovinná</strong> — doplníš i později; vybírá se z role Vedoucí, oddělení Projekťák nebo pozice „obchodní manažer".</li>
+        <li><strong>Odpovědná osoba je nepovinná</strong> — doplníš i později; vybírá se z role Vedoucí nebo oddělení Projekťák / Obchodní manažer.</li>
         <li><strong>Termín přímo ze seznamu:</strong> u každé poptávky lze termín přidat/změnit tužkou <Code>✎</Code> ve sloupci Termín – bez otvírání detailu.</li>
         <li><strong>Tabule (drag &amp; drop):</strong> vlevo odpovědné osoby, vpravo nepřidělené poptávky. Přetáhni poptávku na osobu = přiřadíš (z pravého sloupce zmizí). Mezi osobami přeřadíš. <strong>Přidělená poptávka musí mít termín</strong> – když ho poptávka nemá, tabule si při přetažení vyžádá termín v okně.</li>
         <li><strong>Objednáno:</strong> poptávky, ze kterých se tvoří zakázky.</li>

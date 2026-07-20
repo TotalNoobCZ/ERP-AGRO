@@ -261,13 +261,12 @@ export async function priraditPoptavku(
   const supabase = await createClient();
   const { data: person } = await supabase
     .from("profiles")
-    .select("role, oddeleni, pozice, active")
+    .select("role, oddeleni, active")
     .eq("id", personId)
     .maybeSingle();
   if (!person || !person.active) return { ok: false, error: "Osoba nenalezena." };
-  const jeObchodniManazer = (person.pozice ?? "").trim().toLowerCase() === "obchodní manažer";
-  if (person.role !== "vedouci" && person.oddeleni !== "projektak" && !jeObchodniManazer) {
-    return { ok: false, error: "Odpovědnou osobou může být jen Vedoucí, Projekťák nebo obchodní manažer." };
+  if (person.role !== "vedouci" && person.oddeleni !== "projektak" && person.oddeleni !== "obchodni_manazer") {
+    return { ok: false, error: "Odpovědnou osobou může být jen Vedoucí, Projekťák nebo Obchodní manažer." };
   }
 
   const { data: inq } = await supabase.from("inquiries").select("deadline").eq("id", id).maybeSingle();
