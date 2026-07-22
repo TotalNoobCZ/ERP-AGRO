@@ -49,7 +49,18 @@ export default function Timeline({
   /** volá se po puštění taženého pruhu s posunem ve dnech (≠ 0) */
   onBarDrag?: (dragId: string, deltaDays: number, mode: DragMode) => void;
 }) {
-  const { has: jeOtevreno, toggle } = usePersistentSet("erp_zakazky_plan_otevrene");
+  const { has: jeOtevreno, toggle, replace } = usePersistentSet("erp_zakazky_plan_otevrene");
+
+  // Řádky s podřádky (jde je rozbalit) – pro „zobrazit vše" / „skrýt vše".
+  const rozbalitelne: string[] = [];
+  (function sber(rs: TRadek[]) {
+    for (const r of rs) {
+      if (r.podradky?.length) {
+        rozbalitelne.push(r.id);
+        sber(r.podradky);
+      }
+    }
+  })(radky);
   const [drag, setDrag] = useState<DragState | null>(null);
   const dragRef = useRef<DragState | null>(null);
   const movedRef = useRef(false);
@@ -219,8 +230,19 @@ export default function Timeline({
   }
 
   return (
-    <div className="card overflow-x-auto">
-      <div style={{ minWidth: LABEL_W + sirka }}>
+    <div className="space-y-2">
+      {rozbalitelne.length > 0 && (
+        <div className="flex gap-2">
+          <button type="button" className="btn-ghost text-xs" onClick={() => replace(rozbalitelne)}>
+            ▾ Zobrazit vše
+          </button>
+          <button type="button" className="btn-ghost text-xs" onClick={() => replace([])}>
+            ▸ Skrýt vše
+          </button>
+        </div>
+      )}
+      <div className="card overflow-x-auto">
+        <div style={{ minWidth: LABEL_W + sirka }}>
         {/* Hlavička */}
         <div className="flex border-b border-line bg-muted">
           <div style={{ width: LABEL_W }} className="sticky left-0 z-20 shrink-0 bg-muted px-3 py-2 text-xs font-medium text-text-muted">Období</div>
@@ -244,6 +266,7 @@ export default function Timeline({
         ) : (
           radky.map((r) => <RadekStrom key={r.id} r={r} hloubka={0} />)
         )}
+        </div>
       </div>
     </div>
   );

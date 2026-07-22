@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 export function usePersistentSet(key: string): {
   has: (id: string) => boolean;
   toggle: (id: string) => void;
+  replace: (ids: string[]) => void;
   set: Set<string>;
 } {
   const [set, setSet] = useState<Set<string>>(new Set());
@@ -41,5 +42,10 @@ export function usePersistentSet(key: string): {
     });
   }, []);
 
-  return { has: (id) => set.has(id), toggle, set };
+  // Nahradí celou množinu (pro „zobrazit vše" / „skrýt vše").
+  const replace = useCallback((ids: string[]) => {
+    setSet(new Set(ids));
+  }, []);
+
+  return { has: (id) => set.has(id), toggle, replace, set };
 }
