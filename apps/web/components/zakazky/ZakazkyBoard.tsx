@@ -36,12 +36,15 @@ export default function ZakazkyBoard({
   zakazky,
   editable,
   muzeOdebratKonstruktera,
+  zakazkaBasePath = "/zakazky",
 }: {
   osoby: BoardOsobaZ[];
   zakazky: BoardZakazka[];
   editable: boolean;
   /** smí přihlášený odebrat konstruktéra ze zakázky (šéfkonstruktér / admin) */
   muzeOdebratKonstruktera: boolean;
+  /** kam vede kliknutí na zakázku (Zakázky vs. Dílna mají vlastní detail) */
+  zakazkaBasePath?: string;
 }) {
   const router = useRouter();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
@@ -298,7 +301,7 @@ export default function ZakazkyBoard({
                     zakazka={g.akce}
                     editable={editable}
                     muzeOdebratKonstruktera={muzeOdebratKonstruktera}
-                    onOpen={() => router.push(`/zakazky/${g.akce.id}`)}
+                    onOpen={() => router.push(`${zakazkaBasePath}/${g.akce.id}`)}
                     onOpenOsoba={(osobaId) => router.push(`/lide/${osobaId}`)}
                     onRemove={odebrat}
                     onRemoveOdpovedna={() => nastavitOdpovednou(g.akce.id, null)}
@@ -321,7 +324,7 @@ export default function ZakazkyBoard({
                               zakazka={d}
                               editable={editable}
                               muzeOdebratKonstruktera={muzeOdebratKonstruktera}
-                              onOpen={() => router.push(`/zakazky/${d.id}`)}
+                              onOpen={() => router.push(`${zakazkaBasePath}/${d.id}`)}
                               onOpenOsoba={(osobaId) => router.push(`/lide/${osobaId}`)}
                               onRemove={odebrat}
                               onRemoveOdpovedna={() => nastavitOdpovednou(d.id, null)}

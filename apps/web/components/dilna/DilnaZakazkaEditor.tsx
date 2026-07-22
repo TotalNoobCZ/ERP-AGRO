@@ -2,6 +2,7 @@
 // Editor výrobních fází a uskladnění jedné zakázky (modul Dílna).
 // Mistr zadává termíny od–do jednotlivých fází a místo uskladnění.
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { DateField } from "@/components/DateField";
 import { Button } from "@/components/ui";
@@ -58,7 +59,9 @@ export function DilnaZakazkaEditor({ zakazka, editable }: { zakazka: DilnaZakazk
     <div className="rounded-lg border border-line p-3">
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <span className="font-mono font-semibold">{zakazka.kod}</span>
+          <Link href={`/dilna/${zakazka.id}`} className="font-mono font-semibold text-link hover:underline">
+            {zakazka.kod}
+          </Link>
           {zakazka.parentId && <span className="ml-2 rounded bg-accent px-1.5 py-0.5 text-[11px] text-text-muted">k akci</span>}
           <span className="ml-2 text-sm text-text-muted">{zakazka.popis || zakazka.mistoPlneni}</span>
         </div>

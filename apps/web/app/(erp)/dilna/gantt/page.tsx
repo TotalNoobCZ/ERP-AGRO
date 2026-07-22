@@ -52,7 +52,7 @@ function naRadek(z: DilnaZakazka): TRadek {
     id: z.id,
     label: z.kod,
     sublabel: z.popis || z.mistoPlneni,
-    href: `/zakazky/${z.id}`,
+    href: `/dilna/${z.id}`,
     pocetRad: Math.max(1, bary.length),
     bary,
     znacky: [],

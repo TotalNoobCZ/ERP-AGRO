@@ -33,6 +33,7 @@ export default async function DilnaTabulePage() {
         zakazky={zakazky}
         editable={editable}
         muzeOdebratKonstruktera={smiOdebratKonstruktera}
+        zakazkaBasePath="/dilna"
       />
     </div>
   );
