@@ -2,13 +2,14 @@
 // Dostupná kliknutím na název „ERP Strojírenská divize" v hlavičce.
 import Link from "next/link";
 import { getCurrentProfile } from "@/lib/supabase/server";
-import { isAdmin, type Role } from "@erp/core";
+import { povoleneModulyProProfil } from "@/lib/pristup";
+import { isAdmin, type Role, type Modul } from "@erp/core";
 
 const KARTY = [
-  { href: "/poptavky/dashboard", label: "Poptávky", emoji: "📥", popis: "Poptávky, nabídky a zákazníci", adminOnly: false },
-  { href: "/zakazky/dashboard", label: "Zakázky", emoji: "📋", popis: "Výrobní zakázky, plán a tabule", adminOnly: false },
-  { href: "/konstrukce/prehled", label: "Konstrukce", emoji: "📐", popis: "Konstrukční plánování a Gantt", adminOnly: false },
-  { href: "/sprava", label: "Správa", emoji: "⚙️", popis: "Uživatelé a nastavení", adminOnly: true },
+  { href: "/poptavky/dashboard", label: "Poptávky", emoji: "📥", popis: "Poptávky, nabídky a zákazníci", adminOnly: false, modul: "poptavky" as Modul },
+  { href: "/zakazky/dashboard", label: "Zakázky", emoji: "📋", popis: "Výrobní zakázky, plán a tabule", adminOnly: false, modul: "zakazky" as Modul },
+  { href: "/konstrukce/prehled", label: "Konstrukce", emoji: "📐", popis: "Konstrukční plánování a Gantt", adminOnly: false, modul: "konstrukce" as Modul },
+  { href: "/sprava", label: "Správa", emoji: "⚙️", popis: "Uživatelé a nastavení", adminOnly: true, modul: null },
 ] as const;
 
 export const dynamic = "force-dynamic";
@@ -16,7 +17,10 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   const profile = await getCurrentProfile();
   const admin = profile ? isAdmin(profile.role as Role) : false;
-  const karty = KARTY.filter((k) => !k.adminOnly || admin);
+  const moduly = await povoleneModulyProProfil(profile);
+  const karty = KARTY.filter((k) =>
+    k.adminOnly ? admin : k.modul != null && moduly.includes(k.modul),
+  );
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 py-6">

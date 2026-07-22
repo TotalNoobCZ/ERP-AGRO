@@ -5,7 +5,7 @@ import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { ROLES, ROLE_LABELS, ODDELENI, ODDELENI_LABELS, KAPITOLY, KAPITOLA_LABELS, ODDELENI_KAPITOLA, jeDilna } from "@erp/core";
+import { ROLES, ROLE_LABELS, ODDELENI, ODDELENI_LABELS, KAPITOLY, KAPITOLA_LABELS, ODDELENI_KAPITOLA, jeDilna, MODULY, MODUL_LABELS } from "@erp/core";
 import { USER_PALETTE, USER_PALETTE_NAMES } from "@erp/ui";
 import type { ProfilStav } from "@/app/(erp)/sprava/actions";
 
@@ -17,6 +17,7 @@ type Init = {
   oddeleni?: string | null;
   assignable?: boolean;
   sefkonstrukter?: boolean;
+  accessModules?: string[] | null;
   colorIndex?: number | null;
   active?: boolean;
   pozice?: string | null;
@@ -69,6 +70,14 @@ export function ProfilForm({
   const [osobniCislo, setOsobniCislo] = useState(initial?.osobniCislo ?? "");
   const [poznamka, setPoznamka] = useState(initial?.poznamka ?? "");
   const emailNepovinny = jeDilna(oddeleni);
+
+  // Přístup k modulům: „dle oddělení" (accessModules = null) nebo „vlastní".
+  const [accessMode, setAccessMode] = useState<"dle_oddeleni" | "vlastni">(
+    initial?.accessModules != null ? "vlastni" : "dle_oddeleni",
+  );
+  const [accessModules, setAccessModules] = useState<string[]>(initial?.accessModules ?? []);
+  const prepnoutModul = (m: string) =>
+    setAccessModules((prev) => (prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m]));
 
   return (
     <form action={formAction} className="card max-w-2xl space-y-4 p-6">
@@ -170,6 +179,54 @@ export function ProfilForm({
       <div>
         <label className="label">Poznámka</label>
         <textarea name="poznamka" className="field" rows={2} value={poznamka} onChange={(e) => setPoznamka(e.target.value)} />
+      </div>
+
+      {/* Přístup k modulům (kartám). „Dle oddělení" = zdědí plošné nastavení. */}
+      <div className="rounded-lg border border-line p-4">
+        <p className="mb-2 text-sm font-semibold">Přístup k modulům</p>
+        <input type="hidden" name="access_mode" value={accessMode} />
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="access_mode_radio"
+              checked={accessMode === "dle_oddeleni"}
+              onChange={() => setAccessMode("dle_oddeleni")}
+            />
+            Podle oddělení (výchozí)
+            <span className="text-xs text-text-muted">– řídí se plošným nastavením práv</span>
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="access_mode_radio"
+              checked={accessMode === "vlastni"}
+              onChange={() => setAccessMode("vlastni")}
+            />
+            Vlastní nastavení
+            <span className="text-xs text-text-muted">– přepíše nastavení oddělení</span>
+          </label>
+        </div>
+        {accessMode === "vlastni" && (
+          <div className="mt-3 flex flex-wrap gap-4 border-t border-line pt-3">
+            {MODULY.map((m) => (
+              <label key={m} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  name="access_modules"
+                  value={m}
+                  checked={accessModules.includes(m)}
+                  onChange={() => prepnoutModul(m)}
+                />
+                {MODUL_LABELS[m]}
+              </label>
+            ))}
+          </div>
+        )}
+        <p className="mt-2 text-xs text-text-muted">
+          Správa je vždy jen pro administrátory. Uživatelé z Dílny (výroba/montáž/elektro)
+          vidí v Zakázkách jen zakázky, ke kterým jsou přiřazeni.
+        </p>
       </div>
 
       <div className="flex gap-3 pt-2">

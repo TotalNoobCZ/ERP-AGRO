@@ -95,6 +95,8 @@ export default function NapovedaPage() {
         <li>Nový/úprava: jméno, e-mail, role, oddělení (rozbalovátko dle kapitol), barva, aktivní.</li>
         <li><strong>E-mail je nepovinný pro kapitolu Dílna</strong> (nepřihlašuje se). „Lze přiřazovat" je automaticky u všech.</li>
         <li><strong>Šéfkonstruktér</strong> — u profilu z oddělení <strong>Konstrukce</strong> lze zaškrtnout pozici Šéfkonstruktér; smí jako jediný (kromě administrátora) <strong>odebírat konstruktéry ze zakázek</strong>.</li>
+        <li><strong>Přístupová práva k modulům</strong> — tlačítko <Code>🔐 Přístupová práva</Code> ve Správě otevře matici <em>oddělení × modul</em> (Poptávky / Zakázky / Konstrukce): zaškrtneš, které moduly dané oddělení vidí. U konkrétního zaměstnance lze v jeho profilu zvolit <strong>Vlastní nastavení</strong>, které přepíše oddělení. <strong>Administrátor vidí vždy vše</strong>; kartu Správa má vždy jen admin. Dokud není nic nastaveno, vidí všichni vše (zpětná kompatibilita).</li>
+        <li><strong>Dílna jen přiřazené</strong> — uživatelé z kapitoly Dílna (výroba/montáž/elektro) vidí v <strong>Zakázkách</strong> jen zakázky, ke kterým jsou přiřazeni jako pracovník nebo odpovědná osoba (v seznamu Akce i na Tabuli).</li>
         <li><strong>Heslo uživatele</strong> (v jeho detailu): nastavit konkrétní, nebo vygenerovat náhodné a předat. Bez e-mailu se heslo neřeší.</li>
       </UL>
 

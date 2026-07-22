@@ -46,6 +46,7 @@ create table profiles (
                   check (oddeleni in ('vyroba', 'montaz', 'elektro', 'kancelar', 'obchod', 'obchodni_manazer', 'konstrukce', 'projektak', 'elektro_projektant', 'programator')),
   assignable    boolean not null default true,    -- lze přiřazovat na úkoly/zakázky (automatické u všech)
   sefkonstrukter boolean not null default false,  -- pozice: smí odebírat konstruktéry ze zakázek
+  access_modules text[],                          -- vlastní přístup k modulům (NULL = dle oddělení)
   color_index   int,                              -- 0–9, paleta dlaždic z Konstrukce
   tile_order    int,                              -- pořadí dlaždic členů (Konstrukce)
   active        boolean not null default true,
@@ -64,6 +65,14 @@ create index profiles_assignable_idx on profiles (assignable) where assignable;
 create trigger profiles_set_updated_at
   before update on profiles
   for each row execute function set_updated_at();
+
+-- Výchozí přístup k modulům dle oddělení (per-profil viz profiles.access_modules).
+create table department_access (
+  oddeleni   text primary key
+    check (oddeleni in ('vyroba', 'montaz', 'elektro', 'kancelar', 'obchod', 'obchodni_manazer', 'konstrukce', 'projektak', 'elektro_projektant', 'programator')),
+  modules    text[] not null default '{}',
+  updated_at timestamptz not null default now()
+);
 
 -- ####################  20260715000200_shared_customers.sql  ####################
 
@@ -592,6 +601,20 @@ create policy audit_log_select on audit_log
 create policy audit_log_insert on audit_log
   for insert to authenticated
   with check ((select can_write()));
+
+-- ----------------------------------------------------------------------------
+--  department_access: čtení pro každý profil, zápis jen admin.
+-- ----------------------------------------------------------------------------
+alter table department_access enable row level security;
+
+create policy department_access_select on department_access
+  for select to authenticated
+  using ((select has_profile()));
+
+create policy department_access_write on department_access
+  for all to authenticated
+  using ((select is_admin()))
+  with check ((select is_admin()));
 
 -- ####################  seed.sql  ####################
 

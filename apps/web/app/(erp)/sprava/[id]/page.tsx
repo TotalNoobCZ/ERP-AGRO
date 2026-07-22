@@ -16,7 +16,7 @@ export default async function UpravitProfilPage({ params }: { params: Promise<{ 
   const supabase = await createClient();
   const { data: p } = await supabase
     .from("profiles")
-    .select("id, name, email, role, oddeleni, assignable, sefkonstrukter, color_index, active, pozice, osobni_cislo, poznamka, auth_user_id")
+    .select("id, name, email, role, oddeleni, assignable, sefkonstrukter, access_modules, color_index, active, pozice, osobni_cislo, poznamka, auth_user_id")
     .eq("id", id)
     .maybeSingle();
   if (!p) notFound();
@@ -36,6 +36,7 @@ export default async function UpravitProfilPage({ params }: { params: Promise<{ 
           oddeleni: p.oddeleni,
           assignable: p.assignable,
           sefkonstrukter: p.sefkonstrukter,
+          accessModules: p.access_modules,
           colorIndex: p.color_index,
           active: p.active,
           pozice: p.pozice,

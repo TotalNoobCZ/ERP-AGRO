@@ -55,6 +55,8 @@ export type ProfileRow = {
   assignable: boolean;
   /** pozice: šéfkonstruktér – smí odebírat konstruktéry ze zakázek */
   sefkonstrukter: boolean;
+  /** vlastní přístup k modulům (null = zdědit dle oddělení) */
+  access_modules: string[] | null;
   color_index: number | null;
   tile_order: number | null;
   active: boolean;
@@ -62,6 +64,12 @@ export type ProfileRow = {
   osobni_cislo: string | null;
   poznamka: string | null;
   created_at: string;
+  updated_at: string;
+}
+
+export type DepartmentAccessRow = {
+  oddeleni: string;
+  modules: string[];
   updated_at: string;
 }
 
@@ -389,6 +397,7 @@ export type Database = {
       >;
       project_todos: TableShape<ProjectTodoRow, "project_id" | "body", [Fk<"project_id", "projects">]>;
       absences: TableShape<AbsenceRow, "profile_id" | "type" | "start_date" | "end_date", [Fk<"profile_id", "profiles">]>;
+      department_access: TableShape<DepartmentAccessRow, "oddeleni">;
     };
     Views: Record<string, never>;
     Functions: {

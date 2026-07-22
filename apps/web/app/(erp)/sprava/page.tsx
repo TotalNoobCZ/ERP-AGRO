@@ -28,12 +28,20 @@ export default async function SpravaPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Správa uživatelů</h1>
-        <Link
-          href="/sprava/novy"
-          className="rounded-md bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
-        >
-          + Nový uživatel
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/sprava/prava"
+            className="rounded-md border border-line px-3 py-1.5 text-sm font-semibold hover:border-link hover:text-link"
+          >
+            🔐 Přístupová práva
+          </Link>
+          <Link
+            href="/sprava/novy"
+            className="rounded-md bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
+          >
+            + Nový uživatel
+          </Link>
+        </div>
       </div>
 
       <div className="rounded-xl border bg-card">

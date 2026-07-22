@@ -1,5 +1,6 @@
 // Tabule zakázek – obrácené drag & drop: osoby (vlevo) se táhnou na zakázky (vpravo).
 import { createClient, getCurrentProfile } from "@/lib/supabase/server";
+import { jenPrirazeneProProfil } from "@/lib/pristup";
 import { queryZakazkyBoard } from "@/lib/zakazky-query";
 import ZakazkyBoard from "@/components/zakazky/ZakazkyBoard";
 import { canWrite, muzeOdebratKonstruktera, type Role } from "@erp/core";
@@ -8,10 +9,9 @@ export const dynamic = "force-dynamic";
 
 export default async function ZakazkyTabulePage() {
   const supabase = await createClient();
-  const [{ osoby, zakazky }, profile] = await Promise.all([
-    queryZakazkyBoard(supabase),
-    getCurrentProfile(),
-  ]);
+  const profile = await getCurrentProfile();
+  const omezeni = jenPrirazeneProProfil(profile) ? profile!.id : null;
+  const { osoby, zakazky } = await queryZakazkyBoard(supabase, omezeni);
   const editable = profile ? canWrite(profile.role as Role) : false;
   const smiOdebratKonstruktera = profile
     ? muzeOdebratKonstruktera({ role: profile.role, sefkonstrukter: profile.sefkonstrukter })

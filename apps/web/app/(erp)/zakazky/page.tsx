@@ -1,6 +1,7 @@
 // Seznam akcí (zakázek) s živými filtry – jednotné s Poptávkami.
 import { Suspense } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCurrentProfile } from "@/lib/supabase/server";
+import { jenPrirazeneProProfil } from "@/lib/pristup";
 import { queryZakazky, type ZakazkaListParams, type ZakazkaListRow } from "@/lib/zakazky-query";
 import { nacistLidiZakazek, sjednotitOsoby } from "@/lib/zakazky/lide";
 import { ZakazkyFilters, ZakazkyFilterRestore } from "@/components/zakazky/filters";
@@ -15,7 +16,9 @@ export default async function ZakazkyPage({
 }) {
   const params = await searchParams;
   const supabase = await createClient();
-  const zakazky = await queryZakazky(supabase, params);
+  const profile = await getCurrentProfile();
+  const omezeni = jenPrirazeneProProfil(profile) ? profile!.id : null;
+  const zakazky = await queryZakazky(supabase, params, omezeni);
 
   // Podzakázky vnořené pod hlavní akci (rozbalovací seznam).
   const ids = new Set(zakazky.map((z) => z.id));

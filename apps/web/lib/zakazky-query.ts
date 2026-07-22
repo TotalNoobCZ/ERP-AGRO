@@ -6,6 +6,24 @@ import { ZAKAZKA_STAVY, type StavZakazky } from "@erp/core";
 
 export type ZakazkaListParams = { q?: string; stav?: string; priorita?: string };
 
+/**
+ * Množina ID zakázek, ke kterým je osoba přiřazena (jako pracovník) nebo je
+ * jejich odpovědnou osobou. Slouží k omezení pohledu pro Dílnu.
+ */
+export async function zakazkyOsobyIds(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  osobaId: string,
+): Promise<Set<string>> {
+  const [pr, odp] = await Promise.all([
+    supabase.from("prirazeni_zakazka").select("zakazka_id").eq("osoba_id", osobaId).is("deleted_at", null),
+    supabase.from("zakazky").select("id").eq("odpovedna_osoba_id", osobaId).is("deleted_at", null),
+  ]);
+  const set = new Set<string>();
+  for (const r of (pr.data ?? []) as { zakazka_id: string }[]) set.add(r.zakazka_id);
+  for (const r of (odp.data ?? []) as { id: string }[]) set.add(r.id);
+  return set;
+}
+
 export type ZakazkaListRow = {
   id: string;
   kod: string;
@@ -24,6 +42,8 @@ export type ZakazkaListRow = {
 export async function queryZakazky(
   supabase: Awaited<ReturnType<typeof createClient>>,
   params: ZakazkaListParams,
+  /** Dílna: omez na zakázky, ke kterým je osoba přiřazena (+ jejich akce). */
+  omezeniOsobaId?: string | null,
 ): Promise<ZakazkaListRow[]> {
   const q = params.q?.trim();
   const stav = params.stav;
@@ -51,6 +71,13 @@ export async function queryZakazky(
   if (stav === "PO_TERMINU") {
     rows = rows.filter((z) => poTerminu({ konecAktualni: parseDay(z.konec_aktualni), stav: z.stav }));
   }
+  if (omezeniOsobaId) {
+    const moje = await zakazkyOsobyIds(supabase, omezeniOsobaId);
+    // Povolené = přiřazené zakázky + jejich nadřazené akce (kvůli seskupení).
+    const povolene = new Set(moje);
+    for (const r of rows) if (moje.has(r.id) && r.parent_id) povolene.add(r.parent_id);
+    rows = rows.filter((z) => povolene.has(z.id));
+  }
   return rows;
 }
 
@@ -75,6 +102,8 @@ export type BoardZakazka = {
 /** Data pro tabuli zakázek: přiřaditelné osoby + otevřené zakázky s pracovníky. */
 export async function queryZakazkyBoard(
   supabase: Awaited<ReturnType<typeof createClient>>,
+  /** Dílna: omez na zakázky, ke kterým je osoba přiřazena (+ jejich akce). */
+  omezeniOsobaId?: string | null,
 ): Promise<{ osoby: BoardOsobaZ[]; zakazky: BoardZakazka[] }> {
   const [osobyRes, zakRes] = await Promise.all([
     supabase
@@ -148,6 +177,22 @@ export async function queryZakazkyBoard(
       pracovnici,
     };
   });
+
+  if (omezeniOsobaId) {
+    // Přiřazené (pracovník nebo odpovědná osoba) + jejich nadřazené akce.
+    const moje = new Set(
+      zakazky
+        .filter(
+          (z) =>
+            z.odpovednaOsobaId === omezeniOsobaId ||
+            z.pracovnici.some((p) => p.osobaId === omezeniOsobaId),
+        )
+        .map((z) => z.id),
+    );
+    const povolene = new Set(moje);
+    for (const z of zakazky) if (moje.has(z.id) && z.parentId) povolene.add(z.parentId);
+    return { osoby, zakazky: zakazky.filter((z) => povolene.has(z.id)) };
+  }
 
   return { osoby, zakazky };
 }
