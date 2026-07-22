@@ -54,7 +54,7 @@ export default function NapovedaPage() {
       <H2>2. Orientace v aplikaci</H2>
       <UL>
         <li><strong>Vstupní rozcestník</strong> — klikni na název <strong>„ERP Strojírenská divize"</strong> v hlavičce; zobrazí se dlaždice modulů.</li>
-        <li><strong>Hlavní karty</strong> (Poptávky · Zakázky · Konstrukce; Správa jen admin) tě pustí na <strong>Přehled</strong> modulu.</li>
+        <li><strong>Hlavní karty</strong> (Poptávky · Zakázky · Konstrukce · Dílna; Správa jen admin) tě pustí na <strong>Přehled</strong> modulu. Které karty vidíš, řídí administrátor v <strong>Přístupových právech</strong>.</li>
         <li><strong>Podnavigace</strong> — záložky uvnitř modulu (Přehled / Gantt / Akce / Tabule / Archiv…).</li>
         <li><strong>Sbalení se pamatuje:</strong> sbalené/rozbalené skupiny (akce, oddělení, zakázky k akci, seznamy) zůstanou i po přechodu na jinou kartu nebo obnovení stránky.</li>
         <li><strong>📌 Přišpendlení záložky</strong> — klikni na špendlík u záložky; ta se stane výchozí a otevře se jako první po kliknutí na kartu modulu. Nastavení je osobní (drží se v prohlížeči).</li>
@@ -142,19 +142,27 @@ export default function NapovedaPage() {
         <li><strong>Absence</strong> se zadávají v dialogu člena (klik na dlaždici).</li>
       </UL>
 
-      <H2>9. Tisk a export do PDF</H2>
+      <H2>9. Dílna (mistr / koordinátor výroby)</H2>
+      <P>Záložky: Zakázky · Tabule · Gantt. Karta míchá možnosti Zakázek a Konstrukce pro koordinaci výroby. Přístup se řídí <strong>právy modulu</strong> (Správa → Přístupová práva) – typicky pro mistra.</P>
+      <UL>
+        <li><strong>Tabule:</strong> stejné přetahování jako u Zakázek, ale vlevo jsou <strong>jen lidé z dílen</strong> (výroba / montáž / elektro). Přiřazení pracovníka se <strong>propíše do Zakázek</strong> (sdílená data). Přiřazuje se i na <strong>všechny zakázky k akci</strong> (podzakázky).</li>
+        <li><strong>Zakázky:</strong> u každé zakázky (i podzakázky) mistr zadává termíny <strong>výrobních fází</strong> od–do: <em>Pálení a příprava, Svařování, Lakovna, Montáž</em>, a <strong>uskladnění</strong> (kde je díl / stroj). Vše se propisuje do detailu zakázky.</li>
+        <li><strong>Gantt:</strong> výrobní fáze jako barevné pruhy v čase, zakázky k akci vnořené pod akci.</li>
+      </UL>
+
+      <H2>10. Tisk a export do PDF</H2>
       <UL>
         <li>Tlačítko <strong>🖨 Export do PDF</strong> otevře čistou tiskovou verzi; PDF vytvoříš přes tisk prohlížeče (Ctrl/Cmd+P → Uložit jako PDF).</li>
         <li>Export respektuje aktivní filtry.</li>
       </UL>
 
-      <H2>10. Jak to spolu souvisí</H2>
+      <H2>11. Jak to spolu souvisí</H2>
       <P>
         Objednaná <strong>poptávka</strong> → založí <strong>zakázku</strong> (zdědí zákazníka) → se zakázkou vznikne
         <strong> konstrukční projekt</strong>. Konstruktér přiřazený k úkolu projektu se <strong>propíše zpět k zakázce</strong>.
       </P>
 
-      <H2>11. Rychlý tahák</H2>
+      <H2>12. Rychlý tahák</H2>
       <UL>
         <li><strong>Přiřadit poptávku:</strong> Poptávky → Tabule → přetáhni na osobu.</li>
         <li><strong>Zakázka z poptávky:</strong> Poptávky → Objednáno → otevřít → vytvořit zakázku.</li>

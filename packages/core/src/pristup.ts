@@ -8,13 +8,14 @@
 import { jeDilna } from "./roles";
 
 /** Moduly („karty"), na které lze nastavit přístup. Správa je vždy jen admin. */
-export const MODULY = ["poptavky", "zakazky", "konstrukce"] as const;
+export const MODULY = ["poptavky", "zakazky", "konstrukce", "dilna"] as const;
 export type Modul = (typeof MODULY)[number];
 
 export const MODUL_LABELS: Record<Modul, string> = {
   poptavky: "Poptávky",
   zakazky: "Zakázky",
   konstrukce: "Konstrukce",
+  dilna: "Dílna",
 };
 
 /** Výchozí přístup dle oddělení: oddeleni → seznam povolených modulů. */

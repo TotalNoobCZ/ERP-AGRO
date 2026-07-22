@@ -217,6 +217,7 @@ create table zakazky (
   archivovano_kdy    timestamptz,
   poznamka           text,
   popis              text,                          -- „oč se jedná" (hlavně u podzakázek)
+  ulozeni            text,                          -- kde je díl/stroj uskladněn (Dílna)
 
   zalozil_id         uuid not null references profiles (id) on delete restrict, -- dřívější zalozilUzivatel
   archivoval_id      uuid references profiles (id),
@@ -261,6 +262,25 @@ create index milniky_zakazka_typ_idx on milniky (zakazka_id, typ);
 
 create trigger milniky_set_updated_at
   before update on milniky
+  for each row execute function set_updated_at();
+
+-- Výrobní fáze zakázky (modul Dílna) – termíny od–do na fázi.
+create table dilna_faze (
+  id         uuid primary key default gen_random_uuid(),
+  zakazka_id uuid not null references zakazky (id) on delete cascade,
+  typ        text not null
+               check (typ in ('PALENI_PRIPRAVA', 'SVAROVANI', 'LAKOVNA', 'MONTAZ')),
+  datum_od   date,
+  datum_do   date,
+  poznamka   text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create unique index dilna_faze_zakazka_typ_uidx on dilna_faze (zakazka_id, typ);
+
+create trigger dilna_faze_set_updated_at
+  before update on dilna_faze
   for each row execute function set_updated_at();
 
 -- Přiřazení osoby k zakázce (má rozsah od–do, vstupuje do kontroly kolizí).
@@ -615,6 +635,23 @@ create policy department_access_write on department_access
   for all to authenticated
   using ((select is_admin()))
   with check ((select is_admin()));
+
+-- ----------------------------------------------------------------------------
+--  dilna_faze: čtení pro každý profil, zápis pro editor/admin.
+-- ----------------------------------------------------------------------------
+alter table dilna_faze enable row level security;
+
+create policy dilna_faze_select on dilna_faze
+  for select to authenticated using ((select has_profile()));
+
+create policy dilna_faze_insert on dilna_faze
+  for insert to authenticated with check ((select can_write()));
+
+create policy dilna_faze_update on dilna_faze
+  for update to authenticated using ((select can_write())) with check ((select can_write()));
+
+create policy dilna_faze_delete on dilna_faze
+  for delete to authenticated using ((select can_write()));
 
 -- ####################  seed.sql  ####################
 

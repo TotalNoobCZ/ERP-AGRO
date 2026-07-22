@@ -171,9 +171,23 @@ export type ZakazkaRow = {
   customer_id: string | null;
   parent_id: string | null;
   popis: string | null;
+  ulozeni: string | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+}
+
+export type DilnaFazeTypDb = "PALENI_PRIPRAVA" | "SVAROVANI" | "LAKOVNA" | "MONTAZ";
+
+export type DilnaFazeRow = {
+  id: string;
+  zakazka_id: string;
+  typ: DilnaFazeTypDb;
+  datum_od: string | null;
+  datum_do: string | null;
+  poznamka: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export type MilnikRow = {
@@ -348,6 +362,7 @@ export type Database = {
         ]
       >;
       milniky: TableShape<MilnikRow, "zakazka_id" | "typ" | "datum", [Fk<"zakazka_id", "zakazky">]>;
+      dilna_faze: TableShape<DilnaFazeRow, "zakazka_id" | "typ", [Fk<"zakazka_id", "zakazky">]>;
       prirazeni_zakazka: TableShape<
         PrirazeniZakazkaRow,
         "zakazka_id" | "osoba_id" | "datum_od" | "datum_do",

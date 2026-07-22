@@ -15,6 +15,7 @@ const MODULES = [
   { href: "/poptavky/dashboard", match: "/poptavky", label: "Poptávky", adminOnly: false, modul: "poptavky" as Modul },
   { href: "/zakazky/dashboard", match: "/zakazky", label: "Zakázky", adminOnly: false, modul: "zakazky" as Modul },
   { href: "/konstrukce/prehled", match: "/konstrukce", label: "Konstrukce", adminOnly: false, modul: "konstrukce" as Modul },
+  { href: "/dilna/tabule", match: "/dilna", label: "Dílna", adminOnly: false, modul: "dilna" as Modul },
   { href: "/sprava", match: "/sprava", label: "Správa", adminOnly: true, modul: null },
 ] as const;
 

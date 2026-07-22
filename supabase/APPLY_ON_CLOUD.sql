@@ -84,3 +84,38 @@ create policy department_access_write on public.department_access
   for all to authenticated
   using ((select is_admin()))
   with check ((select is_admin()));
+
+-- 11) Modul Dílna: výrobní fáze + uskladnění
+alter table public.zakazky add column if not exists ulozeni text;
+
+create table if not exists public.dilna_faze (
+  id         uuid primary key default gen_random_uuid(),
+  zakazka_id uuid not null references public.zakazky (id) on delete cascade,
+  typ        text not null
+               check (typ in ('PALENI_PRIPRAVA', 'SVAROVANI', 'LAKOVNA', 'MONTAZ')),
+  datum_od   date,
+  datum_do   date,
+  poznamka   text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create unique index if not exists dilna_faze_zakazka_typ_uidx on public.dilna_faze (zakazka_id, typ);
+
+alter table public.dilna_faze enable row level security;
+
+drop policy if exists dilna_faze_select on public.dilna_faze;
+create policy dilna_faze_select on public.dilna_faze
+  for select to authenticated using ((select has_profile()));
+
+drop policy if exists dilna_faze_insert on public.dilna_faze;
+create policy dilna_faze_insert on public.dilna_faze
+  for insert to authenticated with check ((select can_write()));
+
+drop policy if exists dilna_faze_update on public.dilna_faze;
+create policy dilna_faze_update on public.dilna_faze
+  for update to authenticated using ((select can_write())) with check ((select can_write()));
+
+drop policy if exists dilna_faze_delete on public.dilna_faze;
+create policy dilna_faze_delete on public.dilna_faze
+  for delete to authenticated using ((select can_write()));
