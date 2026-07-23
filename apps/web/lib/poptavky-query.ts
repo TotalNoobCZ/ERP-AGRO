@@ -202,6 +202,9 @@ export type BoardPoptavka = {
   deadline: string | null;
   personId: string | null;
   customerName: string;
+  contactName: string | null;
+  contactPhone: string | null;
+  contactEmail: string | null;
 };
 
 /** Data pro tabuli poptávek: odpovědné osoby (dlaždice) + otevřené poptávky. */
@@ -218,7 +221,7 @@ export async function queryPoptavkyBoard(
     // Jen otevřené poptávky (uzavřené se nepřiřazují).
     supabase
       .from("inquiries")
-      .select("id, number, subject, description, status, deadline, person_id, customer:customers(name)")
+      .select("id, number, subject, description, status, deadline, person_id, contact_name, contact_phone, contact_email, customer:customers(name)")
       .not("status", "in", `(${INQUIRY_CLOSED_STATUSES.join(",")})`)
       .order("number", { ascending: false }),
   ]);
@@ -241,6 +244,9 @@ export async function queryPoptavkyBoard(
       deadline: p.deadline,
       personId: p.person_id,
       customerName,
+      contactName: p.contact_name,
+      contactPhone: p.contact_phone,
+      contactEmail: p.contact_email,
     };
   });
 
