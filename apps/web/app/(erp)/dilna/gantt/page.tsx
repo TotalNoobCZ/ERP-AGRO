@@ -103,11 +103,11 @@ export default async function DilnaGanttPage({
   if (mode === "faze") {
     const zakazky = await queryDilnaZakazky(supabase);
     const skupiny = seskupitDoAkci(zakazky);
-    radky = skupiny.map(({ akce, deti }) => {
-      const r = naRadek(akce);
-      if (deti.length > 0) r.podradky = deti.map(naRadek);
-      return r;
-    });
+    // Hlavní akce i její podzakázky jsou vidět zároveň (podzakázky odsazené).
+    radky = skupiny.flatMap(({ akce, deti }) => [
+      naRadek(akce),
+      ...deti.map((d) => ({ ...naRadek(d), label: `↳ ${d.kod}` })),
+    ]);
   } else {
     // Podle zaměstnance: přiřazení lidí z dílen na zakázky v okně.
     const { data } = await supabase
