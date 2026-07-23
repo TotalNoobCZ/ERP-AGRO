@@ -39,7 +39,12 @@ export function DeadlineBadge({
   // Nabídka už odeslána / vyřízeno → lhůta splněna, jen ukážeme datum.
   if (status && !inquiryDeadlineActive(status)) {
     return (
-      <Badge className="border-gray-200 bg-gray-100 text-gray-500">{formatDate(d)}</Badge>
+      <Badge
+        className="border-gray-200 bg-gray-100 text-gray-500"
+        title="Termín splněn – nabídka už byla odeslána/vyřízena"
+      >
+        {formatDate(d)}
+      </Badge>
     );
   }
   const level = deadlineLevel(d);
