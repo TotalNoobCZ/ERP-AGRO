@@ -6,6 +6,9 @@
 -- ============================================================================
 begin;
 
+-- Sjednocení názvu zákazníka Melkov (dřívější import mohl mít „Melkov-WH“).
+update public.customers set name = 'Melkov - WH s.r.o.' where name = 'Melkov-WH';
+
 create temp table _imp (number bigint, subject text, cust_name text, cname text, cemail text, cphone text, received text, person_key text, deadline text, status text, note text) on commit drop;
 insert into _imp values
   (35,'balící lis','Trans Stroj','Sergej Filimonov','s.filimonov@ts-arh.ru','79 642 946 777','2026-03-06','person_kadanik','2026-03-31','ZAMITNUTO',NULL),

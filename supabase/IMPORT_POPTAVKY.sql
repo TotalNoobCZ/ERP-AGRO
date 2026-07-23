@@ -13,7 +13,7 @@ insert into _imp_cust values
   ('cmrj667uk000hmc7h1j7or0sg','Bartoň s.r.o',NULL,NULL,NULL,NULL,NULL,NULL,NULL),
   ('cmrj682ih000nmc7hi27fb8sj','DUOK',NULL,NULL,NULL,NULL,NULL,NULL,NULL),
   ('cmrj6algk000tmc7hs4smwzxg','Diakonie Broumov',NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-  ('cmrj6c14m000zmc7hn7xx9uq2','Melkov-WH',NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+  ('cmrj6c14m000zmc7hn7xx9uq2','Melkov - WH s.r.o.',NULL,NULL,NULL,NULL,NULL,NULL,NULL),
   ('cmrkc04tk0000rhhs6hfacwby','Qlar Czech s.r.o.',NULL,'+420','Průmyslová 484 Hala DC3, 252 61 Jeneč','Česko','Petr Rohlena','775409049','p.rohlena@qlar.com'),
   ('cmroid3r70001cyditcz8y1f4','SULTRADE','sultrade@sultrade.cz','724085054',NULL,NULL,NULL,NULL,NULL),
   ('cmrowelzi0001elvsnnr0if27','PastedGraphic  (Bartoň)',NULL,NULL,NULL,NULL,NULL,NULL,NULL),
