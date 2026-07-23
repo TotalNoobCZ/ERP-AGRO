@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { createClient, getCurrentProfile } from "@/lib/supabase/server";
 import { parseDay, formatDay, formatCz, today } from "@/lib/zakazky/dates";
 import { formatDateTime } from "@/lib/format";
-import { StavBadge, SubmitButton, SmazatButton } from "@/components/zakazky/common";
+import { StavBadge, SmazatButton } from "@/components/zakazky/common";
 import {
   prodlouzit,
   zmenitStav,
@@ -15,6 +15,7 @@ import {
   type ZakazkaStav,
 } from "../actions";
 import { ProdlouzeniForm, PreruseniForm, PoznamkyAkce, MilnikyEditor } from "@/components/zakazky/formulare";
+import { AkceStavAkce } from "@/components/zakazky/AkceStavAkce";
 import Timeline, { type TRadek } from "@/components/zakazky/Timeline";
 import { ZalozitProjekt } from "@/components/konstrukce/ZalozitProjekt";
 import { ZalozitPodzakazku } from "@/components/zakazky/ZalozitPodzakazku";
@@ -220,7 +221,8 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
           <h1 className="font-mono text-2xl font-bold">{z.kod}</h1>
           <StavBadge z={stavovaZakazka} />
           <span title="1 = nejvyšší, 5 = nejnižší" className="badge bg-slate-100 text-slate-500">Priorita {z.priorita}</span>
-          <div className="ml-auto flex gap-2">
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <AkceStavAkce id={z.id} stav={z.stav} />
             <Link href={`/zakazky/${z.id}/tisk?print=1`} className="btn-ghost">🖨 Export do PDF</Link>
             <Link href={`/zakazky/${z.id}/upravit`} className="btn-ghost">✏️ Upravit</Link>
           </div>
@@ -419,30 +421,6 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
         <KonstrukcniProjekty zakazkaId={z.id} />
       </section>
 
-      <section className="flex flex-wrap gap-3">
-        {/* Životní cyklus akce: běží → Fakturace → Proplaceno (finále) → Archiv */}
-        {(z.stav === "AKTIVNI" || z.stav === "POZASTAVENO") && (
-          <StavTlacitko id={z.id} stav="FAKTURACE" label="Hotovo → do fakturace" cls="btn-primary" />
-        )}
-        {z.stav === "FAKTURACE" && (
-          <>
-            <StavTlacitko id={z.id} stav="PROPLACENO" label="Označit proplaceno" cls="btn-primary" />
-            <StavTlacitko id={z.id} stav="AKTIVNI" label="Zpět do výroby" cls="btn-ghost" />
-          </>
-        )}
-        {z.stav === "PROPLACENO" && (
-          <>
-            <StavTlacitko id={z.id} stav="FAKTURACE" label="Zpět do fakturace" cls="btn-ghost" />
-            <StavTlacitko id={z.id} stav="ARCHIV" label="Archivovat" cls="btn-danger" />
-          </>
-        )}
-        {z.stav === "ARCHIV" && (
-          <StavTlacitko id={z.id} stav="AKTIVNI" label="Znovu aktivovat" cls="btn-ghost" />
-        )}
-        {(z.stav === "AKTIVNI" || z.stav === "POZASTAVENO") && (
-          <StavTlacitko id={z.id} stav="ARCHIV" label="Archivovat" cls="btn-danger" />
-        )}
-      </section>
 
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-muted">Historie změn</h2>
@@ -551,25 +529,3 @@ async function KonstrukcniProjekty({ zakazkaId }: { zakazkaId: string }) {
   );
 }
 
-function StavTlacitko({
-  id,
-  stav,
-  label,
-  cls,
-}: {
-  id: string;
-  stav: "FAKTURACE" | "PROPLACENO" | "ARCHIV" | "AKTIVNI" | "POZASTAVENO";
-  label: string;
-  cls: string;
-}) {
-  return (
-    <form
-      action={async () => {
-        "use server";
-        await zmenitStav(id, stav);
-      }}
-    >
-      <SubmitButton className={cls} pendingText="Ukládám…">{label}</SubmitButton>
-    </form>
-  );
-}
