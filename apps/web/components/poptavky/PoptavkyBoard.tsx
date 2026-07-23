@@ -18,6 +18,7 @@ import {
 import { INQUIRY_STATUS_LABELS } from "@erp/core";
 import { COLOR_TOKENS, userColor } from "@erp/ui";
 import { formatDen } from "@/lib/format";
+import { formatPhone } from "@/lib/countries";
 import { DateField } from "@/components/DateField";
 import { priraditPoptavku } from "@/app/(erp)/poptavky/actions";
 import type { BoardOsoba, BoardPoptavka } from "@/lib/poptavky-query";
@@ -272,6 +273,8 @@ function PoptCard({
     id: `popt:${popt.id}`,
     disabled: !editable,
   });
+  const stop = (e: React.MouseEvent) => e.stopPropagation();
+  const maKontakt = Boolean(popt.contactName || popt.contactPhone || popt.contactEmail);
   return (
     <div
       ref={setNodeRef}
@@ -284,6 +287,21 @@ function PoptCard({
     >
       <p className="truncate font-semibold">#{popt.number} · {popt.subject}</p>
       <p className="truncate text-xs opacity-75">{popt.customerName}</p>
+      {maKontakt && (
+        <div className="mt-1 space-y-0.5 border-t border-black/15 pt-1 text-[10px] opacity-80">
+          {popt.contactName && <p className="truncate">👤 {popt.contactName}</p>}
+          {popt.contactPhone && (
+            <a href={`tel:${popt.contactPhone}`} onClick={stop} className="block truncate hover:underline">
+              📞 {formatPhone(popt.contactPhone)}
+            </a>
+          )}
+          {popt.contactEmail && (
+            <a href={`mailto:${popt.contactEmail}`} onClick={stop} className="block truncate hover:underline">
+              ✉️ {popt.contactEmail}
+            </a>
+          )}
+        </div>
+      )}
       <div className="mt-0.5 flex items-center justify-between text-[10px] opacity-70">
         <span>{INQUIRY_STATUS_LABELS[popt.status]}</span>
         {popt.deadline && <span>do {formatDen(popt.deadline)}</span>}
