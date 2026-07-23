@@ -62,17 +62,34 @@ function fazoveBary(z: DilnaZakazka): TBar[] {
 
 const BARVA_TERMIN = "#64748b"; // slate-500 – termín zakázky/akce (základní pruh)
 
-function naRadek(z: DilnaZakazka): TRadek {
-  // Základní pruh = termín samotné zakázky/akce (začátek → konec), pak fáze nad ním.
-  const zac = parseDay(z.zacatek);
-  const kon = parseDay(z.konecAktualni);
+/** Rozsah termínů podzakázek: nejdřívější začátek → nejzazší konec (nebo null). */
+function rozsahPodzakazek(deti: DilnaZakazka[]): { od: Date; do: Date } | null {
+  if (deti.length === 0) return null;
+  let od = parseDay(deti[0]!.zacatek);
+  let doo = parseDay(deti[0]!.konecAktualni);
+  for (const d of deti) {
+    const z = parseDay(d.zacatek);
+    const k = parseDay(d.konecAktualni);
+    if (z < od) od = z;
+    if (k > doo) doo = k;
+  }
+  return { od, do: doo };
+}
+
+function naRadek(z: DilnaZakazka, terminOverride?: { od: Date; do: Date } | null): TRadek {
+  // Základní pruh = termín zakázky/akce. U akce s podzakázkami se odvodí z jejich
+  // rozsahu (nejdřívější začátek → nejzazší konec), jinak vlastní začátek → konec.
+  const zac = terminOverride ? terminOverride.od : parseDay(z.zacatek);
+  const kon = terminOverride ? terminOverride.do : parseDay(z.konecAktualni);
   const termin: TBar = {
     od: zac,
     do: kon,
     lane: 0,
     barva: BARVA_TERMIN,
     label: z.kod,
-    titulek: `${z.kod} – termín: ${formatCz(zac)} – ${formatCz(kon)}`,
+    titulek: terminOverride
+      ? `${z.kod} – termín dle podzakázek: ${formatCz(zac)} – ${formatCz(kon)}`
+      : `${z.kod} – termín: ${formatCz(zac)} – ${formatCz(kon)}`,
   };
   const faze = fazoveBary(z).map((b) => ({ ...b, lane: b.lane + 1 }));
   const bary = [termin, ...faze];
@@ -107,7 +124,8 @@ export default async function DilnaGanttPage({
     // rozbalitelné podřádky – poslední stav (co uživatel naposledy rozbalil)
     // si Timeline pamatuje v localStorage pod vlastním klíčem.
     radky = skupiny.map(({ akce, deti }) => ({
-      ...naRadek(akce),
+      // Pruh hlavní akce = rozsah jejích podzakázek (má-li nějaké), jinak vlastní termín.
+      ...naRadek(akce, rozsahPodzakazek(deti)),
       podradky: deti.map((d) => ({ ...naRadek(d), label: `↳ ${d.kod}` })),
     }));
   } else {
