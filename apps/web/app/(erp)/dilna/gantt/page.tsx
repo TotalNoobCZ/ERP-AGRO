@@ -108,7 +108,7 @@ export default async function DilnaGanttPage({
     // si Timeline pamatuje v localStorage pod vlastním klíčem.
     radky = skupiny.map(({ akce, deti }) => ({
       ...naRadek(akce),
-      podradky: deti.map((d) => naRadek(d)),
+      podradky: deti.map((d) => ({ ...naRadek(d), label: `↳ ${d.kod}` })),
     }));
   } else {
     // Podle zaměstnance: přiřazení lidí z dílen na zakázky v okně.

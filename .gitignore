@@ -16,5 +16,9 @@ next-env.d.ts
 .turbo/
 .vercel/
 
+# Tento repozitář používá npm (package-lock.json). pnpm-lock.yaml by
+# přinutil Vercel přepnout na pnpm, které nečte pole "workspaces" → build spadne.
+pnpm-lock.yaml
+
 # OS / editor
 .DS_Store
