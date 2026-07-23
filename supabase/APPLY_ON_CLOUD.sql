@@ -124,9 +124,10 @@ create policy dilna_faze_delete on public.dilna_faze
 --  12) Zakázky – fakturace a proplacení (finále akce)
 --  Stav „Dokončeno" nahrazen „Fakturace"; po zaplacení „Proplaceno" = hotové.
 -- ============================================================================
--- Nejdřív rozšířit povolené stavy, teprve pak přepsat existující DOKONCENO.
+-- Pořadí: DROP starý constraint → UPDATE dat (bez omezení) → ADD nový.
 alter table public.zakazky drop constraint if exists zakazky_stav_check;
-alter table public.zakazky add constraint zakazky_stav_check
-  check (stav in ('AKTIVNI', 'POZASTAVENO', 'FAKTURACE', 'PROPLACENO', 'ARCHIV'));
 
 update public.zakazky set stav = 'FAKTURACE' where stav = 'DOKONCENO';
+
+alter table public.zakazky add constraint zakazky_stav_check
+  check (stav in ('AKTIVNI', 'POZASTAVENO', 'FAKTURACE', 'PROPLACENO', 'ARCHIV'));

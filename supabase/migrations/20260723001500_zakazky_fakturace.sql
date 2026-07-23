@@ -5,12 +5,14 @@
 --  stavu „Proplaceno", který se bere jako hotové. Oba stavy má vlastní lišta
 --  „Fakturace" (viz @erp/core ZAKAZKA_FAKTURACNI_STAVY).
 --
---  Pořadí: nejdřív rozšířit check constraint (aby povolil nové stavy), teprve
---  pak přepsat existující DOKONCENO → FAKTURACE.
+--  Pořadí (kvůli check constraintu): DROP starý → UPDATE dat (bez omezení) →
+--  ADD nový. Jinak buď starý constraint nepovolí FAKTURACE, nebo nový narazí
+--  na existující DOKONCENO řádky.
 -- ============================================================================
 
 alter table zakazky drop constraint if exists zakazky_stav_check;
-alter table zakazky add constraint zakazky_stav_check
-  check (stav in ('AKTIVNI', 'POZASTAVENO', 'FAKTURACE', 'PROPLACENO', 'ARCHIV'));
 
 update zakazky set stav = 'FAKTURACE' where stav = 'DOKONCENO';
+
+alter table zakazky add constraint zakazky_stav_check
+  check (stav in ('AKTIVNI', 'POZASTAVENO', 'FAKTURACE', 'PROPLACENO', 'ARCHIV'));
