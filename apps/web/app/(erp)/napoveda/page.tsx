@@ -44,6 +44,7 @@ export default function NapovedaPage() {
         <li>Administrátor tě nejdřív založí ve <strong>Správě</strong> (bez hesla).</li>
         <li>Na přihlašovací stránce klikni na <strong>„Jsem tu poprvé"</strong>.</li>
         <li>Zadej svůj <strong>e-mail</strong> a <strong>nové heslo</strong> (min. 8 znaků) → systém tě přihlásí.</li>
+        <li><strong>Po prvním přihlášení</strong> se objeví okénko s nabídkou projít si návod – <em>Ano</em> otevře manuál, <em>Teď ne</em> tě pustí na hlavní obrazovku. Návod pak kdykoli otevřeš přes <Code>ⓘ</Code> v hlavičce.</li>
       </UL>
       <H3>Běžné přihlášení</H3>
       <UL>
