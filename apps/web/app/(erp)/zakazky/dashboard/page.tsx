@@ -37,7 +37,8 @@ export default async function ZakazkyDashboard() {
   const pocet = {
     AKTIVNI: withStav.filter((z) => z.stav === "AKTIVNI" && !z.po).length,
     POZASTAVENO: withStav.filter((z) => z.stav === "POZASTAVENO" && !z.po).length,
-    DOKONCENO: withStav.filter((z) => z.stav === "DOKONCENO").length,
+    FAKTURACE: withStav.filter((z) => z.stav === "FAKTURACE").length,
+    PROPLACENO: withStav.filter((z) => z.stav === "PROPLACENO").length,
     PO: withStav.filter((z) => z.po).length,
   };
 
@@ -54,11 +55,12 @@ export default async function ZakazkyDashboard() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Přehled zakázek</h1>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
         <StatKarta href="/zakazky?stav=AKTIVNI" label="Aktivní" value={pocet.AKTIVNI} />
         <StatKarta href="/zakazky?stav=PO_TERMINU" label="Po termínu" value={pocet.PO} warn={pocet.PO > 0} />
         <StatKarta href="/zakazky?stav=POZASTAVENO" label="Pozastaveno" value={pocet.POZASTAVENO} />
-        <StatKarta href="/zakazky?stav=DOKONCENO" label="Dokončeno" value={pocet.DOKONCENO} />
+        <StatKarta href="/zakazky/fakturace" label="Fakturace" value={pocet.FAKTURACE} warn={pocet.FAKTURACE > 0} />
+        <StatKarta href="/zakazky/fakturace" label="Proplaceno" value={pocet.PROPLACENO} />
       </div>
 
       <Card className={pocet.PO > 0 ? "border-red-400/50" : ""}>

@@ -30,7 +30,7 @@ export default async function PlanPrintPage({
        milniky(typ, datum, deleted_at)`,
     )
     .is("deleted_at", null)
-    .in("stav", ["AKTIVNI", "POZASTAVENO", "DOKONCENO"])
+    .in("stav", ["AKTIVNI", "POZASTAVENO", "FAKTURACE"])
     .order("priorita", { ascending: true })
     .order("konec_aktualni", { ascending: true });
   const zakazky = (data ?? []) as unknown as Row[];

@@ -22,7 +22,8 @@ export function stavLabel(z: StavovaZakazka): string {
 const STAV_BARVA: Record<StavZakazky, string> = {
   AKTIVNI: "bg-sky-100 text-sky-700",
   POZASTAVENO: "bg-amber-100 text-amber-800",
-  DOKONCENO: "bg-emerald-100 text-emerald-700",
+  FAKTURACE: "bg-violet-100 text-violet-700",
+  PROPLACENO: "bg-emerald-100 text-emerald-700",
   ARCHIV: "bg-slate-100 text-slate-500",
 };
 

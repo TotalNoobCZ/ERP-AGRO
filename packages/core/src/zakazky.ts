@@ -3,18 +3,24 @@
 //  Převzato 1:1 z Planovani/src/lib/orders.ts a tiskových stránek.
 // ----------------------------------------------------------------------------
 
-export const ZAKAZKA_STAVY = ["AKTIVNI", "POZASTAVENO", "DOKONCENO", "ARCHIV"] as const;
+// Životní cyklus akce: běží → po výrobě „Fakturace" (řeší se vystavení faktury)
+// → „Proplaceno" = finále (bere se jako hotové) → případně Archiv.
+export const ZAKAZKA_STAVY = ["AKTIVNI", "POZASTAVENO", "FAKTURACE", "PROPLACENO", "ARCHIV"] as const;
 export type StavZakazky = (typeof ZAKAZKA_STAVY)[number];
 
 export const ZAKAZKA_STAV_LABELS: Record<StavZakazky, string> = {
   AKTIVNI: "Aktivní",
   POZASTAVENO: "Pozastaveno",
-  DOKONCENO: "Dokončeno",
+  FAKTURACE: "Fakturace",
+  PROPLACENO: "Proplaceno",
   ARCHIV: "Archiv",
 };
 
 /** Zakázky, které se zobrazují v plánu (běžící). */
 export const ZAKAZKA_BEZICI_STAVY: StavZakazky[] = ["AKTIVNI", "POZASTAVENO"];
+
+/** Stavy finále akce – vlastní lišta „Fakturace" (přehled fakturace a plateb). */
+export const ZAKAZKA_FAKTURACNI_STAVY: StavZakazky[] = ["FAKTURACE", "PROPLACENO"];
 
 export const MILNIK_TYPY = [
   "ZAHAJENI_VYROBY",

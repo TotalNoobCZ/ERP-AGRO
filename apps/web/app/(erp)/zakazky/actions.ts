@@ -600,7 +600,7 @@ export async function upravitZakazku(zakazkaId: string, _prev: ZakazkaStav, fd: 
 
 export async function zmenitStav(
   zakazkaId: string,
-  stav: "DOKONCENO" | "ARCHIV" | "AKTIVNI" | "POZASTAVENO",
+  stav: "FAKTURACE" | "PROPLACENO" | "ARCHIV" | "AKTIVNI" | "POZASTAVENO",
 ) {
   const u = await writer();
   if (!u) return;
@@ -624,6 +624,7 @@ export async function zmenitStav(
   });
   revalidatePath(`/zakazky/${zakazkaId}`);
   revalidatePath("/zakazky");
+  revalidatePath("/zakazky/fakturace");
 }
 
 export async function smazatZakazku(zakazkaId: string, _fd?: FormData) {

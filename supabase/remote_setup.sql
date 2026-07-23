@@ -213,7 +213,7 @@ create table zakazky (
   konec_puvodni      date not null,
   konec_aktualni     date not null,
   stav               text not null default 'AKTIVNI'
-                       check (stav in ('AKTIVNI','POZASTAVENO','DOKONCENO','ARCHIV')),
+                       check (stav in ('AKTIVNI','POZASTAVENO','FAKTURACE','PROPLACENO','ARCHIV')),
   archivovano_kdy    timestamptz,
   poznamka           text,
   popis              text,                          -- „oč se jedná" (hlavně u podzakázek)
