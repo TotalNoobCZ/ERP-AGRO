@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { queryInquiries, queryPersons, type InquiryListParams } from "@/lib/poptavky-query";
+import { queryInquiries, queryFilterPersons, type InquiryListParams } from "@/lib/poptavky-query";
 import { InquiryFilters, FilterRestore } from "@/components/poptavky/inquiry-filters";
 import { InquiryRow } from "@/components/poptavky/inquiry-row";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui";
@@ -19,7 +19,7 @@ export default async function InquiriesPage({
 
   const [inquiries, persons] = await Promise.all([
     queryInquiries(supabase, params),
-    queryPersons(supabase),
+    queryFilterPersons(supabase),
   ]);
 
   // Query string pro tiskový export – zachová aktivní filtry a řazení.

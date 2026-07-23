@@ -133,6 +133,25 @@ export async function queryDueReminders(
   return data ?? [];
 }
 
+/**
+ * Osoby do filtru seznamu poptávek: kdo smí být odpovědný (Vedoucí / Projekťák /
+ * Obchodní manažer) NEBO je na některé poptávce už přiřazen (i historicky
+ * importovaní). Nezahltí filtr všemi zaměstnanci (dílna apod.).
+ */
+export async function queryFilterPersons(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const responsibles = await queryResponsibles(supabase);
+  const byId = new Map<string, { id: string; name: string; email: string | null }>(
+    responsibles.map((p) => [p.id, p]),
+  );
+  const { data: rows } = await supabase.from("inquiries").select("person_id").not("person_id", "is", null);
+  const ids = [...new Set((rows ?? []).map((r) => r.person_id as string))].filter((id) => !byId.has(id));
+  if (ids.length) {
+    const { data: extra } = await supabase.from("profiles").select("id, name, email").in("id", ids);
+    for (const p of extra ?? []) byId.set(p.id, p);
+  }
+  return Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name, "cs"));
+}
+
 /** Číselník osob pro filtry a autora = aktivní profily. */
 export async function queryPersons(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data } = await supabase
