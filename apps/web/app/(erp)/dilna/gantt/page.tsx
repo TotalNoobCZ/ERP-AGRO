@@ -60,14 +60,28 @@ function fazoveBary(z: DilnaZakazka): TBar[] {
   return bary;
 }
 
+const BARVA_TERMIN = "#64748b"; // slate-500 – termín zakázky/akce (základní pruh)
+
 function naRadek(z: DilnaZakazka): TRadek {
-  const bary = fazoveBary(z);
+  // Základní pruh = termín samotné zakázky/akce (začátek → konec), pak fáze nad ním.
+  const zac = parseDay(z.zacatek);
+  const kon = parseDay(z.konecAktualni);
+  const termin: TBar = {
+    od: zac,
+    do: kon,
+    lane: 0,
+    barva: BARVA_TERMIN,
+    label: z.kod,
+    titulek: `${z.kod} – termín: ${formatCz(zac)} – ${formatCz(kon)}`,
+  };
+  const faze = fazoveBary(z).map((b) => ({ ...b, lane: b.lane + 1 }));
+  const bary = [termin, ...faze];
   return {
     id: z.id,
     label: z.kod,
     sublabel: z.popis || z.mistoPlneni,
     href: `/dilna/${z.id}`,
-    pocetRad: Math.max(1, bary.length),
+    pocetRad: 1 + faze.length,
     bary,
     znacky: [],
   };
@@ -180,12 +194,18 @@ export default async function DilnaGanttPage({
 
       <div className="flex flex-wrap gap-4 text-xs text-text-muted">
         {mode === "faze" ? (
-          DILNA_FAZE.map((t) => (
-            <span key={t} className="inline-flex items-center gap-1.5">
-              <span className="inline-block h-3 w-3 rounded" style={{ backgroundColor: DILNA_FAZE_BARVY[t] }} />
-              {DILNA_FAZE_LABELS[t]}
+          <>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="inline-block h-3 w-3 rounded" style={{ backgroundColor: BARVA_TERMIN }} />
+              Termín zakázky/akce
             </span>
-          ))
+            {DILNA_FAZE.map((t) => (
+              <span key={t} className="inline-flex items-center gap-1.5">
+                <span className="inline-block h-3 w-3 rounded" style={{ backgroundColor: DILNA_FAZE_BARVY[t] }} />
+                {DILNA_FAZE_LABELS[t]}
+              </span>
+            ))}
+          </>
         ) : (
           <>
             <span>Barvy odlišují jednotlivé akce.</span>
