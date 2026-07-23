@@ -113,6 +113,10 @@ function Calendar({ value, onPick }: { value: string; onPick: (iso: string) => v
   const base = value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T00:00:00Z`) : new Date();
   const [ym, setYm] = useState({ y: base.getUTCFullYear(), m: base.getUTCMonth() });
 
+  // Dnešní datum (lokální kalendářní den) pro zvýraznění v mřížce.
+  const ted = new Date();
+  const dnesIso = `${ted.getFullYear()}-${String(ted.getMonth() + 1).padStart(2, "0")}-${String(ted.getDate()).padStart(2, "0")}`;
+
   const first = new Date(Date.UTC(ym.y, ym.m, 1));
   const startDow = (first.getUTCDay() + 6) % 7; // Po=0
   const daysInMonth = new Date(Date.UTC(ym.y, ym.m + 1, 0)).getUTCDate();
@@ -140,12 +144,20 @@ function Calendar({ value, onPick }: { value: string; onPick: (iso: string) => v
           if (d === null) return <div key={i} />;
           const iso = `${ym.y}-${String(ym.m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
           const sel = iso === value;
+          const dnes = iso === dnesIso;
           return (
             <button
               key={i}
               type="button"
               onClick={() => onPick(iso)}
-              className={`rounded py-1 text-sm hover:bg-accent ${sel ? "bg-user-0 font-semibold text-on-accent" : ""}`}
+              title={dnes ? "Dnes" : undefined}
+              className={`rounded py-1 text-sm hover:bg-accent ${
+                sel
+                  ? "bg-user-0 font-semibold text-on-accent"
+                  : dnes
+                    ? "font-semibold text-link ring-1 ring-inset ring-link"
+                    : ""
+              }`}
             >
               {d}
             </button>
