@@ -25,6 +25,7 @@ export const ODDELENI = [
   // Kapitola Kancelář
   "kancelar",
   "obchod",
+  "obchodni_manazer",
   "konstrukce",
   "projektak",
   "elektro_projektant",
@@ -38,6 +39,7 @@ export const ODDELENI_LABELS: Record<Oddeleni, string> = {
   elektro: "Elektro",
   kancelar: "Kancelář",
   obchod: "Obchod",
+  obchodni_manazer: "Obchodní manažer",
   konstrukce: "Konstrukce",
   projektak: "Projekťák",
   elektro_projektant: "Elektro projektant",
@@ -57,6 +59,7 @@ export const ODDELENI_KAPITOLA: Record<Oddeleni, Kapitola> = {
   elektro: "dilna",
   kancelar: "kancelar",
   obchod: "kancelar",
+  obchodni_manazer: "kancelar",
   konstrukce: "kancelar",
   projektak: "kancelar",
   elektro_projektant: "kancelar",
@@ -78,6 +81,17 @@ export function isAdmin(role: Role): boolean {
   return role === "admin";
 }
 
+/**
+ * Smí odebrat konstruktéra ze zakázky? Jen šéfkonstruktér nebo administrátor.
+ * (Přiřazování zůstává na editorech; odebrání je chráněná operace.)
+ */
+export function muzeOdebratKonstruktera(p: {
+  role: Role | string;
+  sefkonstrukter?: boolean | null;
+}): boolean {
+  return p.role === "admin" || !!p.sefkonstrukter;
+}
+
 export interface Profile {
   id: string;
   authUserId: string | null;
@@ -87,6 +101,8 @@ export interface Profile {
   oddeleni: Oddeleni | null;
   /** lze přiřazovat na úkoly/zakázky (dřívější has_tile / řešitel) */
   assignable: boolean;
+  /** pozice: šéfkonstruktér – smí odebírat konstruktéry ze zakázek */
+  sefkonstrukter: boolean;
   /** 0–9, paleta dlaždic z Konstrukce */
   colorIndex: number | null;
   tileOrder: number | null;

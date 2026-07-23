@@ -31,7 +31,9 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
     <button
       type="button"
       onClick={toggle}
-      title={theme === "dark" ? "Přepnout na světlý vzhled" : "Přepnout na tmavý vzhled"}
+      data-tip={theme === "dark" ? "Přepnout na světlý vzhled" : "Přepnout na tmavý vzhled"}
+      data-tip-pos="bottom"
+      aria-label="Přepnout vzhled"
       className={`inline-flex h-7 w-7 items-center justify-center rounded-md border border-line text-sm hover:bg-accent ${className}`}
     >
       {theme === "dark" ? "☀️" : "🌙"}

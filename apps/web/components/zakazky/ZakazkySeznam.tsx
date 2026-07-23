@@ -1,9 +1,9 @@
 "use client";
 // Seznam akcí. U hlavní akce se zobrazí VŠICHNI lidé (napříč jejími zakázkami),
 // šipkou se rozbalí zakázky k akci a u každé jsou její lidé.
-import { useState } from "react";
 import Link from "next/link";
 import { parseDay, formatCz } from "@/lib/zakazky/dates";
+import { usePersistentSet } from "@/lib/usePersistentSet";
 import { StavBadge } from "@/components/zakazky/common";
 import { userColor } from "@erp/ui";
 import type { ZakazkaListRow } from "@/lib/zakazky-query";
@@ -38,7 +38,13 @@ function Zahlavi({ z }: { z: ZakazkaListRow }) {
       <span title="Priorita (1 = nejvyšší, 5 = nejnižší)" className="w-8 shrink-0 text-center text-xs font-semibold text-text-muted">
         P{z.priorita}
       </span>
-      <span className="font-mono text-sm font-semibold">{z.kod}</span>
+      <span
+        className="font-mono text-sm font-semibold"
+        data-tip={z.popis || z.misto_plneni || undefined}
+        data-tip-pos="bottom"
+      >
+        {z.kod}
+      </span>
       <span className="min-w-0 flex-1 truncate text-sm text-text-muted">{z.popis || z.misto_plneni}</span>
       <span className="hidden text-sm text-text-muted sm:inline">{formatCz(parseDay(z.konec_aktualni))}</span>
       <StavBadge z={{ konecAktualni: parseDay(z.konec_aktualni), stav: z.stav }} />
@@ -47,19 +53,12 @@ function Zahlavi({ z }: { z: ZakazkaListRow }) {
 }
 
 export function ZakazkySeznam({ uzly }: { uzly: Uzel[] }) {
-  const [open, setOpen] = useState<Set<string>>(new Set());
-  const toggle = (id: string) =>
-    setOpen((s) => {
-      const n = new Set(s);
-      if (n.has(id)) n.delete(id);
-      else n.add(id);
-      return n;
-    });
+  const { has: jeOtevreno, toggle } = usePersistentSet("erp_zakazky_seznam_open");
 
   return (
     <div className="card divide-y divide-line">
       {uzly.map(({ row, deti, lideAkce }) => {
-        const otevreno = open.has(row.id);
+        const otevreno = jeOtevreno(row.id);
         return (
           <div key={row.id}>
             <div className="flex items-start hover:bg-accent">

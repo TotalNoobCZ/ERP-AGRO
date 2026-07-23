@@ -9,7 +9,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient, getCurrentProfile } from "@/lib/supabase/server";
-import { canWrite, type Role, type TypZmeny } from "@erp/core";
+import { canWrite, muzeOdebratKonstruktera, type Role, type TypZmeny } from "@erp/core";
 import {
   zakazkaSchema,
   zakazkaUpravaSchema,
@@ -50,7 +50,12 @@ async function writer() {
   const profile = await getCurrentProfile();
   if (!profile) return null;
   if (!canWrite(profile.role as Role)) return null;
-  return { id: profile.id, name: profile.name, role: profile.role as Role };
+  return {
+    id: profile.id,
+    name: profile.name,
+    role: profile.role as Role,
+    sefkonstrukter: !!profile.sefkonstrukter,
+  };
 }
 
 async function zapisAudit(
@@ -113,6 +118,45 @@ async function nactiExistujiciPrirazeni(supabase: Db, osobaIds: string[]) {
     zakazka: { kod: string };
     osoba: { name: string } | null;
   }[];
+}
+
+/**
+ * Zakázka k akci (child) se v Konstrukci NEzobrazuje jako samostatný projekt,
+ * ale jako podúkol v konstrukčním projektu hlavní akce – aby Konstrukce
+ * odpovídala tabuli (akce → zakázky k akci). Task.zakazka_id = child, takže
+ * konstruktér přiřazený k podúkolu se propíše ke správné zakázce k akci.
+ */
+async function pridatKonstrukcniPodukol(
+  supabase: Db,
+  parentZakazkaId: string,
+  childZakazkaId: string,
+  nazev: string,
+): Promise<void> {
+  let { data: hlavniProjekt } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("zakazka_id", parentZakazkaId)
+    .eq("status", "active")
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (!hlavniProjekt) {
+    const { data: parent } = await supabase
+      .from("zakazky").select("kod").eq("id", parentZakazkaId).maybeSingle();
+    const { data: novy } = await supabase
+      .from("projects")
+      .insert({ zakazka_id: parentZakazkaId, name: parent?.kod ?? "Akce", owner_id: null })
+      .select("id")
+      .single();
+    hlavniProjekt = novy;
+  }
+  if (hlavniProjekt) {
+    await supabase.from("tasks").insert({
+      project_id: hlavniProjekt.id,
+      zakazka_id: childZakazkaId,
+      name: nazev,
+    });
+  }
 }
 
 export async function vytvoritZakazku(_prev: ZakazkaStav, fd: FormData): Promise<ZakazkaStav> {
@@ -234,14 +278,20 @@ export async function vytvoritZakazku(_prev: ZakazkaStav, fd: FormData): Promise
   );
   if (prirErr) return { obecna: "Přiřazení se nepodařilo uložit." };
 
-  // Integrace s Konstrukcí: každá zakázka automaticky založí jeden konstrukční
-  // projekt. Je „volný“ (owner_id = null) – čeká na přidělení zodpovědného
-  // nebo na rozdělení do dalších projektů/úkolů v modulu Konstrukce.
-  await supabase.from("projects").insert({
-    zakazka_id: zakazka.id,
-    name: d.kod,
-    owner_id: null,
-  });
+  // Integrace s Konstrukcí:
+  //  – běžná akce → vlastní „volný“ konstrukční projekt (owner_id = null),
+  //  – zakázka k akci (má rodiče) → jen podúkol v projektu hlavní akce,
+  //    aby Konstrukce odpovídala tabuli (akce → zakázky k akci) a nevznikal
+  //    duplicitní samostatný projekt pro dceřinou zakázku.
+  if (d.parentId) {
+    await pridatKonstrukcniPodukol(supabase, d.parentId, zakazka.id, d.kod);
+  } else {
+    await supabase.from("projects").insert({
+      zakazka_id: zakazka.id,
+      name: d.kod,
+      owner_id: null,
+    });
+  }
 
   await zapisAudit(supabase, {
     entita: "zakazka", entitaId: zakazka.id, typZmeny: "VYTVORENI", uzivatelId: u.id,
@@ -296,31 +346,8 @@ export async function vytvoritPodzakazku(
   }
 
   // Konstrukce: zakázka k akci se NEzaloží jako samostatný projekt, ale přidá
-  // se jako podúkol do konstrukčního projektu hlavní akce.
-  let { data: hlavniProjekt } = await supabase
-    .from("projects")
-    .select("id")
-    .eq("zakazka_id", parentId)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  if (!hlavniProjekt) {
-    const { data: novy } = await supabase
-      .from("projects")
-      .insert({ zakazka_id: parentId, name: parent.kod, owner_id: null })
-      .select("id")
-      .single();
-    hlavniProjekt = novy;
-  }
-  if (hlavniProjekt) {
-    // Podúkol reprezentuje tuto zakázku k akci (zakazka_id = child.id), aby se
-    // konstruktér přiřazený k podúkolu propsal ke správné zakázce.
-    await supabase.from("tasks").insert({
-      project_id: hlavniProjekt.id,
-      zakazka_id: child.id,
-      name: cislo.trim(),
-    });
-  }
+  // se jako podúkol do konstrukčního projektu hlavní akce (sdílená logika).
+  await pridatKonstrukcniPodukol(supabase, parentId, child.id, cislo.trim());
 
   await zapisAudit(supabase, {
     entita: "zakazka",
@@ -608,12 +635,19 @@ export async function smazatZakazku(zakazkaId: string, _fd?: FormData) {
   if (!z || z.deleted_at) return;
 
   const ted = new Date().toISOString();
-  await supabase.from("prirazeni_zakazka").update({ deleted_at: ted }).eq("zakazka_id", zakazkaId).is("deleted_at", null);
-  await supabase.from("milniky").update({ deleted_at: ted }).eq("zakazka_id", zakazkaId).is("deleted_at", null);
 
-  // Konstrukce: zarchivovat projekty této zakázky + jejich úkoly, ať akce
+  // Kaskáda na zakázky k akci: smazání akce vezme i její dceřiné zakázky,
+  // ať v systému nezůstanou osiřelé (parent bez rodiče) záznamy.
+  const { data: deti } = await supabase
+    .from("zakazky").select("id").eq("parent_id", zakazkaId).is("deleted_at", null);
+  const vsechnyIds = [zakazkaId, ...(deti ?? []).map((d) => d.id)];
+
+  await supabase.from("prirazeni_zakazka").update({ deleted_at: ted }).in("zakazka_id", vsechnyIds).is("deleted_at", null);
+  await supabase.from("milniky").update({ deleted_at: ted }).in("zakazka_id", vsechnyIds).is("deleted_at", null);
+
+  // Konstrukce: zarchivovat projekty těchto zakázek + jejich úkoly, ať akce
   // po smazání nezůstane viset v Plánování/Ganttu.
-  const { data: projs } = await supabase.from("projects").select("id").eq("zakazka_id", zakazkaId);
+  const { data: projs } = await supabase.from("projects").select("id").in("zakazka_id", vsechnyIds);
   const projIds = (projs ?? []).map((p) => p.id);
   if (projIds.length > 0) {
     await supabase
@@ -623,14 +657,14 @@ export async function smazatZakazku(zakazkaId: string, _fd?: FormData) {
       .eq("status", "active");
     await supabase.from("projects").update({ status: "archived" }).in("id", projIds).eq("status", "active");
   }
-  // Úkoly reprezentující tuto zakázku k akci (žijí v projektu hlavní akce).
+  // Úkoly reprezentující tyto zakázky k akci (žijí v projektu hlavní akce).
   await supabase
     .from("tasks")
     .update({ status: "archived", archived_at: ted, archived_by: u.id })
-    .eq("zakazka_id", zakazkaId)
+    .in("zakazka_id", vsechnyIds)
     .eq("status", "active");
 
-  await supabase.from("zakazky").update({ deleted_at: ted }).eq("id", zakazkaId);
+  await supabase.from("zakazky").update({ deleted_at: ted }).in("id", vsechnyIds);
 
   await zapisAudit(supabase, {
     entita: "zakazka", entitaId: zakazkaId, typZmeny: "SMAZANI", uzivatelId: u.id,
@@ -898,11 +932,17 @@ export async function odebratPracovnika(prirazeniId: string, duvod: string): Pro
   const supabase = await createClient();
   const { data: p } = await supabase
     .from("prirazeni_zakazka")
-    .select("id, zakazka_id, datum_od, datum_do, deleted_at, osoba:profiles(name)")
+    .select("id, zakazka_id, datum_od, datum_do, deleted_at, osoba:profiles(name, oddeleni)")
     .eq("id", prirazeniId)
     .maybeSingle();
   if (!p || p.deleted_at) return { ok: false, chyba: "Přiřazení nenalezeno." };
-  const jmeno = (p.osoba as unknown as { name: string } | null)?.name ?? "?";
+  const osoba = p.osoba as unknown as { name: string; oddeleni: string | null } | null;
+  const jmeno = osoba?.name ?? "?";
+
+  // Odebrat konstruktéra ze zakázky smí jen šéfkonstruktér nebo administrátor.
+  if (osoba?.oddeleni === "konstrukce" && !muzeOdebratKonstruktera(u)) {
+    return { ok: false, chyba: "Odebrat konstruktéra ze zakázky smí jen šéfkonstruktér nebo administrátor." };
+  }
 
   await supabase.from("prirazeni_zakazka").update({ deleted_at: new Date().toISOString() }).eq("id", p.id);
   await zapisAudit(supabase, {
@@ -911,6 +951,42 @@ export async function odebratPracovnika(prirazeniId: string, duvod: string): Pro
   });
   revalidatePath(`/zakazky/${p.zakazka_id}`);
   revalidatePath(`/zakazky/${p.zakazka_id}/upravit`);
+  revalidatePath("/zakazky/plan");
+  return { ok: true };
+}
+
+/**
+ * Nastaví (nebo zruší) odpovědnou osobu zakázky – z tabule přetažením
+ * projekťáka / vedoucího. Odpovědnou osobou smí být jen Projekťák nebo Vedoucí.
+ */
+export async function nastavitOdpovednouOsobu(zakazkaId: string, osobaId: string | null): Promise<PracVysledek> {
+  const u = await writer();
+  if (!u) return { ok: false, chyba: "Nejste přihlášeni nebo nemáte právo zápisu." };
+  const supabase = await createClient();
+
+  const { data: z } = await supabase.from("zakazky").select("id, deleted_at").eq("id", zakazkaId).maybeSingle();
+  if (!z || z.deleted_at) return { ok: false, chyba: "Akce nenalezena." };
+
+  let jmeno = "—";
+  if (osobaId) {
+    const { data: osoba } = await supabase
+      .from("profiles").select("name, oddeleni, role, active").eq("id", osobaId).maybeSingle();
+    if (!osoba || !osoba.active) return { ok: false, chyba: "Osoba nenalezena." };
+    if (osoba.oddeleni !== "projektak" && osoba.role !== "vedouci") {
+      return { ok: false, chyba: "Odpovědnou osobou může být jen Projekťák nebo Vedoucí." };
+    }
+    jmeno = osoba.name;
+  }
+
+  const { error } = await supabase.from("zakazky").update({ odpovedna_osoba_id: osobaId }).eq("id", zakazkaId);
+  if (error) return { ok: false, chyba: "Uložení se nezdařilo." };
+  await zapisAudit(supabase, {
+    entita: "zakazka", entitaId: zakazkaId, typZmeny: "UPRAVA", uzivatelId: u.id,
+    nova: { popis: osobaId ? `Odpovědná osoba: ${jmeno}` : "Odpovědná osoba zrušena" },
+  });
+  revalidatePath(`/zakazky/${zakazkaId}`);
+  revalidatePath(`/zakazky/${zakazkaId}/upravit`);
+  revalidatePath("/zakazky/tabule");
   revalidatePath("/zakazky/plan");
   return { ok: true };
 }

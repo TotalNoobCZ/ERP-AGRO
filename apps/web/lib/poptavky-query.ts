@@ -2,7 +2,7 @@
 //  Sdílená dotazová logika seznamu poptávek (tabulka + tiskový export).
 //  Přepis WHERE/ORDER BY logiky z Popt-vky/app/poptavky/page.tsx na supabase-js.
 // ----------------------------------------------------------------------------
-import { INQUIRY_STATUSES, INQUIRY_CLOSED_STATUSES, type InquiryStatus } from "@erp/core";
+import { INQUIRY_STATUSES, INQUIRY_CLOSED_STATUSES, INQUIRY_OPEN_DEADLINE_STATUSES, type InquiryStatus } from "@erp/core";
 import type { createClient } from "@/lib/supabase/server";
 
 export type InquiryListParams = {
@@ -62,13 +62,14 @@ export async function queryInquiries(
     // Explicitně vybraný stav má přednost.
     query = query.eq("status", status as InquiryStatus);
   } else if (deadline === "overdue") {
-    // Pohled "po termínu" = jen živé (neuzavřené) poptávky.
-    query = query.not("status", "in", `(${INQUIRY_CLOSED_STATUSES.join(",")})`);
+    // „Po termínu" jen dokud nebyla nabídka odeslána (Nová / V jednání).
+    query = query.in("status", INQUIRY_OPEN_DEADLINE_STATUSES);
   } else if (contact === "1") {
     // Pohled "ke kontaktování" – stav neomezujeme.
   } else {
-    // Hlavní seznam NEzobrazuje "Objednáno" – mají vlastní záložku.
-    query = query.neq("status", "OBJEDNANO");
+    // Hlavní seznam NEzobrazuje „Objednáno" (vlastní záložka) ani „Odloženo"
+    // (skryté, dokud nepřijde připomenutí – vlastní záložka „Odložené").
+    query = query.not("status", "in", "(OBJEDNANO,ODLOZENO)");
   }
   if (personId) query = query.eq("person_id", personId);
   if (contact === "1") query = query.eq("needs_contact", true);
@@ -86,6 +87,69 @@ export async function queryInquiries(
 
   const { data } = await query;
   return (data ?? []) as unknown as InquiryListRow[];
+}
+
+export type OdlozenaRow = {
+  id: string;
+  number: number;
+  subject: string;
+  description: string | null;
+  status: InquiryStatus;
+  remind_at: string | null;
+  deadline: string | null;
+  customer: { name: string } | null;
+  person: { id: string; name: string } | null;
+};
+
+/** Seznam všech odložených poptávek, seřazený podle data připomenutí. */
+export async function queryOdlozene(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<OdlozenaRow[]> {
+  const { data } = await supabase
+    .from("inquiries")
+    .select("id, number, subject, description, status, remind_at, deadline, customer:customers(name), person:profiles(id, name)")
+    .eq("status", "ODLOZENO")
+    .order("remind_at", { ascending: true, nullsFirst: false });
+  return (data ?? []) as unknown as OdlozenaRow[];
+}
+
+/**
+ * Odložené poptávky, u kterých už nastal čas připomenutí (remind_at <= dnes),
+ * přiřazené konkrétní odpovědné osobě. Slouží k in-app upozornění.
+ */
+export async function queryDueReminders(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  personId: string,
+): Promise<{ id: string; number: number; subject: string; remind_at: string | null }[]> {
+  const today = new Date().toISOString().slice(0, 10);
+  const { data } = await supabase
+    .from("inquiries")
+    .select("id, number, subject, remind_at")
+    .eq("status", "ODLOZENO")
+    .eq("person_id", personId)
+    .not("remind_at", "is", null)
+    .lte("remind_at", today)
+    .order("remind_at", { ascending: true });
+  return data ?? [];
+}
+
+/**
+ * Osoby do filtru seznamu poptávek: kdo smí být odpovědný (Vedoucí / Projekťák /
+ * Obchodní manažer) NEBO je na některé poptávce už přiřazen (i historicky
+ * importovaní). Nezahltí filtr všemi zaměstnanci (dílna apod.).
+ */
+export async function queryFilterPersons(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const responsibles = await queryResponsibles(supabase);
+  const byId = new Map<string, { id: string; name: string; email: string | null }>(
+    responsibles.map((p) => [p.id, p]),
+  );
+  const { data: rows } = await supabase.from("inquiries").select("person_id").not("person_id", "is", null);
+  const ids = [...new Set((rows ?? []).map((r) => r.person_id as string))].filter((id) => !byId.has(id));
+  if (ids.length) {
+    const { data: extra } = await supabase.from("profiles").select("id, name, email").in("id", ids);
+    for (const p of extra ?? []) byId.set(p.id, p);
+  }
+  return Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name, "cs"));
 }
 
 /** Číselník osob pro filtry a autora = aktivní profily. */
@@ -111,7 +175,7 @@ export async function queryResponsibles(
     .from("profiles")
     .select("id, name, email")
     .eq("active", true)
-    .or("role.eq.vedouci,oddeleni.eq.projektak")
+    .or("role.eq.vedouci,oddeleni.eq.projektak,oddeleni.eq.obchodni_manazer")
     .order("name", { ascending: true });
   const list = data ?? [];
 
@@ -133,6 +197,7 @@ export type BoardPoptavka = {
   id: string;
   number: number;
   subject: string;
+  description: string | null;
   status: InquiryStatus;
   deadline: string | null;
   personId: string | null;
@@ -148,12 +213,12 @@ export async function queryPoptavkyBoard(
       .from("profiles")
       .select("id, name, color_index")
       .eq("active", true)
-      .or("role.eq.vedouci,oddeleni.eq.projektak")
+      .or("role.eq.vedouci,oddeleni.eq.projektak,oddeleni.eq.obchodni_manazer")
       .order("name", { ascending: true }),
     // Jen otevřené poptávky (uzavřené se nepřiřazují).
     supabase
       .from("inquiries")
-      .select("id, number, subject, status, deadline, person_id, customer:customers(name)")
+      .select("id, number, subject, description, status, deadline, person_id, customer:customers(name)")
       .not("status", "in", `(${INQUIRY_CLOSED_STATUSES.join(",")})`)
       .order("number", { ascending: false }),
   ]);
@@ -171,6 +236,7 @@ export async function queryPoptavkyBoard(
       id: p.id,
       number: p.number,
       subject: p.subject,
+      description: p.description,
       status: p.status as InquiryStatus,
       deadline: p.deadline,
       personId: p.person_id,

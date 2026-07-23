@@ -3,6 +3,7 @@
 // barvy dle tématu, logika 1:1. Navíc: volitelné tažení pruhů
 // (posun celé akce / roztažení konce) přes pointer events.
 import { useRef, useState } from "react";
+import { usePersistentSet } from "@/lib/usePersistentSet";
 import Link from "next/link";
 import { celkovaSirka, offsetPx, sirkaPx, mesicniZnacky, PX_ZA_DEN } from "@/lib/zakazky/timeline";
 import { today, formatCz, addDays } from "@/lib/zakazky/dates";
@@ -42,24 +43,29 @@ type DragState = {
 
 export default function Timeline({
   start, konec, radky, prazdno = "Žádná data v tomto období.",
-  onBarDrag,
+  onBarDrag, persistKey = "erp_zakazky_plan_otevrene",
 }: {
   start: Date; konec: Date; radky: TRadek[]; prazdno?: string;
   /** volá se po puštění taženého pruhu s posunem ve dnech (≠ 0) */
   onBarDrag?: (dragId: string, deltaDays: number, mode: DragMode) => void;
+  /** localStorage klíč pro zapamatování rozbalených podřádků (per pohled) */
+  persistKey?: string;
 }) {
-  const [otevrene, setOtevrene] = useState<Set<string>>(new Set());
+  const { has: jeOtevreno, toggle, replace } = usePersistentSet(persistKey);
+
+  // Řádky s podřádky (jde je rozbalit) – pro „zobrazit vše" / „skrýt vše".
+  const rozbalitelne: string[] = [];
+  (function sber(rs: TRadek[]) {
+    for (const r of rs) {
+      if (r.podradky?.length) {
+        rozbalitelne.push(r.id);
+        sber(r.podradky);
+      }
+    }
+  })(radky);
   const [drag, setDrag] = useState<DragState | null>(null);
   const dragRef = useRef<DragState | null>(null);
   const movedRef = useRef(false);
-
-  const toggle = (id: string) =>
-    setOtevrene((s) => {
-      const n = new Set(s);
-      if (n.has(id)) n.delete(id);
-      else n.add(id);
-      return n;
-    });
 
   const sirka = celkovaSirka(start, konec);
   const znacky = mesicniZnacky(start, konec);
@@ -131,7 +137,7 @@ export default function Timeline({
   function radekEl(r: TRadek, hloubka: number) {
     const vyska = r.pocetRad * LANE_H + 8;
     const maPodradky = !!r.podradky?.length;
-    const otevreno = otevrene.has(r.id);
+    const otevreno = jeOtevreno(r.id);
     return (
       <div key={`${r.id}@${hloubka}`} className="flex border-b border-line">
         <div style={{ width: LABEL_W, paddingLeft: 12 + hloubka * 16 }} className="sticky left-0 z-10 shrink-0 bg-surface py-2 pr-3">
@@ -163,7 +169,7 @@ export default function Timeline({
 
             const bar = (
               <div
-                className={`relative flex h-[20px] items-center overflow-hidden whitespace-nowrap rounded px-2 text-[11px] font-medium text-white ${draggable ? "cursor-grab active:cursor-grabbing" : ""} ${isDragged ? "opacity-80 ring-2 ring-link" : ""}`}
+                className={`relative mx-px flex h-[20px] items-center overflow-hidden whitespace-nowrap rounded border border-white/25 px-2 text-[11px] font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_0_0_1px_rgba(0,0,0,0.25)] ${draggable ? "cursor-grab active:cursor-grabbing" : ""} ${isDragged ? "opacity-80 ring-2 ring-link" : ""}`}
                 style={{ backgroundColor: b.barva }}
                 title={b.titulek}
                 onPointerDown={draggable ? (e) => startDrag(e, b.dragId!, "move") : undefined}
@@ -220,14 +226,25 @@ export default function Timeline({
     return (
       <div>
         {radekEl(r, hloubka)}
-        {otevrene.has(r.id) && r.podradky?.map((pr) => <RadekStrom key={`${pr.id}@${hloubka + 1}`} r={pr} hloubka={hloubka + 1} />)}
+        {jeOtevreno(r.id) && r.podradky?.map((pr) => <RadekStrom key={`${pr.id}@${hloubka + 1}`} r={pr} hloubka={hloubka + 1} />)}
       </div>
     );
   }
 
   return (
-    <div className="card overflow-x-auto">
-      <div style={{ minWidth: LABEL_W + sirka }}>
+    <div className="space-y-2">
+      {rozbalitelne.length > 0 && (
+        <div className="flex gap-2">
+          <button type="button" className="btn-ghost text-xs" onClick={() => replace(rozbalitelne)}>
+            ▾ Zobrazit vše
+          </button>
+          <button type="button" className="btn-ghost text-xs" onClick={() => replace([])}>
+            ▸ Skrýt vše
+          </button>
+        </div>
+      )}
+      <div className="card overflow-x-auto">
+        <div style={{ minWidth: LABEL_W + sirka }}>
         {/* Hlavička */}
         <div className="flex border-b border-line bg-muted">
           <div style={{ width: LABEL_W }} className="sticky left-0 z-20 shrink-0 bg-muted px-3 py-2 text-xs font-medium text-text-muted">Období</div>
@@ -251,6 +268,7 @@ export default function Timeline({
         ) : (
           radky.map((r) => <RadekStrom key={r.id} r={r} hloubka={0} />)
         )}
+        </div>
       </div>
     </div>
   );

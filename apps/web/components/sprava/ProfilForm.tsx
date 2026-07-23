@@ -5,7 +5,7 @@ import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { ROLES, ROLE_LABELS, ODDELENI, ODDELENI_LABELS, KAPITOLY, KAPITOLA_LABELS, ODDELENI_KAPITOLA, jeDilna } from "@erp/core";
+import { ROLES, ROLE_LABELS, ODDELENI, ODDELENI_LABELS, KAPITOLY, KAPITOLA_LABELS, ODDELENI_KAPITOLA, jeDilna, MODULY, MODUL_LABELS } from "@erp/core";
 import { USER_PALETTE, USER_PALETTE_NAMES } from "@erp/ui";
 import type { ProfilStav } from "@/app/(erp)/sprava/actions";
 
@@ -16,6 +16,8 @@ type Init = {
   role?: string;
   oddeleni?: string | null;
   assignable?: boolean;
+  sefkonstrukter?: boolean;
+  accessModules?: string[] | null;
   colorIndex?: number | null;
   active?: boolean;
   pozice?: string | null;
@@ -55,9 +57,27 @@ export function ProfilForm({
   const ch = stav.chyby ?? {};
   const isEdit = Boolean(initial?.id);
 
-  // Kapitola Dílna se do systému nepřihlašuje → e-mail není povinný.
+  // Řízená pole – aby se po neúspěšném uložení (React 19 resetuje formulář se
+  // server akcí) zadané údaje nesmazaly.
+  const [name, setName] = useState(initial?.name ?? "");
+  const [email, setEmail] = useState(initial?.email ?? "");
+  const [role, setRole] = useState(initial?.role ?? "viewer");
   const [oddeleni, setOddeleni] = useState(initial?.oddeleni ?? "");
+  const [colorIndex, setColorIndex] = useState(String(initial?.colorIndex ?? 0));
+  const [active, setActive] = useState(initial?.active ?? true);
+  const [sefkonstrukter, setSefkonstrukter] = useState(initial?.sefkonstrukter ?? false);
+  const [pozice, setPozice] = useState(initial?.pozice ?? "");
+  const [osobniCislo, setOsobniCislo] = useState(initial?.osobniCislo ?? "");
+  const [poznamka, setPoznamka] = useState(initial?.poznamka ?? "");
   const emailNepovinny = jeDilna(oddeleni);
+
+  // Přístup k modulům: „dle oddělení" (accessModules = null) nebo „vlastní".
+  const [accessMode, setAccessMode] = useState<"dle_oddeleni" | "vlastni">(
+    initial?.accessModules != null ? "vlastni" : "dle_oddeleni",
+  );
+  const [accessModules, setAccessModules] = useState<string[]>(initial?.accessModules ?? []);
+  const prepnoutModul = (m: string) =>
+    setAccessModules((prev) => (prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m]));
 
   return (
     <form action={formAction} className="card max-w-2xl space-y-4 p-6">
@@ -66,7 +86,7 @@ export function ProfilForm({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="label">Jméno a příjmení</label>
-          <input name="name" className="field" defaultValue={initial?.name ?? ""} required />
+          <input name="name" className="field" value={name} onChange={(e) => setName(e.target.value)} required />
           {ch.name && <p className="err">{ch.name}</p>}
         </div>
         <div>
@@ -77,7 +97,8 @@ export function ProfilForm({
             name="email"
             type="email"
             className="field"
-            defaultValue={initial?.email ?? ""}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required={!emailNepovinny}
             placeholder={emailNepovinny ? "dílna se nepřihlašuje – lze nechat prázdné" : ""}
           />
@@ -96,7 +117,7 @@ export function ProfilForm({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div>
           <label className="label">Role</label>
-          <select name="role" className="field" defaultValue={initial?.role ?? "viewer"}>
+          <select name="role" className="field" value={role} onChange={(e) => setRole(e.target.value)}>
             {ROLES.map((r) => (
               <option key={r} value={r}>{ROLE_LABELS[r]}</option>
             ))}
@@ -122,7 +143,7 @@ export function ProfilForm({
         </div>
         <div>
           <label className="label">Barva (dlaždice)</label>
-          <select name="colorIndex" className="field" defaultValue={String(initial?.colorIndex ?? 0)}>
+          <select name="colorIndex" className="field" value={colorIndex} onChange={(e) => setColorIndex(e.target.value)}>
             {USER_PALETTE.map((hex, i) => (
               <option key={hex} value={i}>{USER_PALETTE_NAMES[i]}</option>
             ))}
@@ -132,25 +153,80 @@ export function ProfilForm({
 
       <div className="flex flex-wrap gap-6">
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" name="active" defaultChecked={initial?.active ?? true} />
+          <input type="checkbox" name="active" checked={active} onChange={(e) => setActive(e.target.checked)} />
           Aktivní
         </label>
+        {oddeleni === "konstrukce" && (
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" name="sefkonstrukter" checked={sefkonstrukter} onChange={(e) => setSefkonstrukter(e.target.checked)} />
+            Šéfkonstruktér
+            <span className="text-xs text-text-muted">(smí odebírat konstruktéry ze zakázek)</span>
+          </label>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="label">Pozice (nepovinné)</label>
-          <input name="pozice" className="field" defaultValue={initial?.pozice ?? ""} />
+          <input name="pozice" className="field" value={pozice} onChange={(e) => setPozice(e.target.value)} />
         </div>
         <div>
           <label className="label">Osobní číslo (nepovinné)</label>
-          <input name="osobniCislo" className="field" defaultValue={initial?.osobniCislo ?? ""} />
+          <input name="osobniCislo" className="field" value={osobniCislo} onChange={(e) => setOsobniCislo(e.target.value)} />
         </div>
       </div>
 
       <div>
         <label className="label">Poznámka</label>
-        <textarea name="poznamka" className="field" rows={2} defaultValue={initial?.poznamka ?? ""} />
+        <textarea name="poznamka" className="field" rows={2} value={poznamka} onChange={(e) => setPoznamka(e.target.value)} />
+      </div>
+
+      {/* Přístup k modulům (kartám). „Dle oddělení" = zdědí plošné nastavení. */}
+      <div className="rounded-lg border border-line p-4">
+        <p className="mb-2 text-sm font-semibold">Přístup k modulům</p>
+        <input type="hidden" name="access_mode" value={accessMode} />
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="access_mode_radio"
+              checked={accessMode === "dle_oddeleni"}
+              onChange={() => setAccessMode("dle_oddeleni")}
+            />
+            Podle oddělení (výchozí)
+            <span className="text-xs text-text-muted">– řídí se plošným nastavením práv</span>
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="access_mode_radio"
+              checked={accessMode === "vlastni"}
+              onChange={() => setAccessMode("vlastni")}
+            />
+            Vlastní nastavení
+            <span className="text-xs text-text-muted">– přepíše nastavení oddělení</span>
+          </label>
+        </div>
+        {accessMode === "vlastni" && (
+          <div className="mt-3 flex flex-wrap gap-4 border-t border-line pt-3">
+            {MODULY.map((m) => (
+              <label key={m} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  name="access_modules"
+                  value={m}
+                  checked={accessModules.includes(m)}
+                  onChange={() => prepnoutModul(m)}
+                />
+                {MODUL_LABELS[m]}
+              </label>
+            ))}
+          </div>
+        )}
+        <p className="mt-2 text-xs text-text-muted">
+          Správa je vždy jen pro administrátory. Uživatelé z Dílny (výroba/montáž/elektro)
+          vidí v Zakázkách jen zakázky, ke kterým jsou přiřazeni.
+        </p>
       </div>
 
       <div className="flex gap-3 pt-2">

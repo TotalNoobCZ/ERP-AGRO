@@ -1,10 +1,10 @@
 "use client";
 // Přehled akcí s konstruktéry: karta akce (všichni konstruktéři napříč jejími
 // zakázkami) + sbalitelný seznam zakázek k akci, u každé její konstruktéři.
-import { useState } from "react";
 import Link from "next/link";
 import { userColor } from "@erp/ui";
 import { formatDen } from "@/lib/format";
+import { usePersistentSet } from "@/lib/usePersistentSet";
 import type { Osoba } from "@/lib/zakazky/lide";
 
 export type AkceZak = {
@@ -51,14 +51,7 @@ function Karta({ z, lide }: { z: AkceZak; lide: Osoba[] }) {
 }
 
 export function AkceKonstrukteri({ skupiny }: { skupiny: AkceSkupina[] }) {
-  const [sbaleno, setSbaleno] = useState<Set<string>>(new Set());
-  const toggle = (id: string) =>
-    setSbaleno((s) => {
-      const n = new Set(s);
-      if (n.has(id)) n.delete(id);
-      else n.add(id);
-      return n;
-    });
+  const { has: jeSbaleno, toggle } = usePersistentSet("erp_konstrukce_prehled_sbaleno");
 
   if (skupiny.length === 0) {
     return <p className="text-sm text-text-muted">Žádné otevřené akce.</p>;
@@ -67,7 +60,7 @@ export function AkceKonstrukteri({ skupiny }: { skupiny: AkceSkupina[] }) {
   return (
     <div className="columns-1 gap-3 md:columns-2 [&>*]:mb-3 [&>*]:break-inside-avoid">
       {skupiny.map((g) => {
-        const zavreno = sbaleno.has(g.akce.id);
+        const zavreno = jeSbaleno(g.akce.id);
         return (
           <div key={g.akce.id}>
             <Karta z={g.akce} lide={g.konstrukteriAkce} />

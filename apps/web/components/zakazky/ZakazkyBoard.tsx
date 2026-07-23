@@ -19,8 +19,14 @@ import {
 import { userColor } from "@erp/ui";
 import { ODDELENI, ODDELENI_LABELS, KAPITOLY, KAPITOLA_LABELS, ODDELENI_KAPITOLA } from "@erp/core";
 import { formatDen } from "@/lib/format";
-import { pridatPracovnika, odebratPracovnika } from "@/app/(erp)/zakazky/actions";
+import { usePersistentSet } from "@/lib/usePersistentSet";
+import { pridatPracovnika, odebratPracovnika, nastavitOdpovednouOsobu } from "@/app/(erp)/zakazky/actions";
 import type { BoardOsobaZ, BoardZakazka } from "@/lib/zakazky-query";
+
+/** Odpovědná osoba zakázky = Projekťák (oddělení) nebo role Vedoucí. */
+function jeOdpovednaKandidat(o: BoardOsobaZ): boolean {
+  return o.oddeleni === "projektak" || o.role === "vedouci";
+}
 
 const DUVOD_PRIDAT = "Přiřazení na tabuli";
 const DUVOD_ODEBRAT = "Odebrání na tabuli";
@@ -29,10 +35,16 @@ export default function ZakazkyBoard({
   osoby,
   zakazky,
   editable,
+  muzeOdebratKonstruktera,
+  zakazkaBasePath = "/zakazky",
 }: {
   osoby: BoardOsobaZ[];
   zakazky: BoardZakazka[];
   editable: boolean;
+  /** smí přihlášený odebrat konstruktéra ze zakázky (šéfkonstruktér / admin) */
+  muzeOdebratKonstruktera: boolean;
+  /** kam vede kliknutí na zakázku (Zakázky vs. Dílna mají vlastní detail) */
+  zakazkaBasePath?: string;
 }) {
   const router = useRouter();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
@@ -42,9 +54,9 @@ export default function ZakazkyBoard({
   const [chyba, setChyba] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   // Sbalená oddělení v levém sloupci (klíč oddělení, "" = bez oddělení).
-  const [sbalene, setSbalene] = useState<Set<string>>(new Set());
+  const { has: jeSbaleno, toggle: prepnoutSkupinu } = usePersistentSet("erp_zakazky_tabule_sbalene");
   // Sbalené seznamy zakázek k akci (v pravém sloupci).
-  const [sbaleneAkce, setSbaleneAkce] = useState<Set<string>>(new Set());
+  const { has: jeAkceSbalena, toggle: prepnoutAkci } = usePersistentSet("erp_zakazky_tabule_sbaleneAkce");
   // Potvrzení kolize (osoba obsazená u jiné akce).
   const [potvrzeni, setPotvrzeni] = useState<{ zakId: string; osobaId: string; text: string } | null>(null);
 
@@ -77,10 +89,20 @@ export default function ZakazkyBoard({
       .map((akce) => ({ akce, deti: detiBy.get(akce.id) ?? [] }));
   }, [zakazky]);
 
+  // Odpovědné osoby (projekťák / vedoucí) – samostatná skupina; přetažením se
+  // zaevidují jako odpovědná osoba zakázky (ne jako pracovník).
+  const odpovedneOsoby = useMemo(
+    () => osoby.filter(osobaMatches).filter(jeOdpovednaKandidat),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [osoby, q],
+  );
+
   // Osoby v levém sloupci: dvě kapitoly (Dílna / Kancelář) → oddělení → lidé.
+  // Odpovědné osoby (projekťák/vedoucí) sem nepatří – mají vlastní skupinu výše.
   const strom = useMemo(() => {
     const perDept = new Map<string, BoardOsobaZ[]>();
     for (const o of osoby.filter(osobaMatches)) {
+      if (jeOdpovednaKandidat(o)) continue;
       const key = o.oddeleni ?? "";
       if (!perDept.has(key)) perDept.set(key, []);
       perDept.get(key)!.push(o);
@@ -112,15 +134,6 @@ export default function ZakazkyBoard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [osoby, q]);
 
-  function prepnoutSkupinu(key: string) {
-    setSbalene((s) => {
-      const next = new Set(s);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  }
-
   async function priradit(zakId: string, osobaId: string, vynutit: boolean) {
     setBusy(true);
     setChyba(null);
@@ -150,6 +163,15 @@ export default function ZakazkyBoard({
     router.refresh();
   }
 
+  async function nastavitOdpovednou(zakId: string, osobaId: string | null) {
+    setBusy(true);
+    setChyba(null);
+    const res = await nastavitOdpovednouOsobu(zakId, osobaId);
+    setBusy(false);
+    if (!res.ok) { setChyba(res.chyba ?? "Uložení se nezdařilo."); return; }
+    router.refresh();
+  }
+
   function onDragStart(e: DragStartEvent) {
     const id = String(e.active.id).replace(/^osoba:/, "");
     setDragged(osobaById.get(id) ?? null);
@@ -163,6 +185,12 @@ export default function ZakazkyBoard({
     if (overId.startsWith("zak:")) {
       const zakId = overId.slice(4);
       const z = zakazky.find((x) => x.id === zakId);
+      // Projekťák / vedoucí → odpovědná osoba; ostatní → pracovník.
+      if (jeOdpovednaKandidat(osoba)) {
+        if (z?.odpovednaOsobaId === osoba.id) return; // už je odpovědná
+        await nastavitOdpovednou(zakId, osoba.id);
+        return;
+      }
       if (z?.pracovnici.some((p) => p.osobaId === osoba.id)) return; // už tam je
       await priradit(zakId, osoba.id, false);
     }
@@ -187,8 +215,33 @@ export default function ZakazkyBoard({
       <div className="flex gap-4">
         {/* Levá 1/3 – osoby rozdělené podle oddělení (táhnou se) */}
         <div className="w-1/3 min-w-[220px] space-y-3">
+          {/* Odpovědné osoby (projekťák / vedoucí) – přetažením = odpovědná osoba. */}
+          {odpovedneOsoby.length > 0 && (() => {
+            const zavreno = jeSbaleno("kap:_odpovedne");
+            return (
+              <div className="space-y-1.5 rounded-lg border border-link/30 bg-link/5 p-2">
+                <button
+                  type="button"
+                  onClick={() => prepnoutSkupinu("kap:_odpovedne")}
+                  className="flex w-full items-center gap-1 text-sm font-bold hover:text-link"
+                >
+                  <span className="inline-block w-3 text-xs">{zavreno ? "▸" : "▾"}</span>
+                  ⭐ Odpovědné osoby
+                  <span className="font-normal text-text-muted">({odpovedneOsoby.length})</span>
+                </button>
+                {!zavreno && (
+                  <>
+                    <p className="text-[11px] text-text-muted">Projekťák / vedoucí – přetažením na zakázku = odpovědná osoba.</p>
+                    {odpovedneOsoby.map((o) => (
+                      <OsobaChip key={o.id} osoba={o} editable={editable} onOpen={() => router.push(`/lide/${o.id}`)} />
+                    ))}
+                  </>
+                )}
+              </div>
+            );
+          })()}
           {strom.map((kap) => {
-            const kapZavreno = sbalene.has(`kap:${kap.key}`);
+            const kapZavreno = jeSbaleno(`kap:${kap.key}`);
             return (
               <div key={kap.key} className="space-y-1.5">
                 <button
@@ -202,7 +255,7 @@ export default function ZakazkyBoard({
                 </button>
                 {!kapZavreno &&
                   kap.depts.map((d) => {
-                    const depZavreno = sbalene.has(`dep:${d.key}`);
+                    const depZavreno = jeSbaleno(`dep:${d.key}`);
                     return (
                       <div key={d.key} className="ml-3 space-y-1.5">
                         <button
@@ -215,7 +268,14 @@ export default function ZakazkyBoard({
                           <span className="font-normal">({d.lidi.length})</span>
                         </button>
                         {!depZavreno &&
-                          d.lidi.map((o) => <OsobaChip key={o.id} osoba={o} editable={editable} />)}
+                          d.lidi.map((o) => (
+                            <OsobaChip
+                              key={o.id}
+                              osoba={o}
+                              editable={editable}
+                              onOpen={() => router.push(`/lide/${o.id}`)}
+                            />
+                          ))}
                       </div>
                     );
                   })}
@@ -240,35 +300,34 @@ export default function ZakazkyBoard({
                   <ZakazkaTile
                     zakazka={g.akce}
                     editable={editable}
-                    onOpen={() => router.push(`/zakazky/${g.akce.id}`)}
+                    muzeOdebratKonstruktera={muzeOdebratKonstruktera}
+                    onOpen={() => router.push(`${zakazkaBasePath}/${g.akce.id}`)}
+                    onOpenOsoba={(osobaId) => router.push(`/lide/${osobaId}`)}
                     onRemove={odebrat}
+                    onRemoveOdpovedna={() => nastavitOdpovednou(g.akce.id, null)}
                   />
                   {g.deti.length > 0 && (
                     <div className="ml-3 mt-1 border-l-2 border-link/40 pl-3">
                       <button
                         type="button"
-                        onClick={() =>
-                          setSbaleneAkce((s) => {
-                            const n = new Set(s);
-                            if (n.has(g.akce.id)) n.delete(g.akce.id);
-                            else n.add(g.akce.id);
-                            return n;
-                          })
-                        }
+                        onClick={() => prepnoutAkci(g.akce.id)}
                         className="flex items-center gap-1 py-1 text-xs font-medium text-text-muted hover:text-text"
                       >
-                        <span className="inline-block w-3">{sbaleneAkce.has(g.akce.id) ? "▸" : "▾"}</span>
+                        <span className="inline-block w-3">{jeAkceSbalena(g.akce.id) ? "▸" : "▾"}</span>
                         Zakázky k akci ({g.deti.length})
                       </button>
-                      {!sbaleneAkce.has(g.akce.id) && (
+                      {!jeAkceSbalena(g.akce.id) && (
                         <div className="mt-1 space-y-2">
                           {g.deti.map((d) => (
                             <ZakazkaTile
                               key={d.id}
                               zakazka={d}
                               editable={editable}
-                              onOpen={() => router.push(`/zakazky/${d.id}`)}
+                              muzeOdebratKonstruktera={muzeOdebratKonstruktera}
+                              onOpen={() => router.push(`${zakazkaBasePath}/${d.id}`)}
+                              onOpenOsoba={(osobaId) => router.push(`/lide/${osobaId}`)}
                               onRemove={odebrat}
+                              onRemoveOdpovedna={() => nastavitOdpovednou(d.id, null)}
                             />
                           ))}
                         </div>
@@ -324,7 +383,7 @@ export default function ZakazkyBoard({
   );
 }
 
-function OsobaChip({ osoba, editable }: { osoba: BoardOsobaZ; editable: boolean }) {
+function OsobaChip({ osoba, editable, onOpen }: { osoba: BoardOsobaZ; editable: boolean; onOpen: () => void }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `osoba:${osoba.id}`,
     disabled: !editable,
@@ -334,9 +393,10 @@ function OsobaChip({ osoba, editable }: { osoba: BoardOsobaZ; editable: boolean 
       ref={setNodeRef}
       {...attributes}
       {...listeners}
+      onDoubleClick={onOpen}
       className={`rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition ${isDragging ? "opacity-40" : ""} ${editable ? "cursor-grab hover:brightness-110" : ""}`}
       style={{ backgroundColor: userColor(osoba.colorIndex), color: "#16181b" }}
-      title={editable ? "Přetáhni na zakázku" : osoba.name}
+      title={editable ? "Přetáhni na zakázku · dvojklik = karta zaměstnance" : "Dvojklik = karta zaměstnance"}
     >
       {osoba.name}
     </div>
@@ -346,15 +406,22 @@ function OsobaChip({ osoba, editable }: { osoba: BoardOsobaZ; editable: boolean 
 function ZakazkaTile({
   zakazka,
   editable,
+  muzeOdebratKonstruktera,
   onOpen,
+  onOpenOsoba,
   onRemove,
+  onRemoveOdpovedna,
 }: {
   zakazka: BoardZakazka;
   editable: boolean;
+  muzeOdebratKonstruktera: boolean;
   onOpen: () => void;
+  onOpenOsoba: (osobaId: string) => void;
   onRemove: (prirazeniId: string) => void;
+  onRemoveOdpovedna: () => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `zak:${zakazka.id}` });
+  const odp = zakazka.odpovednaOsoba;
   return (
     <div
       ref={setNodeRef}
@@ -367,24 +434,64 @@ function ZakazkaTile({
       <p className="mb-2 text-[11px] text-text-muted">
         {formatDen(zakazka.zacatek)} – {formatDen(zakazka.konecAktualni)}
       </p>
-      <div className="flex flex-wrap gap-1.5">
-        {zakazka.pracovnici.map((p) => (
+
+      {/* Odpovědná osoba – samostatně nad pracovníky. */}
+      <div className="mb-2">
+        <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-muted">Odpovědná osoba</p>
+        {odp ? (
           <span
-            key={p.prirazeniId}
-            className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium"
-            style={{ backgroundColor: userColor(p.colorIndex), color: "#16181b" }}
+            onDoubleClick={() => onOpenOsoba(odp.id)}
+            data-tip="Dvojklik = karta zaměstnance"
+            className="inline-flex cursor-pointer items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold ring-1 ring-black/10"
+            style={{ backgroundColor: userColor(odp.colorIndex), color: "#16181b" }}
           >
-            {p.name}
+            ⭐ {odp.name}
             {editable && (
               <button
                 type="button"
-                onClick={() => onRemove(p.prirazeniId)}
+                onClick={onRemoveOdpovedna}
                 className="text-black/60 hover:text-black"
-                title="Odebrat"
+                data-tip="Zrušit odpovědnou osobu"
+                data-tip-pos="bottom"
               >
                 ✕
               </button>
             )}
+          </span>
+        ) : (
+          <span className="inline-block rounded-md border border-dashed border-link/50 px-2 py-0.5 text-xs text-text-muted">
+            přetáhni sem projekťáka / vedoucího
+          </span>
+        )}
+      </div>
+
+      <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-muted">Pracovníci</p>
+      <div className="flex flex-wrap gap-1.5">
+        {zakazka.pracovnici.map((p) => (
+          <span
+            key={p.prirazeniId}
+            onDoubleClick={() => onOpenOsoba(p.osobaId)}
+            title="Dvojklik = karta zaměstnance"
+            className="inline-flex cursor-pointer items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium"
+            style={{ backgroundColor: userColor(p.colorIndex), color: "#16181b" }}
+          >
+            {p.name}
+            {editable &&
+              (p.oddeleni === "konstrukce" && !muzeOdebratKonstruktera ? (
+                <span className="text-black/40" data-tip="Konstruktéra smí odebrat jen šéfkonstruktér nebo administrátor" data-tip-pos="bottom">
+                  🔒
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onRemove(p.prirazeniId)}
+                  className="text-black/60 hover:text-black"
+                  data-tip="Odebrat pracovníka ze zakázky"
+                  data-tip-pos="bottom"
+                >
+                  ✕
+                </button>
+              ))}
           </span>
         ))}
         {zakazka.pracovnici.length === 0 && (

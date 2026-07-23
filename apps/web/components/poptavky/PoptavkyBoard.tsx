@@ -18,6 +18,7 @@ import {
 import { INQUIRY_STATUS_LABELS } from "@erp/core";
 import { COLOR_TOKENS, userColor } from "@erp/ui";
 import { formatDen } from "@/lib/format";
+import { DateField } from "@/components/DateField";
 import { priraditPoptavku } from "@/app/(erp)/poptavky/actions";
 import type { BoardOsoba, BoardPoptavka } from "@/lib/poptavky-query";
 
@@ -37,6 +38,9 @@ export default function PoptavkyBoard({
   const [busy, setBusy] = useState(false);
   const [chyba, setChyba] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  // Vyžádání termínu při přidělení poptávky bez termínu.
+  const [terminPending, setTerminPending] = useState<{ inquiryId: string; personId: string; label: string; osoba: string } | null>(null);
+  const [terminVal, setTerminVal] = useState("");
 
   const q = query.trim().toLowerCase();
   const matches = (p: BoardPoptavka) =>
@@ -72,15 +76,29 @@ export default function PoptavkyBoard({
     [poptavky, barvaOsoby],
   );
 
-  async function priradit(inquiryId: string, personId: string) {
+  async function priradit(inquiryId: string, personId: string, deadline?: string) {
     setBusy(true);
     setChyba(null);
-    const res = await priraditPoptavku(inquiryId, personId);
+    const res = await priraditPoptavku(inquiryId, personId, deadline);
     setBusy(false);
     if (!res.ok) {
-      setChyba(res.error);
+      // Přidělená poptávka nemůže být bez termínu → vyžádáme si ho v okně.
+      if (res.needsDeadline) {
+        const p = poptavky.find((x) => x.id === inquiryId);
+        const o = osoby.find((x) => x.id === personId);
+        setTerminVal("");
+        setTerminPending({
+          inquiryId,
+          personId,
+          label: p ? `#${p.number} · ${p.subject}` : "poptávka",
+          osoba: o?.name ?? "osobě",
+        });
+        return;
+      }
+      setChyba(res.error ?? "Přiřazení se nezdařilo.");
       return;
     }
+    setTerminPending(null);
     router.refresh();
   }
 
@@ -131,7 +149,7 @@ export default function PoptavkyBoard({
           ))}
           {osoby.length === 0 && (
             <p className="text-sm text-text-muted">
-              Žádné odpovědné osoby. Ve Správě dej někomu roli „Vedoucí" nebo oddělení „Projekťák".
+              Žádné odpovědné osoby. Ve Správě dej někomu roli „Vedoucí" nebo oddělení „Projekťák" / „Obchodní manažer".
             </p>
           )}
         </div>
@@ -167,6 +185,36 @@ export default function PoptavkyBoard({
       </DragOverlay>
 
       {busy && <p className="mt-2 text-xs text-text-muted">Ukládám…</p>}
+
+      {terminPending && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="card w-full max-w-md p-6">
+            <h2 className="text-base font-semibold">Zadej termín poptávky</h2>
+            <p className="mt-1 text-sm text-text-muted">
+              Přidělovaná poptávka <span className="font-medium text-text">{terminPending.label}</span>{" "}
+              ({terminPending.osoba}) zatím nemá termín. Přidělená poptávka nemůže existovat bez termínu.
+            </p>
+            <div className="mt-4">
+              <label className="label">Termín nabídky</label>
+              <DateField value={terminVal} onChange={setTerminVal} />
+            </div>
+            {chyba && <p className="err mt-2">{chyba}</p>}
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" className="btn-ghost" onClick={() => setTerminPending(null)} disabled={busy}>
+                Zrušit
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={busy || !terminVal}
+                onClick={() => priradit(terminPending.inquiryId, terminPending.personId, terminVal)}
+              >
+                {busy ? "Ukládám…" : "Přidělit s termínem"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DndContext>
   );
 }
@@ -232,7 +280,7 @@ function PoptCard({
       onClick={onOpen}
       className={`cursor-pointer rounded-md p-2 text-sm shadow-sm transition ${isDragging ? "opacity-40" : ""} ${editable ? "hover:brightness-110" : ""}`}
       style={{ backgroundColor: barva, color: "#16181b" }}
-      title={popt.subject}
+      data-tip={popt.description || popt.subject}
     >
       <p className="truncate font-semibold">#{popt.number} · {popt.subject}</p>
       <p className="truncate text-xs opacity-75">{popt.customerName}</p>

@@ -6,6 +6,24 @@ import { ZAKAZKA_STAVY, type StavZakazky } from "@erp/core";
 
 export type ZakazkaListParams = { q?: string; stav?: string; priorita?: string };
 
+/**
+ * Množina ID zakázek, ke kterým je osoba přiřazena (jako pracovník) nebo je
+ * jejich odpovědnou osobou. Slouží k omezení pohledu pro Dílnu.
+ */
+export async function zakazkyOsobyIds(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  osobaId: string,
+): Promise<Set<string>> {
+  const [pr, odp] = await Promise.all([
+    supabase.from("prirazeni_zakazka").select("zakazka_id").eq("osoba_id", osobaId).is("deleted_at", null),
+    supabase.from("zakazky").select("id").eq("odpovedna_osoba_id", osobaId).is("deleted_at", null),
+  ]);
+  const set = new Set<string>();
+  for (const r of (pr.data ?? []) as { zakazka_id: string }[]) set.add(r.zakazka_id);
+  for (const r of (odp.data ?? []) as { id: string }[]) set.add(r.id);
+  return set;
+}
+
 export type ZakazkaListRow = {
   id: string;
   kod: string;
@@ -24,6 +42,8 @@ export type ZakazkaListRow = {
 export async function queryZakazky(
   supabase: Awaited<ReturnType<typeof createClient>>,
   params: ZakazkaListParams,
+  /** Dílna: omez na zakázky, ke kterým je osoba přiřazena (+ jejich akce). */
+  omezeniOsobaId?: string | null,
 ): Promise<ZakazkaListRow[]> {
   const q = params.q?.trim();
   const stav = params.stav;
@@ -51,13 +71,21 @@ export async function queryZakazky(
   if (stav === "PO_TERMINU") {
     rows = rows.filter((z) => poTerminu({ konecAktualni: parseDay(z.konec_aktualni), stav: z.stav }));
   }
+  if (omezeniOsobaId) {
+    const moje = await zakazkyOsobyIds(supabase, omezeniOsobaId);
+    // Povolené = přiřazené zakázky + jejich nadřazené akce (kvůli seskupení).
+    const povolene = new Set(moje);
+    for (const r of rows) if (moje.has(r.id) && r.parent_id) povolene.add(r.parent_id);
+    rows = rows.filter((z) => povolene.has(z.id));
+  }
   return rows;
 }
 
 // ---------- Tabule zakázek (obrácené drag & drop: osoba → zakázka) ----------
 
-export type BoardOsobaZ = { id: string; name: string; oddeleni: string | null; colorIndex: number | null };
-export type BoardPrirazeni = { prirazeniId: string; osobaId: string; name: string; colorIndex: number | null };
+export type BoardOsobaZ = { id: string; name: string; oddeleni: string | null; role: string | null; colorIndex: number | null };
+export type BoardPrirazeni = { prirazeniId: string; osobaId: string; name: string; oddeleni: string | null; colorIndex: number | null };
+export type BoardOdpovedna = { id: string; name: string; colorIndex: number | null };
 export type BoardZakazka = {
   id: string;
   kod: string;
@@ -67,17 +95,20 @@ export type BoardZakazka = {
   zacatek: string;
   konecAktualni: string;
   odpovednaOsobaId: string | null;
+  odpovednaOsoba: BoardOdpovedna | null;
   pracovnici: BoardPrirazeni[];
 };
 
 /** Data pro tabuli zakázek: přiřaditelné osoby + otevřené zakázky s pracovníky. */
 export async function queryZakazkyBoard(
   supabase: Awaited<ReturnType<typeof createClient>>,
+  /** Dílna: omez na zakázky, ke kterým je osoba přiřazena (+ jejich akce). */
+  omezeniOsobaId?: string | null,
 ): Promise<{ osoby: BoardOsobaZ[]; zakazky: BoardZakazka[] }> {
   const [osobyRes, zakRes] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, name, oddeleni, color_index")
+      .select("id, name, oddeleni, role, color_index")
       .eq("active", true)
       .eq("assignable", true)
       .order("name", { ascending: true }),
@@ -85,7 +116,8 @@ export async function queryZakazkyBoard(
       .from("zakazky")
       .select(
         "id, kod, misto_plneni, popis, parent_id, zacatek, konec_aktualni, odpovedna_osoba_id, " +
-          "prirazeni:prirazeni_zakazka(id, osoba_id, deleted_at, osoba:profiles(id, name, color_index))",
+          "odpovedna:profiles!zakazky_odpovedna_osoba_id_fkey(id, name, color_index), " +
+          "prirazeni:prirazeni_zakazka(id, osoba_id, deleted_at, osoba:profiles(id, name, oddeleni, color_index))",
       )
       .is("deleted_at", null)
       .in("stav", ["AKTIVNI", "POZASTAVENO"])
@@ -96,6 +128,7 @@ export async function queryZakazkyBoard(
     id: o.id,
     name: o.name,
     oddeleni: o.oddeleni,
+    role: o.role,
     colorIndex: o.color_index,
   }));
 
@@ -108,11 +141,12 @@ export async function queryZakazkyBoard(
     zacatek: string;
     konec_aktualni: string;
     odpovedna_osoba_id: string | null;
+    odpovedna: { id: string; name: string; color_index: number | null } | null;
     prirazeni: Array<{
       id: string;
       osoba_id: string;
       deleted_at: string | null;
-      osoba: { id: string; name: string; color_index: number | null } | null;
+      osoba: { id: string; name: string; oddeleni: string | null; color_index: number | null } | null;
     }> | null;
   };
   const rawZ = (zakRes.data ?? []) as unknown as RawZ[];
@@ -125,6 +159,7 @@ export async function queryZakazkyBoard(
         prirazeniId: p.id,
         osobaId: p.osoba_id,
         name: p.osoba?.name ?? "?",
+        oddeleni: p.osoba?.oddeleni ?? null,
         colorIndex: p.osoba?.color_index ?? null,
       }));
     return {
@@ -136,9 +171,28 @@ export async function queryZakazkyBoard(
       zacatek: z.zacatek,
       konecAktualni: z.konec_aktualni,
       odpovednaOsobaId: z.odpovedna_osoba_id,
+      odpovednaOsoba: z.odpovedna
+        ? { id: z.odpovedna.id, name: z.odpovedna.name, colorIndex: z.odpovedna.color_index }
+        : null,
       pracovnici,
     };
   });
+
+  if (omezeniOsobaId) {
+    // Přiřazené (pracovník nebo odpovědná osoba) + jejich nadřazené akce.
+    const moje = new Set(
+      zakazky
+        .filter(
+          (z) =>
+            z.odpovednaOsobaId === omezeniOsobaId ||
+            z.pracovnici.some((p) => p.osobaId === omezeniOsobaId),
+        )
+        .map((z) => z.id),
+    );
+    const povolene = new Set(moje);
+    for (const z of zakazky) if (moje.has(z.id) && z.parentId) povolene.add(z.parentId);
+    return { osoby, zakazky: zakazky.filter((z) => povolene.has(z.id)) };
+  }
 
   return { osoby, zakazky };
 }

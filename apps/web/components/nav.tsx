@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { userColor } from "@erp/ui";
-import { ROLE_LABELS, isAdmin, type Role } from "@erp/core";
+import { ROLE_LABELS, isAdmin, type Role, type Modul } from "@erp/core";
 import { ThemeToggle } from "@/components/theme";
 import { LinkSpinner } from "@/components/LinkSpinner";
 import { pinKey } from "@/components/PinButton";
@@ -12,20 +12,23 @@ import { pinKey } from "@/components/PinButton";
 // Hlavní karty vždy otevřou záložku Přehled; `match` řídí zvýraznění pro
 // celý modul (i ostatní jeho podstránky). Správa jen pro administrátory.
 const MODULES = [
-  { href: "/poptavky/dashboard", match: "/poptavky", label: "Poptávky", adminOnly: false },
-  { href: "/zakazky/dashboard", match: "/zakazky", label: "Zakázky", adminOnly: false },
-  { href: "/konstrukce/prehled", match: "/konstrukce", label: "Konstrukce", adminOnly: false },
-  { href: "/sprava", match: "/sprava", label: "Správa", adminOnly: true },
+  { href: "/poptavky/dashboard", match: "/poptavky", label: "Poptávky", adminOnly: false, modul: "poptavky" as Modul },
+  { href: "/zakazky/dashboard", match: "/zakazky", label: "Zakázky", adminOnly: false, modul: "zakazky" as Modul },
+  { href: "/konstrukce/prehled", match: "/konstrukce", label: "Konstrukce", adminOnly: false, modul: "konstrukce" as Modul },
+  { href: "/dilna/tabule", match: "/dilna", label: "Dílna", adminOnly: false, modul: "dilna" as Modul },
+  { href: "/sprava", match: "/sprava", label: "Správa", adminOnly: true, modul: null },
 ] as const;
 
 export interface NavProps {
   name: string;
   role: Role;
   colorIndex: number | null;
+  /** Moduly, na které má uživatel přístup (Správa se řídí adminOnly). */
+  moduly: Modul[];
 }
 
 /** Sdílená navigace – přepínání modulů, jedno přihlášení, jedna session. */
-export function Nav({ name, role, colorIndex }: NavProps) {
+export function Nav({ name, role, colorIndex, moduly }: NavProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -43,7 +46,9 @@ export function Nav({ name, role, colorIndex }: NavProps) {
       </Link>
 
       <nav className="flex flex-1 gap-2">
-        {MODULES.filter((m) => !m.adminOnly || isAdmin(role)).map((m) => {
+        {MODULES.filter((m) =>
+          m.adminOnly ? isAdmin(role) : m.modul != null && moduly.includes(m.modul),
+        ).map((m) => {
           const active = pathname.startsWith(m.match);
           return (
             <Link
@@ -79,7 +84,8 @@ export function Nav({ name, role, colorIndex }: NavProps) {
         <ThemeToggle />
         <Link
           href="/napoveda"
-          title="Nápověda / manuál"
+          data-tip="Nápověda / manuál k aplikaci"
+          data-tip-pos="bottom"
           aria-label="Nápověda"
           className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-line text-sm font-bold text-text-muted transition hover:border-link hover:text-link"
         >
@@ -88,7 +94,8 @@ export function Nav({ name, role, colorIndex }: NavProps) {
         <span
           className="inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-on-accent"
           style={{ backgroundColor: userColor(colorIndex) }}
-          title={`${name} · ${ROLE_LABELS[role]}`}
+          data-tip={`${name} · ${ROLE_LABELS[role]}`}
+          data-tip-pos="bottom"
         >
           {name
             .split(" ")

@@ -1,6 +1,7 @@
 // Úprava akce + správa pracovníků – port z Planovani.
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCurrentProfile } from "@/lib/supabase/server";
+import { muzeOdebratKonstruktera } from "@erp/core";
 import { formatDay, today } from "@/lib/zakazky/dates";
 import { ZakazkaEditForm } from "@/components/zakazky/formulare";
 import PracovniciEditor from "@/components/zakazky/PracovniciEditor";
@@ -17,7 +18,7 @@ export default async function UpravitZakazkuPage({ params }: { params: Promise<{
     .from("zakazky")
     .select(
       `id, kod, misto_plneni, priorita, zacatek, konec_aktualni, poznamka, odpovedna_osoba_id, deleted_at,
-       prirazeni:prirazeni_zakazka(id, osoba_id, datum_od, datum_do, deleted_at, osoba:profiles(name))`,
+       prirazeni:prirazeni_zakazka(id, osoba_id, datum_od, datum_do, deleted_at, osoba:profiles(name, oddeleni))`,
     )
     .eq("id", id)
     .maybeSingle();
@@ -31,7 +32,7 @@ export default async function UpravitZakazkuPage({ params }: { params: Promise<{
     konec_aktualni: string;
     poznamka: string | null;
     odpovedna_osoba_id: string | null;
-    prirazeni: { id: string; osoba_id: string; datum_od: string; datum_do: string; deleted_at: string | null; osoba: { name: string } | null }[];
+    prirazeni: { id: string; osoba_id: string; datum_od: string; datum_do: string; deleted_at: string | null; osoba: { name: string; oddeleni: string | null } | null }[];
   };
   const prirazeni = z.prirazeni
     .filter((p) => !p.deleted_at)
@@ -55,6 +56,11 @@ export default async function UpravitZakazkuPage({ params }: { params: Promise<{
   const osoby = (vsichni ?? []) as OsobaLite[];
   const kancelar = (odpovedniData ?? []) as OsobaLite[];
   const pracovnici = osoby.filter((o) => o.oddeleni !== "kancelar");
+
+  const me = await getCurrentProfile();
+  const smiOdebratKonstruktera = me
+    ? muzeOdebratKonstruktera({ role: me.role, sefkonstrukter: me.sefkonstrukter })
+    : false;
 
   const akce = upravitZakazku.bind(null, z.id) as (prev: ZakazkaStav, fd: FormData) => Promise<ZakazkaStav>;
 
@@ -81,12 +87,14 @@ export default async function UpravitZakazkuPage({ params }: { params: Promise<{
         konecAkce={z.konec_aktualni}
         dnes={formatDay(today())}
         pracovnici={pracovnici}
+        muzeOdebratKonstruktera={smiOdebratKonstruktera}
         prirazeni={prirazeni.map((p) => ({
           id: p.id,
           osobaId: p.osoba_id,
           jmeno: p.osoba?.name ?? "?",
           od: p.datum_od,
           do: p.datum_do,
+          jeKonstrukter: p.osoba?.oddeleni === "konstrukce",
         }))}
       />
     </div>

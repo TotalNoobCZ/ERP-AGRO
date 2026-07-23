@@ -17,7 +17,7 @@ export default async function ZakazkyDashboard() {
   const [vse, milnikyRes] = await Promise.all([
     supabase
       .from("zakazky")
-      .select("id, kod, misto_plneni, konec_aktualni, stav")
+      .select("id, kod, misto_plneni, popis, parent_id, konec_aktualni, stav")
       .is("deleted_at", null)
       .neq("stav", "ARCHIV"),
     supabase
@@ -30,7 +30,7 @@ export default async function ZakazkyDashboard() {
       .limit(6),
   ]);
 
-  type Z = { id: string; kod: string; misto_plneni: string; konec_aktualni: string; stav: StavZakazky };
+  type Z = { id: string; kod: string; misto_plneni: string; popis: string | null; parent_id: string | null; konec_aktualni: string; stav: StavZakazky };
   const zakazky = (vse.data ?? []) as Z[];
   const withStav = zakazky.map((z) => ({ ...z, po: poTerminu({ konecAktualni: parseDay(z.konec_aktualni), stav: z.stav }) }));
 
@@ -114,11 +114,16 @@ function StatKarta({ href, label, value, warn }: { href: string; label: string; 
   );
 }
 
-function RadekZakazky({ z }: { z: { id: string; kod: string; misto_plneni: string; konec_aktualni: string; stav: StavZakazky } }) {
+function RadekZakazky({ z }: { z: { id: string; kod: string; misto_plneni: string; popis: string | null; parent_id: string | null; konec_aktualni: string; stav: StavZakazky } }) {
+  // U zakázky k akci (podzakázky) ukážeme i popis – samotné číslo (826001) nic neřekne.
+  const jePodzakazka = !!z.parent_id;
   return (
     <Link href={`/zakazky/${z.id}`} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line p-3 hover:bg-accent">
       <div className="min-w-0">
-        <p className="truncate font-medium"><span className="font-mono">{z.kod}</span> · {z.misto_plneni}</p>
+        <p className="truncate font-medium">
+          <span className="font-mono">{z.kod}</span> · {z.misto_plneni}
+          {jePodzakazka && z.popis && <span className="font-normal text-text-muted"> — {z.popis}</span>}
+        </p>
         <p className="text-sm text-text-muted">{ZAKAZKA_STAV_LABELS[z.stav]}</p>
       </div>
       <div className="flex items-center gap-2">

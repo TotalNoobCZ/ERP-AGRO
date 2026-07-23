@@ -1,16 +1,17 @@
 "use client";
-// Podnavigace modulu Zakázky: Přehled / Plán / Akce / Archiv.
+// Podnavigace modulu Zakázky: Přehled / Gantt / Akce / Archiv.
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { LinkSpinner } from "@/components/LinkSpinner";
 import { PinButton } from "@/components/PinButton";
 
+// Jednotné pořadí napříč moduly: Přehled → seznam → Tabule → Gantt → Archiv.
 const TABS = [
   { href: "/zakazky/dashboard", label: "Přehled" },
-  { href: "/zakazky/plan", label: "Plán" },
   { href: "/zakazky", label: "Akce" },
   { href: "/zakazky/tabule", label: "Tabule" },
+  { href: "/zakazky/plan", label: "Gantt" },
   { href: "/zakazky/archiv", label: "Archiv" },
 ] as const;
 

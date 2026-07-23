@@ -11,6 +11,7 @@ const TABS = [
   { href: "/poptavky/dashboard", label: "Přehled" },
   { href: "/poptavky", label: "Poptávky" },
   { href: "/poptavky/tabule", label: "Tabule" },
+  { href: "/poptavky/odlozene", label: "Odložené" },
   { href: "/poptavky?status=OBJEDNANO", label: "Objednáno" },
   { href: "/zakaznici", label: "Zákazníci" },
 ] as const;

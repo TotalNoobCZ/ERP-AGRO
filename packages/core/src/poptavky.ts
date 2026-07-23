@@ -8,6 +8,7 @@ export const INQUIRY_STATUSES = [
   "V_JEDNANI",
   "ODESLANA",
   "NEREAGUJE",
+  "ODLOZENO",
   "OBJEDNANO",
   "ZAMITNUTO",
 ] as const;
@@ -18,6 +19,7 @@ export const INQUIRY_STATUS_LABELS: Record<InquiryStatus, string> = {
   V_JEDNANI: "V jednání",
   ODESLANA: "Odeslána",
   NEREAGUJE: "Nereaguje",
+  ODLOZENO: "Odloženo",
   OBJEDNANO: "Objednáno",
   ZAMITNUTO: "Zamítnuto",
 };
@@ -25,8 +27,23 @@ export const INQUIRY_STATUS_LABELS: Record<InquiryStatus, string> = {
 /** Pořadí stavů pro výběr v rozbalovacím menu a na dashboardu. */
 export const INQUIRY_STATUS_ORDER: InquiryStatus[] = [...INQUIRY_STATUSES];
 
-/** Ukončené stavy – bez notifikací, nefigurují v „po termínu". */
-export const INQUIRY_CLOSED_STATUSES: InquiryStatus[] = ["OBJEDNANO", "ZAMITNUTO"];
+/**
+ * Ukončené / skryté stavy – nezobrazují se v hlavním seznamu ani na tabuli,
+ * nefigurují v „po termínu". „Odloženo" je skryté, dokud nepřijde připomenutí.
+ */
+export const INQUIRY_CLOSED_STATUSES: InquiryStatus[] = ["ODLOZENO", "OBJEDNANO", "ZAMITNUTO"];
+
+/**
+ * Stavy, kdy nabídka ještě NEBYLA odeslána – termín (lhůta na vypracování
+ * nabídky) stále běží, takže může být „po termínu". Jakmile je Odesláno (a dál),
+ * je lhůta splněná a „po termínu" už nedává smysl.
+ */
+export const INQUIRY_OPEN_DEADLINE_STATUSES: InquiryStatus[] = ["NOVA", "V_JEDNANI"];
+
+/** Má u poptávky ještě smysl hlídat termín (a hlásit „po termínu")? */
+export function inquiryDeadlineActive(status: InquiryStatus): boolean {
+  return INQUIRY_OPEN_DEADLINE_STATUSES.includes(status);
+}
 
 /**
  * Přechod stavu, který spouští tok mezi moduly:

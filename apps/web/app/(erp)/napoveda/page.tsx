@@ -2,7 +2,7 @@
 // při změnách funkcí aktualizuj tuto stránku i datum níže.
 import type { ReactNode } from "react";
 
-const AKTUALIZOVANO = "16. 7. 2026 (podzakázky, archiv dokončených)";
+const AKTUALIZOVANO = "17. 7. 2026 (odpovědné osoby na tabuli, trvalé sbalení skupin, Gantt předěly)";
 
 export const dynamic = "force-dynamic";
 
@@ -54,8 +54,9 @@ export default function NapovedaPage() {
       <H2>2. Orientace v aplikaci</H2>
       <UL>
         <li><strong>Vstupní rozcestník</strong> — klikni na název <strong>„ERP Strojírenská divize"</strong> v hlavičce; zobrazí se dlaždice modulů.</li>
-        <li><strong>Hlavní karty</strong> (Poptávky · Zakázky · Konstrukce; Správa jen admin) tě pustí na <strong>Přehled</strong> modulu.</li>
-        <li><strong>Podnavigace</strong> — záložky uvnitř modulu (Přehled / Plán / Akce / Tabule / Archiv…).</li>
+        <li><strong>Hlavní karty</strong> (Poptávky · Zakázky · Konstrukce · Dílna; Správa jen admin) tě pustí na <strong>Přehled</strong> modulu. Které karty vidíš, řídí administrátor v <strong>Přístupových právech</strong>.</li>
+        <li><strong>Podnavigace</strong> — záložky uvnitř modulu (Přehled / Gantt / Akce / Tabule / Archiv…).</li>
+        <li><strong>Sbalení se pamatuje:</strong> sbalené/rozbalené skupiny (akce, oddělení, zakázky k akci, seznamy) zůstanou i po přechodu na jinou kartu nebo obnovení stránky.</li>
         <li><strong>📌 Přišpendlení záložky</strong> — klikni na špendlík u záložky; ta se stane výchozí a otevře se jako první po kliknutí na kartu modulu. Nastavení je osobní (drží se v prohlížeči).</li>
         <li><strong>Světlý/tmavý režim</strong> — přepínač 🌙/☀️ v hlavičce.</li>
         <li><strong>Načítání</strong> — po kliknutí je hned vidět indikátor „Načítám…".</li>
@@ -93,27 +94,37 @@ export default function NapovedaPage() {
       <UL>
         <li>Nový/úprava: jméno, e-mail, role, oddělení (rozbalovátko dle kapitol), barva, aktivní.</li>
         <li><strong>E-mail je nepovinný pro kapitolu Dílna</strong> (nepřihlašuje se). „Lze přiřazovat" je automaticky u všech.</li>
+        <li><strong>Šéfkonstruktér</strong> — u profilu z oddělení <strong>Konstrukce</strong> lze zaškrtnout pozici Šéfkonstruktér; smí jako jediný (kromě administrátora) <strong>odebírat konstruktéry ze zakázek</strong>.</li>
+        <li><strong>Přístupová práva k modulům</strong> — tlačítko <Code>🔐 Přístupová práva</Code> ve Správě otevře matici <em>oddělení × modul</em> (Poptávky / Zakázky / Konstrukce): zaškrtneš, které moduly dané oddělení vidí. U konkrétního zaměstnance lze v jeho profilu zvolit <strong>Vlastní nastavení</strong>, které přepíše oddělení. <strong>Administrátor vidí vždy vše</strong>; kartu Správa má vždy jen admin. Dokud není nic nastaveno, vidí všichni vše (zpětná kompatibilita).</li>
+        <li><strong>Dílna jen přiřazené</strong> — uživatelé z kapitoly Dílna (výroba/montáž/elektro) vidí v <strong>Zakázkách</strong> jen zakázky, ke kterým jsou přiřazeni jako pracovník nebo odpovědná osoba (v seznamu Akce i na Tabuli).</li>
         <li><strong>Heslo uživatele</strong> (v jeho detailu): nastavit konkrétní, nebo vygenerovat náhodné a předat. Bez e-mailu se heslo neřeší.</li>
       </UL>
 
       <H2>6. Poptávky</H2>
-      <P>Záložky: Přehled · Poptávky · Tabule · Objednáno · Zákazníci.</P>
+      <P>Záložky: Přehled · Poptávky · Tabule · Odložené · Objednáno · Zákazníci.</P>
       <UL>
-        <li><strong>Nová poptávka:</strong> Předmět a Zákazník jsou povinné (<Code>*</Code>). U existujícího zákazníka se v kontaktech nabízejí jen jeho kontakty.</li>
-        <li><strong>Odpovědná osoba je nepovinná</strong> — doplníš i později; vybírá se z rolí Vedoucí a oddělení Projekťák.</li>
-        <li><strong>Tabule (drag &amp; drop):</strong> vlevo odpovědné osoby, vpravo nepřidělené poptávky. Přetáhni poptávku na osobu = přiřadíš (z pravého sloupce zmizí). Mezi osobami přeřadíš.</li>
+        <li><strong>Nová poptávka:</strong> Předmět, Zákazník a <strong>Kontaktní osoba</strong> jsou povinné (<Code>*</Code>). U existujícího zákazníka se v kontaktech nabízejí jen jeho kontakty.</li>
+        <li><strong>Kontakty se ukládají:</strong> nový zákazník se uloží i s kontaktní osobou; u stálého zákazníka se nová kontaktní osoba automaticky přidá mezi jeho kontakty (příště se nabídne v seznamu).</li>
+        <li><strong>Odpovědná osoba je nepovinná</strong> — doplníš i později; vybírá se z role Vedoucí nebo oddělení Projekťák / Obchodní manažer.</li>
+        <li><strong>Termín přímo ze seznamu:</strong> u každé poptávky lze termín přidat/změnit tužkou <Code>✎</Code> ve sloupci Termín – bez otvírání detailu.</li>
+        <li><strong>Tabule (drag &amp; drop):</strong> vlevo odpovědné osoby, vpravo nepřidělené poptávky. Přetáhni poptávku na osobu = přiřadíš (z pravého sloupce zmizí). Mezi osobami přeřadíš. <strong>Přidělená poptávka musí mít termín</strong> – když ho poptávka nemá, tabule si při přetažení vyžádá termín v okně.</li>
+        <li><strong>Odložit poptávku:</strong> v detailu vyber stav <strong>Odloženo</strong>. Poptávka se skryje ze seznamu i tabule a v okně zvolíš připomenutí: <em>k datu</em>, <em>za 6 měsíců</em>, nebo <em>nepřipomínat</em>.</li>
+        <li><strong>Odložené:</strong> záložka se všemi odloženými poptávkami a datem připomenutí; ty, u kterých už čas nastal, jsou zvýrazněné. Tlačítkem <Code>↩ Obnovit</Code> se poptávka vrátí zpět mezi aktivní.</li>
+        <li><strong>Připomenutí:</strong> jakmile nastane datum připomenutí, odpovědné osobě se nahoře v Poptávkách ukáže upozornění „⏰ Nastal čas kontaktovat".</li>
         <li><strong>Objednáno:</strong> poptávky, ze kterých se tvoří zakázky.</li>
         <li>Seznam má filtry a <strong>Export do PDF</strong>.</li>
       </UL>
 
       <H2>7. Zakázky</H2>
-      <P>Záložky: Přehled · Plán · Akce · Tabule · Archiv.</P>
+      <P>Záložky: Přehled · Gantt · Akce · Tabule · Archiv.</P>
       <UL>
-        <li><strong>Vznik:</strong> obvykle z objednané poptávky (zdědí zákazníka). Nová akce: Název akce, Místo plnění, Začátek, Konec (povinné <Code>*</Code>), priorita.</li>
+        <li><strong>Vznik:</strong> obvykle z objednané poptávky (zdědí zákazníka; <strong>Název akce se předvyplní názvem poptávky</strong> a jde změnit). Nová akce: Název akce, Místo plnění, Začátek, Konec (povinné <Code>*</Code>), priorita.</li>
         <li><strong>Odpovědná osoba</strong> (nepovinná) — z Kanceláře, Projekťáků nebo role Vedoucí.</li>
         <li><strong>Pracovníci jsou nepovinní</strong> — přiřadíš i později (na Tabuli).</li>
-        <li><strong>Plán:</strong> „Podle akcí" (posun termínů tažením) a „Podle zaměstnance" s filtrem kapitoly <strong>Dílna / Kancelář / Vše</strong>.</li>
-        <li><strong>Tabule (obrácené drag &amp; drop):</strong> vlevo osoby dle kapitol a oddělení (sbalitelné), vpravo zakázky. Přetáhni osobu na zakázku = přiřadíš pracovníka; při kolizi termínů systém upozorní.</li>
+        <li><strong>Gantt:</strong> „Podle akcí" (posun termínů tažením) a „Podle zaměstnance" s filtrem kapitoly <strong>Dílna / Kancelář / Vše</strong>.</li>
+        <li><strong>Tabule (obrácené drag &amp; drop):</strong> vlevo osoby dle kapitol a oddělení (sbalitelné), vpravo zakázky. Přetáhni osobu na zakázku = přiřadíš pracovníka; při kolizi termínů systém upozorní. <strong>Dvojklik na osobu</strong> (vlevo i na dlaždici zakázky) otevře její <strong>kartu zaměstnance</strong> (administrátor ji může upravit, ostatní jen prohlížejí).</li>
+        <li><strong>Odpovědné osoby</strong> (projekťák / vedoucí) mají vlevo <strong>vlastní skupinu</strong> a na dlaždici zakázky se zobrazují <strong>zvlášť nad pracovníky</strong>. Přetažením projekťáka/vedoucího na zakázku se zaeviduje jako <strong>odpovědná osoba</strong> (ne pracovník); křížkem u ní ji zrušíš.</li>
+        <li><strong>Odebrání konstruktéra ze zakázky</strong> smí provést jen <strong>šéfkonstruktér</strong> nebo <strong>administrátor</strong> (u ostatních je místo křížku zámek 🔒). Běžné pracovníky odebírá kdokoli s právem zápisu. Šéfkonstruktéra nastaví admin ve Správě u profilu z oddělení Konstrukce.</li>
         <li><strong>Lidé na akci:</strong> u akce se všude zobrazují <strong>všichni lidé</strong> (dělníci, elektrikáři, konstruktéři i odpovědná osoba) sečtení přes akci a její zakázky k akci; u každé zakázky k akci vidíš její lidi zvlášť (seznam Akce – rozbalovací, detail i Tabule).</li>
         <li><strong>Detail:</strong> pracovníci, milníky, prodloužení/přerušení, stav, <strong>konstruktéři z podúkolů</strong>, historie, poznámky, Export do PDF.</li>
         <li><strong>Zakázky k akci:</strong> jedna hlavní akce může sdružovat víc <strong>dceřiných zakázek</strong> (každá má vlastní název). V detailu akce (pod „Přiřazení pracovníci") je rychle přidáš lištou <strong>Název akce + Popis</strong>; místo, termíny a prioritu zdědí od hlavní akce. V seznamu Akce se ukazují jako <strong>rozbalovací seznam</strong> pod hlavní akcí. V <strong>Konstrukci</strong> se zakázka k akci přidá jako <strong>podúkol do projektu hlavní akce</strong>.</li>
@@ -125,30 +136,38 @@ export default function NapovedaPage() {
       <UL>
         <li><strong>Projekt vzniká automaticky se zakázkou</strong>; v detailu zakázky ho lze rozdělit na víc projektů.</li>
         <li><strong>Zodpovědný za konstrukční projekt</strong> je vždy <strong>konstruktér</strong> (oddělení Konstrukce) – nikoho jiného tam vybrat nejde. Řešitelé úkolů jsou také konstruktéři.</li>
-        <li><strong>Plánovací tabule:</strong> vlevo dlaždice členů, vpravo projekty <strong>seskupené pod akci</strong> (sbalitelné). Přetáhni úkol na člena = přiřadíš řešitele; zpět doprava = odebereš; uvnitř dlaždice řadíš tažením.</li>
+        <li><strong>Plánovací tabule:</strong> vlevo dlaždice členů, vpravo projekty <strong>seskupené pod akci</strong> (sbalitelné). Přetáhni úkol na člena = přiřadíš řešitele; uvnitř dlaždice řadíš tažením. <strong>Sundat konstruktéra z úkolu</strong> (tažení zpět doprava) a <strong>zrušit zodpovědného konstruktéra</strong> u projektu smí jen <strong>šéfkonstruktér</strong> nebo <strong>administrátor</strong>; přehodit úkol na jiného konstruktéra může kdokoli s právem zápisu.</li>
         <li><strong>Propojení:</strong> přiřazením řešitele k úkolu se <strong>konstruktér propíše k zakázce</strong> a je vidět v jejím detailu.</li>
         <li><strong>Gantt:</strong> termíny úkolů posouváš tažením; zobrazují se absence. Kolize systém vždy nahlásí (uložit lze i tak).</li>
         <li><strong>Absence</strong> se zadávají v dialogu člena (klik na dlaždici).</li>
       </UL>
 
-      <H2>9. Tisk a export do PDF</H2>
+      <H2>9. Dílna (mistr / koordinátor výroby)</H2>
+      <P>Záložky: Zakázky · Tabule · Gantt. Karta míchá možnosti Zakázek a Konstrukce pro koordinaci výroby. Přístup se řídí <strong>právy modulu</strong> (Správa → Přístupová práva) – typicky pro mistra.</P>
+      <UL>
+        <li><strong>Tabule:</strong> stejné přetahování jako u Zakázek, ale vlevo jsou <strong>jen lidé z dílen</strong> (výroba / montáž / elektro). Přiřazení pracovníka se <strong>propíše do Zakázek</strong> (sdílená data). Přiřazuje se i na <strong>všechny zakázky k akci</strong> (podzakázky).</li>
+        <li><strong>Zakázky:</strong> u každé zakázky (i podzakázky) mistr zadává termíny <strong>výrobních fází</strong> od–do: <em>Pálení a příprava, Svařování, Lakovna, Montáž</em>, a <strong>uskladnění</strong> (kde je díl / stroj). Vše se propisuje do detailu zakázky.</li>
+        <li><strong>Gantt:</strong> výrobní fáze jako barevné pruhy v čase, zakázky k akci vnořené pod akci.</li>
+      </UL>
+
+      <H2>10. Tisk a export do PDF</H2>
       <UL>
         <li>Tlačítko <strong>🖨 Export do PDF</strong> otevře čistou tiskovou verzi; PDF vytvoříš přes tisk prohlížeče (Ctrl/Cmd+P → Uložit jako PDF).</li>
         <li>Export respektuje aktivní filtry.</li>
       </UL>
 
-      <H2>10. Jak to spolu souvisí</H2>
+      <H2>11. Jak to spolu souvisí</H2>
       <P>
         Objednaná <strong>poptávka</strong> → založí <strong>zakázku</strong> (zdědí zákazníka) → se zakázkou vznikne
         <strong> konstrukční projekt</strong>. Konstruktér přiřazený k úkolu projektu se <strong>propíše zpět k zakázce</strong>.
       </P>
 
-      <H2>11. Rychlý tahák</H2>
+      <H2>12. Rychlý tahák</H2>
       <UL>
         <li><strong>Přiřadit poptávku:</strong> Poptávky → Tabule → přetáhni na osobu.</li>
         <li><strong>Zakázka z poptávky:</strong> Poptávky → Objednáno → otevřít → vytvořit zakázku.</li>
         <li><strong>Pracovníci na zakázku:</strong> Zakázky → Tabule → přetáhni osoby na zakázku.</li>
-        <li><strong>Posun termínu:</strong> Zakázky → Plán → táhni pruh.</li>
+        <li><strong>Posun termínu:</strong> Zakázky → Gantt → táhni pruh.</li>
         <li><strong>Naplánovat konstrukci:</strong> Konstrukce → Plánování → přetáhni úkoly na konstruktéry.</li>
         <li><strong>Oblíbená záložka:</strong> klikni na 📌 u záložky.</li>
       </UL>

@@ -2,7 +2,7 @@
 import { createClient, getCurrentProfile } from "@/lib/supabase/server";
 import { nactiKonstrukci } from "@/lib/konstrukce-query";
 import PlanBoard from "@/components/konstrukce/PlanBoard";
-import { canWrite, type Role } from "@erp/core";
+import { canWrite, muzeOdebratKonstruktera, type Role } from "@erp/core";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +19,9 @@ export default async function KonstrukcePage() {
       .order("kod", { ascending: true }),
   ]);
   const editable = profile ? canWrite(profile.role as Role) : false;
+  const smiOdebratKonstruktera = profile
+    ? muzeOdebratKonstruktera({ role: profile.role, sefkonstrukter: profile.sefkonstrukter })
+    : false;
 
   return (
     <PlanBoard
@@ -29,6 +32,7 @@ export default async function KonstrukcePage() {
       absence={absence}
       zakazky={(zakazkyRes.data ?? []).map((z) => ({ id: z.id, kod: z.kod, mistoPlneni: z.misto_plneni }))}
       editable={editable}
+      muzeOdebratKonstruktera={smiOdebratKonstruktera}
     />
   );
 }

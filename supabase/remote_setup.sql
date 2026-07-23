@@ -43,8 +43,10 @@ create table profiles (
   role          text not null default 'viewer'
                   check (role in ('admin', 'editor', 'vedouci', 'viewer')),
   oddeleni      text
-                  check (oddeleni in ('vyroba', 'montaz', 'elektro', 'kancelar', 'obchod', 'konstrukce', 'projektak', 'elektro_projektant', 'programator')),
+                  check (oddeleni in ('vyroba', 'montaz', 'elektro', 'kancelar', 'obchod', 'obchodni_manazer', 'konstrukce', 'projektak', 'elektro_projektant', 'programator')),
   assignable    boolean not null default true,    -- lze přiřazovat na úkoly/zakázky (automatické u všech)
+  sefkonstrukter boolean not null default false,  -- pozice: smí odebírat konstruktéry ze zakázek
+  access_modules text[],                          -- vlastní přístup k modulům (NULL = dle oddělení)
   color_index   int,                              -- 0–9, paleta dlaždic z Konstrukce
   tile_order    int,                              -- pořadí dlaždic členů (Konstrukce)
   active        boolean not null default true,
@@ -63,6 +65,14 @@ create index profiles_assignable_idx on profiles (assignable) where assignable;
 create trigger profiles_set_updated_at
   before update on profiles
   for each row execute function set_updated_at();
+
+-- Výchozí přístup k modulům dle oddělení (per-profil viz profiles.access_modules).
+create table department_access (
+  oddeleni   text primary key
+    check (oddeleni in ('vyroba', 'montaz', 'elektro', 'kancelar', 'obchod', 'obchodni_manazer', 'konstrukce', 'projektak', 'elektro_projektant', 'programator')),
+  modules    text[] not null default '{}',
+  updated_at timestamptz not null default now()
+);
 
 -- ####################  20260715000200_shared_customers.sql  ####################
 
@@ -127,8 +137,9 @@ create table inquiries (
   contact_phone    text,
   contact_email    text,
   status           text not null default 'NOVA'
-                     check (status in ('NOVA','V_JEDNANI','ODESLANA','NEREAGUJE','OBJEDNANO','ZAMITNUTO')),
+                     check (status in ('NOVA','V_JEDNANI','ODESLANA','NEREAGUJE','ODLOZENO','OBJEDNANO','ZAMITNUTO')),
   deadline         timestamptz,                  -- termín pro vypracování nabídky
+  remind_at        date,                          -- datum připomenutí odložené poptávky
 
   customer_id      uuid not null references customers (id) on delete restrict,
   person_id        uuid references profiles (id)  on delete restrict, -- dřívější Person (nepovinné)
@@ -168,9 +179,9 @@ create table status_logs (
   id          uuid primary key default gen_random_uuid(),
   inquiry_id  uuid not null references inquiries (id) on delete cascade,
   from_status text
-                check (from_status in ('NOVA','V_JEDNANI','ODESLANA','NEREAGUJE','OBJEDNANO','ZAMITNUTO')),
+                check (from_status in ('NOVA','V_JEDNANI','ODESLANA','NEREAGUJE','ODLOZENO','OBJEDNANO','ZAMITNUTO')),
   to_status   text not null
-                check (to_status in ('NOVA','V_JEDNANI','ODESLANA','NEREAGUJE','OBJEDNANO','ZAMITNUTO')),
+                check (to_status in ('NOVA','V_JEDNANI','ODESLANA','NEREAGUJE','ODLOZENO','OBJEDNANO','ZAMITNUTO')),
   changed_by  text not null,
   note        text,
   created_at  timestamptz not null default now()
@@ -206,6 +217,7 @@ create table zakazky (
   archivovano_kdy    timestamptz,
   poznamka           text,
   popis              text,                          -- „oč se jedná" (hlavně u podzakázek)
+  ulozeni            text,                          -- kde je díl/stroj uskladněn (Dílna)
 
   zalozil_id         uuid not null references profiles (id) on delete restrict, -- dřívější zalozilUzivatel
   archivoval_id      uuid references profiles (id),
@@ -250,6 +262,25 @@ create index milniky_zakazka_typ_idx on milniky (zakazka_id, typ);
 
 create trigger milniky_set_updated_at
   before update on milniky
+  for each row execute function set_updated_at();
+
+-- Výrobní fáze zakázky (modul Dílna) – termíny od–do na fázi.
+create table dilna_faze (
+  id         uuid primary key default gen_random_uuid(),
+  zakazka_id uuid not null references zakazky (id) on delete cascade,
+  typ        text not null
+               check (typ in ('PALENI_PRIPRAVA', 'SVAROVANI', 'LAKOVNA', 'MONTAZ')),
+  datum_od   date,
+  datum_do   date,
+  poznamka   text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create unique index dilna_faze_zakazka_typ_uidx on dilna_faze (zakazka_id, typ);
+
+create trigger dilna_faze_set_updated_at
+  before update on dilna_faze
   for each row execute function set_updated_at();
 
 -- Přiřazení osoby k zakázce (má rozsah od–do, vstupuje do kontroly kolizí).
@@ -590,6 +621,37 @@ create policy audit_log_select on audit_log
 create policy audit_log_insert on audit_log
   for insert to authenticated
   with check ((select can_write()));
+
+-- ----------------------------------------------------------------------------
+--  department_access: čtení pro každý profil, zápis jen admin.
+-- ----------------------------------------------------------------------------
+alter table department_access enable row level security;
+
+create policy department_access_select on department_access
+  for select to authenticated
+  using ((select has_profile()));
+
+create policy department_access_write on department_access
+  for all to authenticated
+  using ((select is_admin()))
+  with check ((select is_admin()));
+
+-- ----------------------------------------------------------------------------
+--  dilna_faze: čtení pro každý profil, zápis pro editor/admin.
+-- ----------------------------------------------------------------------------
+alter table dilna_faze enable row level security;
+
+create policy dilna_faze_select on dilna_faze
+  for select to authenticated using ((select has_profile()));
+
+create policy dilna_faze_insert on dilna_faze
+  for insert to authenticated with check ((select can_write()));
+
+create policy dilna_faze_update on dilna_faze
+  for update to authenticated using ((select can_write())) with check ((select can_write()));
+
+create policy dilna_faze_delete on dilna_faze
+  for delete to authenticated using ((select can_write()));
 
 -- ####################  seed.sql  ####################
 

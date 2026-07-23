@@ -46,12 +46,17 @@ export type ProfileRow = {
     | "elektro"
     | "kancelar"
     | "obchod"
+    | "obchodni_manazer"
     | "konstrukce"
     | "projektak"
     | "elektro_projektant"
     | "programator"
     | null;
   assignable: boolean;
+  /** pozice: šéfkonstruktér – smí odebírat konstruktéry ze zakázek */
+  sefkonstrukter: boolean;
+  /** vlastní přístup k modulům (null = zdědit dle oddělení) */
+  access_modules: string[] | null;
   color_index: number | null;
   tile_order: number | null;
   active: boolean;
@@ -59,6 +64,12 @@ export type ProfileRow = {
   osobni_cislo: string | null;
   poznamka: string | null;
   created_at: string;
+  updated_at: string;
+}
+
+export type DepartmentAccessRow = {
+  oddeleni: string;
+  modules: string[];
   updated_at: string;
 }
 
@@ -90,6 +101,7 @@ export type InquiryStatusDb =
   | "V_JEDNANI"
   | "ODESLANA"
   | "NEREAGUJE"
+  | "ODLOZENO"
   | "OBJEDNANO"
   | "ZAMITNUTO";
 
@@ -105,6 +117,7 @@ export type InquiryRow = {
   contact_email: string | null;
   status: InquiryStatusDb;
   deadline: string | null;
+  remind_at: string | null;
   customer_id: string;
   person_id: string | null;
   reminder_sent: boolean;
@@ -158,9 +171,23 @@ export type ZakazkaRow = {
   customer_id: string | null;
   parent_id: string | null;
   popis: string | null;
+  ulozeni: string | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+}
+
+export type DilnaFazeTypDb = "PALENI_PRIPRAVA" | "SVAROVANI" | "LAKOVNA" | "MONTAZ";
+
+export type DilnaFazeRow = {
+  id: string;
+  zakazka_id: string;
+  typ: DilnaFazeTypDb;
+  datum_od: string | null;
+  datum_do: string | null;
+  poznamka: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export type MilnikRow = {
@@ -335,6 +362,7 @@ export type Database = {
         ]
       >;
       milniky: TableShape<MilnikRow, "zakazka_id" | "typ" | "datum", [Fk<"zakazka_id", "zakazky">]>;
+      dilna_faze: TableShape<DilnaFazeRow, "zakazka_id" | "typ", [Fk<"zakazka_id", "zakazky">]>;
       prirazeni_zakazka: TableShape<
         PrirazeniZakazkaRow,
         "zakazka_id" | "osoba_id" | "datum_od" | "datum_do",
@@ -384,6 +412,7 @@ export type Database = {
       >;
       project_todos: TableShape<ProjectTodoRow, "project_id" | "body", [Fk<"project_id", "projects">]>;
       absences: TableShape<AbsenceRow, "profile_id" | "type" | "start_date" | "end_date", [Fk<"profile_id", "profiles">]>;
+      department_access: TableShape<DepartmentAccessRow, "oddeleni">;
     };
     Views: Record<string, never>;
     Functions: {

@@ -20,7 +20,7 @@ import { ZalozitProjekt } from "@/components/konstrukce/ZalozitProjekt";
 import { ZalozitPodzakazku } from "@/components/zakazky/ZalozitPodzakazku";
 import { nacistLidiZakazek, sjednotitOsoby, type Osoba } from "@/lib/zakazky/lide";
 import { userColor } from "@erp/ui";
-import type { StavZakazky } from "@erp/core";
+import { DILNA_FAZE, DILNA_FAZE_LABELS, DILNA_FAZE_BARVY, jeDilnaFaze, type StavZakazky } from "@erp/core";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +42,7 @@ type Detail = {
   konec_aktualni: string;
   stav: StavZakazky;
   poznamka: string | null;
+  ulozeni: string | null;
   deleted_at: string | null;
   parent_id: string | null;
   inquiry: { id: string; number: number; subject: string } | null;
@@ -61,7 +62,7 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
   const { data } = await supabase
     .from("zakazky")
     .select(
-      `id, kod, misto_plneni, priorita, zacatek, konec_puvodni, konec_aktualni, stav, poznamka, deleted_at, parent_id,
+      `id, kod, misto_plneni, priorita, zacatek, konec_puvodni, konec_aktualni, stav, poznamka, ulozeni, deleted_at, parent_id,
        inquiry:inquiries(id, number, subject),
        customer:customers(id, name),
        odpovedna:profiles!zakazky_odpovedna_osoba_id_fkey(name),
@@ -99,6 +100,13 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
     const { data: p } = await supabase.from("zakazky").select("id, kod").eq("id", z.parent_id).maybeSingle();
     if (p) rodic = { id: p.id, kod: p.kod };
   }
+
+  // Dílna: výrobní fáze (propisují se z modulu Dílna).
+  const { data: fazeData } = await supabase
+    .from("dilna_faze")
+    .select("typ, datum_od, datum_do")
+    .eq("zakazka_id", z.id);
+  const faze = (fazeData ?? []) as { typ: string; datum_od: string | null; datum_do: string | null }[];
 
   // Lidé na akci = přiřazení + odpovědní napříč akcí a jejími zakázkami k akci.
   const lidiMap = await nacistLidiZakazek(supabase, [z.id, ...podzakazky.map((p) => p.id)]);
@@ -154,6 +162,18 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
   const akceProdlouzit = prodlouzit.bind(null, z.id) as (p: ZakazkaStav, fd: FormData) => Promise<ZakazkaStav>;
   const akceSmazat = smazatZakazku.bind(null, z.id) as (fd: FormData) => Promise<void>;
   const stavovaZakazka = { konecAktualni: konecAktualniD, stav: z.stav };
+
+  // Potvrzení mazání: akce s podzakázkami varuje, že smaže i je;
+  // zakázka k akci upozorní, že ostatní zůstanou.
+  const pocetPodz = podzakazky.length;
+  const sklonZakazky =
+    pocetPodz === 1 ? "1 zakázka k akci" : pocetPodz >= 2 && pocetPodz <= 4 ? `${pocetPodz} zakázky k akci` : `${pocetPodz} zakázek k akci`;
+  const smazatLabel = z.parent_id ? "Smazat zakázku k akci" : "Smazat akci";
+  const smazatConfirm = z.parent_id
+    ? "Smazat tuto zakázku k akci? Hlavní akce ani ostatní zakázky k akci se nesmažou (zůstane jen v auditu)."
+    : pocetPodz > 0
+      ? `Smazat akci ${z.kod}? Smaže se s ní i ${sklonZakazky}. Vše zmizí ze seznamů i z plánu (zůstane jen v auditu).`
+      : "Opravdu smazat tuto akci? Zmizí ze seznamů i z plánu (zůstane jen v auditu).";
 
   // Barvy podle osoby – stejná osoba = stejná barva.
   const PALETA = ["#2f5d78", "#b45309", "#0f766e", "#be185d", "#4d7c0f", "#6d28d9", "#0369a1", "#a16207"];
@@ -245,6 +265,38 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
         </div>
         {z.poznamka && <p className="mt-3 text-sm text-text-muted">{z.poznamka}</p>}
       </section>
+
+      {(z.ulozeni || faze.length > 0) && (
+        <section className="card p-4">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-muted">
+            Dílna (výroba)
+          </h2>
+          {z.ulozeni && (
+            <p className="mb-3 text-sm">
+              <span className="text-text-muted">Uskladnění:</span> {z.ulozeni}
+            </p>
+          )}
+          {faze.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {DILNA_FAZE.filter((t) => faze.some((f) => f.typ === t)).map((t) => {
+                const f = faze.find((x) => jeDilnaFaze(x.typ) && x.typ === t)!;
+                const rozsah = [f.datum_od, f.datum_do].filter(Boolean).map((d) => formatCz(parseDay(d!)));
+                return (
+                  <span
+                    key={t}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-line px-2 py-1 text-xs"
+                  >
+                    <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: DILNA_FAZE_BARVY[t] }} />
+                    <span className="font-medium">{DILNA_FAZE_LABELS[t]}</span>
+                    {rozsah.length > 0 && <span className="text-text-muted">{rozsah.join(" – ")}</span>}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+          <p className="mt-3 text-xs text-text-muted">Zadává se v modulu Dílna.</p>
+        </section>
+      )}
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-text-muted">Přiřazení pracovníci</h2>
@@ -396,7 +448,7 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
       </section>
 
       <section className="border-t border-line pt-4">
-        <SmazatButton akce={akceSmazat} />
+        <SmazatButton akce={akceSmazat} label={smazatLabel} confirmText={smazatConfirm} />
       </section>
     </div>
   );

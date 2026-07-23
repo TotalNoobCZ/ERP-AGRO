@@ -42,7 +42,8 @@ export function PinButton({ modul, href }: { modul: string; href: string }) {
     <button
       type="button"
       onClick={toggle}
-      title={pinned ? "Zrušit výchozí záložku" : "Nastavit jako výchozí po otevření modulu"}
+      data-tip={pinned ? "Zrušit výchozí záložku" : "Přišpendlit jako výchozí záložku modulu (otevře se první)"}
+      data-tip-pos="bottom"
       aria-label="Přišpendlit záložku"
       className={`ml-0.5 text-xs leading-none transition ${pinned ? "opacity-100" : "opacity-25 hover:opacity-70"}`}
     >

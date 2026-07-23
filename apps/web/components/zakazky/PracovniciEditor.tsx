@@ -12,7 +12,7 @@ import {
   type PracVysledek,
 } from "@/app/(erp)/zakazky/actions";
 
-type Prac = { id: string; osobaId: string; jmeno: string; od: string; do: string };
+type Prac = { id: string; osobaId: string; jmeno: string; od: string; do: string; jeKonstrukter: boolean };
 type Typ = "termin" | "nahradit" | "odebrat";
 
 export default function PracovniciEditor({
@@ -21,12 +21,15 @@ export default function PracovniciEditor({
   pracovnici,
   konecAkce,
   dnes,
+  muzeOdebratKonstruktera,
 }: {
   zakazkaId: string;
   prirazeni: Prac[];
   pracovnici: OsobaLite[];
   konecAkce: string;
   dnes: string;
+  /** smí přihlášený odebrat konstruktéra ze zakázky (šéfkonstruktér / admin) */
+  muzeOdebratKonstruktera: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -84,7 +87,13 @@ export default function PracovniciEditor({
               <span className="ml-auto flex gap-2">
                 <button type="button" className="text-link hover:underline" onClick={() => otevri(p, "termin")}>Termín</button>
                 <button type="button" className="text-link hover:underline" onClick={() => otevri(p, "nahradit")}>Nahradit</button>
-                <button type="button" className="text-red-500 hover:underline" onClick={() => otevri(p, "odebrat")}>Odebrat</button>
+                {p.jeKonstrukter && !muzeOdebratKonstruktera ? (
+                  <span className="text-text-muted" data-tip="Konstruktéra smí odebrat jen šéfkonstruktér nebo administrátor">
+                    Odebrat 🔒
+                  </span>
+                ) : (
+                  <button type="button" className="text-red-500 hover:underline" onClick={() => otevri(p, "odebrat")}>Odebrat</button>
+                )}
               </span>
             </div>
 

@@ -23,6 +23,19 @@ const BARVA = {
 
 const PALETA_PRAC = ["#2f5d78", "#b45309", "#0f766e", "#be185d", "#4d7c0f", "#6d28d9", "#0369a1", "#a16207"];
 
+// Paleta pro rozlišení jednotlivých akcí (zobrazení „podle zaměstnance"), ať
+// sousední akce nesplývají. Barva je stabilní podle id akce.
+const PALETA_AKCE = [
+  "#2f5d78", "#0f766e", "#b45309", "#6d28d9", "#be185d", "#4d7c0f",
+  "#0369a1", "#a16207", "#9d174d", "#166534", "#7c2d12", "#1e40af",
+  "#9a3412", "#155e75", "#5b21b6", "#065f46",
+];
+function barvaProAkci(id: string): string {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return PALETA_AKCE[h % PALETA_AKCE.length]!;
+}
+
 function barvaZakazky(z: { konecAktualni: Date; stav: StavZakazky }): string {
   if (poTerminu(z)) return BARVA.potermin;
   if (z.stav === "DOKONCENO") return BARVA.dokonceno;
@@ -227,7 +240,10 @@ export default async function PlanPage({
             od: x.od,
             do: x.do,
             lane: x.lane,
-            barva: barvaZakazky({ konecAktualni: parseDay(x.p.zakazka.konec_aktualni), stav: x.p.zakazka.stav }),
+            // Barva odlišuje jednotlivé akce; po termínu má přednost (červená).
+            barva: poTerminu({ konecAktualni: parseDay(x.p.zakazka.konec_aktualni), stav: x.p.zakazka.stav })
+              ? BARVA.potermin
+              : barvaProAkci(x.p.zakazka.id),
             label: x.p.zakazka.kod,
             href: `/zakazky/${x.p.zakazka.id}`,
             titulek: `${x.p.zakazka.kod} — ${x.p.zakazka.misto_plneni}`,
@@ -284,12 +300,23 @@ export default async function PlanPage({
       )}
 
       <div className="flex flex-wrap gap-4 text-xs text-text-muted">
-        <Legenda barva={BARVA.aktivni} text="Aktivní" />
-        <Legenda barva={BARVA.potermin} text="Po termínu" />
-        <Legenda barva={BARVA.pozastaveno} text="Pozastaveno" />
-        <Legenda barva={BARVA.dokonceno} text="Dokončeno" />
-        <Legenda barva={BARVA.vyroba} text="Milník výroba" kosoctverec />
-        <Legenda barva={BARVA.lakovani} text="Milník lakování" kosoctverec />
+        {mode === "osoby" ? (
+          <>
+            <span>Barvy odlišují jednotlivé akce.</span>
+            <Legenda barva={BARVA.potermin} text="Po termínu" />
+            <Legenda barva={BARVA.vyroba} text="Milník výroba" kosoctverec />
+            <Legenda barva={BARVA.lakovani} text="Milník lakování" kosoctverec />
+          </>
+        ) : (
+          <>
+            <Legenda barva={BARVA.aktivni} text="Aktivní" />
+            <Legenda barva={BARVA.potermin} text="Po termínu" />
+            <Legenda barva={BARVA.pozastaveno} text="Pozastaveno" />
+            <Legenda barva={BARVA.dokonceno} text="Dokončeno" />
+            <Legenda barva={BARVA.vyroba} text="Milník výroba" kosoctverec />
+            <Legenda barva={BARVA.lakovani} text="Milník lakování" kosoctverec />
+          </>
+        )}
       </div>
     </div>
   );

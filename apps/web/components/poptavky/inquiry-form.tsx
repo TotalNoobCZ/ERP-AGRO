@@ -112,8 +112,12 @@ export function InquiryForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
     setError("");
+    if (!contactName.trim()) {
+      setError("Vyplňte kontaktní osobu.");
+      return;
+    }
+    setSaving(true);
 
     const payload: InquiryInput = {
       subject,
@@ -170,7 +174,7 @@ export function InquiryForm({
           {customerMode === "existing" && selectedCustomer && (selectedCustomer.contacts?.length ?? 0) > 0 ? (
             <div className="grid gap-3 sm:grid-cols-3">
               <div>
-                <Label htmlFor="contactPick">Kontaktní osoba</Label>
+                <Label htmlFor="contactPick">Kontaktní osoba *</Label>
                 <Select id="contactPick" value={selectedContactId} onChange={(e) => selectContact(e.target.value)}>
                   <option value="">— zadat ručně —</option>
                   {selectedCustomer.contacts!.map((ct) => (
@@ -180,11 +184,12 @@ export function InquiryForm({
                 {!selectedContactId && (
                   <Input
                     className="mt-2"
-                    placeholder="Jméno kontaktu"
+                    placeholder="Jméno nového kontaktu"
                     value={contactName ?? ""}
                     onChange={(e) => setContactName(e.target.value)}
                   />
                 )}
+                <p className="mt-1 text-xs text-text-muted">Nový kontakt se uloží k zákazníkovi do databáze.</p>
               </div>
               <div>
                 <Label htmlFor="contactPhone">Telefon kontaktu</Label>
@@ -198,8 +203,8 @@ export function InquiryForm({
           ) : (
             <div className="grid gap-3 sm:grid-cols-3">
               <div>
-                <Label htmlFor="contactName">Kontaktní osoba</Label>
-                <Input id="contactName" value={contactName ?? ""} onChange={(e) => setContactName(e.target.value)} />
+                <Label htmlFor="contactName">Kontaktní osoba *</Label>
+                <Input id="contactName" value={contactName ?? ""} onChange={(e) => setContactName(e.target.value)} required />
               </div>
               <div>
                 <Label htmlFor="contactPhone">Telefon kontaktu</Label>
@@ -233,7 +238,7 @@ export function InquiryForm({
             </Select>
             <p className="mt-1 text-xs text-text-muted">
               Nepovinné – můžeš doplnit později přetažením na Tabuli poptávek.
-              Vybrat lze jen roli „Vedoucí" nebo oddělení „Projekťák".
+              Vybrat lze roli „Vedoucí" nebo oddělení „Projekťák" / „Obchodní manažer".
             </p>
           </div>
         </CardContent>
