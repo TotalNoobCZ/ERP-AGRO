@@ -2,7 +2,7 @@
 //  Sdílená dotazová logika seznamu poptávek (tabulka + tiskový export).
 //  Přepis WHERE/ORDER BY logiky z Popt-vky/app/poptavky/page.tsx na supabase-js.
 // ----------------------------------------------------------------------------
-import { INQUIRY_STATUSES, INQUIRY_CLOSED_STATUSES, type InquiryStatus } from "@erp/core";
+import { INQUIRY_STATUSES, INQUIRY_CLOSED_STATUSES, INQUIRY_OPEN_DEADLINE_STATUSES, type InquiryStatus } from "@erp/core";
 import type { createClient } from "@/lib/supabase/server";
 
 export type InquiryListParams = {
@@ -62,8 +62,8 @@ export async function queryInquiries(
     // Explicitně vybraný stav má přednost.
     query = query.eq("status", status as InquiryStatus);
   } else if (deadline === "overdue") {
-    // Pohled "po termínu" = jen živé (neuzavřené) poptávky.
-    query = query.not("status", "in", `(${INQUIRY_CLOSED_STATUSES.join(",")})`);
+    // „Po termínu" jen dokud nebyla nabídka odeslána (Nová / V jednání).
+    query = query.in("status", INQUIRY_OPEN_DEADLINE_STATUSES);
   } else if (contact === "1") {
     // Pohled "ke kontaktování" – stav neomezujeme.
   } else {

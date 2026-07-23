@@ -94,7 +94,7 @@ export default async function InquiryDetailPage({ params }: { params: Promise<{ 
           <h1 className="text-2xl font-bold">{inquiry.subject}</h1>
           <div className="mt-2 flex items-center gap-2">
             <StatusBadge status={inquiry.status as InquiryStatus} />
-            <DeadlineBadge deadline={inquiry.deadline} />
+            <DeadlineBadge deadline={inquiry.deadline} status={inquiry.status as InquiryStatus} />
           </div>
         </div>
         <div className="flex gap-2">

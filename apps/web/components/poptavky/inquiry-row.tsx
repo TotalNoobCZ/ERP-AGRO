@@ -28,7 +28,7 @@ export type InquiryRowData = {
 };
 
 /** Buňka termínu s inline editací (bez otvírání detailu poptávky). */
-function TerminCell({ id, deadline }: { id: string; deadline: string | null }) {
+function TerminCell({ id, deadline, status }: { id: string; deadline: string | null; status: InquiryStatus }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [val, setVal] = useState(deadline ?? "");
@@ -53,7 +53,7 @@ function TerminCell({ id, deadline }: { id: string; deadline: string | null }) {
   if (!editing) {
     return (
       <span className="inline-flex items-center gap-1.5" onClick={stop}>
-        <DeadlineBadge deadline={deadline} />
+        <DeadlineBadge deadline={deadline} status={status} />
         <button
           type="button"
           onClick={() => {
@@ -126,7 +126,7 @@ export function InquiryRow({ inq }: { inq: InquiryRowData }) {
         <TableCell>{inq.personName}</TableCell>
         <TableCell className="whitespace-nowrap">{formatDate(inq.receivedAt)}</TableCell>
         <TableCell><StatusBadge status={inq.status} /></TableCell>
-        <TableCell><TerminCell id={inq.id} deadline={inq.deadline} /></TableCell>
+        <TableCell><TerminCell id={inq.id} deadline={inq.deadline} status={inq.status} /></TableCell>
         <TableCell>
           {inq.needsContact && (
             <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-orange-200 bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">

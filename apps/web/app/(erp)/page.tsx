@@ -95,7 +95,7 @@ export default async function HomePage() {
                   </span>
                   {p.needsContact && <span className="shrink-0 rounded-full border border-orange-200 bg-orange-100 px-2 py-0.5 text-[11px] text-orange-700">📞</span>}
                   <StatusBadge status={p.status} />
-                  <DeadlineBadge deadline={p.deadline} />
+                  <DeadlineBadge deadline={p.deadline} status={p.status} />
                 </Link>
               ))}
             </div>

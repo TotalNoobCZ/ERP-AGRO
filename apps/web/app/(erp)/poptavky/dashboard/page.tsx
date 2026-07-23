@@ -6,7 +6,7 @@ import { StatusBadge, DeadlineBadge } from "@/components/poptavky/badges";
 import {
   INQUIRY_STATUS_ORDER,
   INQUIRY_STATUS_LABELS,
-  INQUIRY_CLOSED_STATUSES,
+  INQUIRY_OPEN_DEADLINE_STATUSES,
   type InquiryStatus,
 } from "@erp/core";
 
@@ -39,7 +39,7 @@ function InquiryRow({ inq }: { inq: Row }) {
       </div>
       <div className="flex items-center gap-2">
         <StatusBadge status={inq.status} />
-        <DeadlineBadge deadline={inq.deadline} />
+        <DeadlineBadge deadline={inq.deadline} status={inq.status} />
       </div>
     </Link>
   );
@@ -48,7 +48,8 @@ function InquiryRow({ inq }: { inq: Row }) {
 export default async function DashboardPage() {
   const supabase = await createClient();
   const now = new Date().toISOString();
-  const closed = `(${INQUIRY_CLOSED_STATUSES.join(",")})`;
+  // „Po termínu" / nadcházející termín platí jen dokud není nabídka odeslána.
+  const open = INQUIRY_OPEN_DEADLINE_STATUSES;
 
   // Všechny dotazy paralelně – rychlejší načtení.
   const [statusRows, overdueCount, upcoming, overdue, contactCount, toContact] = await Promise.all([
@@ -57,18 +58,18 @@ export default async function DashboardPage() {
       .from("inquiries")
       .select("id", { count: "exact", head: true })
       .lt("deadline", now)
-      .not("status", "in", closed),
+      .in("status", open),
     supabase
       .from("inquiries")
       .select(ROW_SELECT)
-      .not("status", "in", closed)
+      .in("status", open)
       .gte("deadline", now)
       .order("deadline", { ascending: true })
       .limit(5),
     supabase
       .from("inquiries")
       .select(ROW_SELECT)
-      .not("status", "in", closed)
+      .in("status", open)
       .lt("deadline", now)
       .order("deadline", { ascending: true })
       .limit(5),
