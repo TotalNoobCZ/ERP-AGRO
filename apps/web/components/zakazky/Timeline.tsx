@@ -43,13 +43,15 @@ type DragState = {
 
 export default function Timeline({
   start, konec, radky, prazdno = "Žádná data v tomto období.",
-  onBarDrag,
+  onBarDrag, persistKey = "erp_zakazky_plan_otevrene",
 }: {
   start: Date; konec: Date; radky: TRadek[]; prazdno?: string;
   /** volá se po puštění taženého pruhu s posunem ve dnech (≠ 0) */
   onBarDrag?: (dragId: string, deltaDays: number, mode: DragMode) => void;
+  /** localStorage klíč pro zapamatování rozbalených podřádků (per pohled) */
+  persistKey?: string;
 }) {
-  const { has: jeOtevreno, toggle, replace } = usePersistentSet("erp_zakazky_plan_otevrene");
+  const { has: jeOtevreno, toggle, replace } = usePersistentSet(persistKey);
 
   // Řádky s podřádky (jde je rozbalit) – pro „zobrazit vše" / „skrýt vše".
   const rozbalitelne: string[] = [];

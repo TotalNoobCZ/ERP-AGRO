@@ -103,11 +103,13 @@ export default async function DilnaGanttPage({
   if (mode === "faze") {
     const zakazky = await queryDilnaZakazky(supabase);
     const skupiny = seskupitDoAkci(zakazky);
-    // Hlavní akce i její podzakázky jsou vidět zároveň (podzakázky odsazené).
-    radky = skupiny.flatMap(({ akce, deti }) => [
-      naRadek(akce),
-      ...deti.map((d) => ({ ...naRadek(d), label: `↳ ${d.kod}` })),
-    ]);
+    // Hlavní akce (s propsaným termínem) je vždy vidět; podzakázky jsou
+    // rozbalitelné podřádky – poslední stav (co uživatel naposledy rozbalil)
+    // si Timeline pamatuje v localStorage pod vlastním klíčem.
+    radky = skupiny.map(({ akce, deti }) => ({
+      ...naRadek(akce),
+      podradky: deti.map((d) => naRadek(d)),
+    }));
   } else {
     // Podle zaměstnance: přiřazení lidí z dílen na zakázky v okně.
     const { data } = await supabase
@@ -189,6 +191,7 @@ export default async function DilnaGanttPage({
         start={start}
         konec={konec}
         radky={radky}
+        persistKey="erp_dilna_gantt_otevrene"
         prazdno={mode === "osoby" ? "Nikdo z dílen nemá v tomto období přiřazení." : "Žádné naplánované fáze v tomto období."}
       />
 
