@@ -13,7 +13,7 @@ export default async function ArchivPage() {
     .from("zakazky")
     .select("id, kod, misto_plneni, konec_aktualni, stav, archivovano_kdy, prirazeni:prirazeni_zakazka(count)")
     .is("deleted_at", null)
-    .in("stav", ["ARCHIV", "DOKONCENO"])
+    .eq("stav", "ARCHIV")
     .order("konec_aktualni", { ascending: false });
 
   const zakazky = (data ?? []) as unknown as {
@@ -30,7 +30,8 @@ export default async function ArchivPage() {
     <div>
       <h1 className="mb-1 text-2xl font-bold">Archiv</h1>
       <p className="mb-4 text-sm text-text-muted">
-        Dokončené a archivované akce. Otevřením akce ji můžeš znovu aktivovat.
+        Archivované akce. Otevřením akce ji můžeš znovu aktivovat. Akce ve fakturaci
+        a proplacené najdeš na liště „Fakturace".
       </p>
 
       {zakazky.length === 0 ? (

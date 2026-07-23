@@ -119,3 +119,15 @@ create policy dilna_faze_update on public.dilna_faze
 drop policy if exists dilna_faze_delete on public.dilna_faze;
 create policy dilna_faze_delete on public.dilna_faze
   for delete to authenticated using ((select can_write()));
+
+-- ============================================================================
+--  12) Zakázky – fakturace a proplacení (finále akce)
+--  Stav „Dokončeno" nahrazen „Fakturace"; po zaplacení „Proplaceno" = hotové.
+-- ============================================================================
+-- Pořadí: DROP starý constraint → UPDATE dat (bez omezení) → ADD nový.
+alter table public.zakazky drop constraint if exists zakazky_stav_check;
+
+update public.zakazky set stav = 'FAKTURACE' where stav = 'DOKONCENO';
+
+alter table public.zakazky add constraint zakazky_stav_check
+  check (stav in ('AKTIVNI', 'POZASTAVENO', 'FAKTURACE', 'PROPLACENO', 'ARCHIV'));

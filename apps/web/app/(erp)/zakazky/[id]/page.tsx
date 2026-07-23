@@ -420,9 +420,28 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
       </section>
 
       <section className="flex flex-wrap gap-3">
-        <StavTlacitko id={z.id} stav="DOKONCENO" label="Označit dokončeno" cls="btn-primary" />
-        <StavTlacitko id={z.id} stav="AKTIVNI" label="Znovu aktivovat" cls="btn-ghost" />
-        <StavTlacitko id={z.id} stav="ARCHIV" label="Archivovat" cls="btn-danger" />
+        {/* Životní cyklus akce: běží → Fakturace → Proplaceno (finále) → Archiv */}
+        {(z.stav === "AKTIVNI" || z.stav === "POZASTAVENO") && (
+          <StavTlacitko id={z.id} stav="FAKTURACE" label="Hotovo → do fakturace" cls="btn-primary" />
+        )}
+        {z.stav === "FAKTURACE" && (
+          <>
+            <StavTlacitko id={z.id} stav="PROPLACENO" label="Označit proplaceno" cls="btn-primary" />
+            <StavTlacitko id={z.id} stav="AKTIVNI" label="Zpět do výroby" cls="btn-ghost" />
+          </>
+        )}
+        {z.stav === "PROPLACENO" && (
+          <>
+            <StavTlacitko id={z.id} stav="FAKTURACE" label="Zpět do fakturace" cls="btn-ghost" />
+            <StavTlacitko id={z.id} stav="ARCHIV" label="Archivovat" cls="btn-danger" />
+          </>
+        )}
+        {z.stav === "ARCHIV" && (
+          <StavTlacitko id={z.id} stav="AKTIVNI" label="Znovu aktivovat" cls="btn-ghost" />
+        )}
+        {(z.stav === "AKTIVNI" || z.stav === "POZASTAVENO") && (
+          <StavTlacitko id={z.id} stav="ARCHIV" label="Archivovat" cls="btn-danger" />
+        )}
       </section>
 
       <section>
@@ -539,7 +558,7 @@ function StavTlacitko({
   cls,
 }: {
   id: string;
-  stav: "DOKONCENO" | "ARCHIV" | "AKTIVNI" | "POZASTAVENO";
+  stav: "FAKTURACE" | "PROPLACENO" | "ARCHIV" | "AKTIVNI" | "POZASTAVENO";
   label: string;
   cls: string;
 }) {

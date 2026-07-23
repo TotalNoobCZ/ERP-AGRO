@@ -145,7 +145,7 @@ export type StatusLogRow = {
   created_at: string;
 }
 
-export type StavZakazkyDb = "AKTIVNI" | "POZASTAVENO" | "DOKONCENO" | "ARCHIV";
+export type StavZakazkyDb = "AKTIVNI" | "POZASTAVENO" | "FAKTURACE" | "PROPLACENO" | "ARCHIV";
 export type TypMilnikuDb =
   | "ZAHAJENI_VYROBY"
   | "PREDANI_LAKOVANI"

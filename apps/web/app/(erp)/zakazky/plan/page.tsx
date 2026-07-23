@@ -38,7 +38,7 @@ function barvaProAkci(id: string): string {
 
 function barvaZakazky(z: { konecAktualni: Date; stav: StavZakazky }): string {
   if (poTerminu(z)) return BARVA.potermin;
-  if (z.stav === "DOKONCENO") return BARVA.dokonceno;
+  if (z.stav === "FAKTURACE" || z.stav === "PROPLACENO") return BARVA.dokonceno;
   if (z.stav === "POZASTAVENO") return BARVA.pozastaveno;
   return BARVA.aktivni;
 }
@@ -97,7 +97,7 @@ export default async function PlanPage({
          prirazeni:prirazeni_zakazka(osoba_id, datum_od, datum_do, deleted_at, osoba:profiles(name))`,
       )
       .is("deleted_at", null)
-      .in("stav", ["AKTIVNI", "POZASTAVENO", "DOKONCENO"])
+      .in("stav", ["AKTIVNI", "POZASTAVENO", "FAKTURACE"])
       .lte("zacatek", konec.toISOString().slice(0, 10))
       .gte("konec_aktualni", start.toISOString().slice(0, 10))
       .order("priorita", { ascending: true })
@@ -312,7 +312,7 @@ export default async function PlanPage({
             <Legenda barva={BARVA.aktivni} text="Aktivní" />
             <Legenda barva={BARVA.potermin} text="Po termínu" />
             <Legenda barva={BARVA.pozastaveno} text="Pozastaveno" />
-            <Legenda barva={BARVA.dokonceno} text="Dokončeno" />
+            <Legenda barva={BARVA.dokonceno} text="Fakturace" />
             <Legenda barva={BARVA.vyroba} text="Milník výroba" kosoctverec />
             <Legenda barva={BARVA.lakovani} text="Milník lakování" kosoctverec />
           </>

@@ -4,7 +4,7 @@ import { parseDay } from "@/lib/zakazky/dates";
 import { poTerminu } from "@/lib/zakazky/orders";
 import { ZAKAZKA_STAVY, type StavZakazky } from "@erp/core";
 
-export type ZakazkaListParams = { q?: string; stav?: string; priorita?: string };
+export type ZakazkaListParams = { q?: string; stav?: string; stavy?: string; priorita?: string };
 
 /**
  * Množina ID zakázek, ke kterým je osoba přiřazena (jako pracovník) nebo je
@@ -47,6 +47,11 @@ export async function queryZakazky(
 ): Promise<ZakazkaListRow[]> {
   const q = params.q?.trim();
   const stav = params.stav;
+  // Multi-výběr stavů: „chci jen tyto stavy" (a tím i „všechny kromě některých").
+  const stavy = (params.stavy ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => (ZAKAZKA_STAVY as readonly string[]).includes(s)) as StavZakazky[];
   const priorita = params.priorita ? Number(params.priorita) : undefined;
 
   let query = supabase
@@ -59,9 +64,14 @@ export async function queryZakazky(
     .order("konec_aktualni", { ascending: true });
 
   if (q) query = query.or(`kod.ilike.%${q}%,misto_plneni.ilike.%${q}%`);
-  if (stav && stav !== "PO_TERMINU" && (ZAKAZKA_STAVY as readonly string[]).includes(stav)) {
+  if (stav === "PO_TERMINU") {
+    // řeší se post-query filtrem níže
+  } else if (stavy.length) {
+    // Vybrané stavy (jen tyto). „Všechny kromě X" = vyber všechny kromě X.
+    query = query.in("stav", stavy);
+  } else if (stav && (ZAKAZKA_STAVY as readonly string[]).includes(stav)) {
     query = query.eq("stav", stav as StavZakazky);
-  } else if (stav !== "PO_TERMINU") {
+  } else {
     query = query.neq("stav", "ARCHIV");
   }
   if (priorita) query = query.eq("priorita", priorita);
