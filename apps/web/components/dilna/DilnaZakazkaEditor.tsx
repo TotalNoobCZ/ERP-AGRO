@@ -32,7 +32,13 @@ export function DilnaZakazkaEditor({ zakazka, editable }: { zakazka: DilnaZakazk
 
   function setFazeVal(t: DilnaFaze, klic: "od" | "do", val: string) {
     setUlozeno(false);
-    setFaze((prev) => ({ ...prev, [t]: { ...prev[t], [klic]: val } }));
+    const next = { ...faze, [t]: { ...faze[t], [klic]: val } };
+    setFaze(next);
+    // Konečný termín podzakázky se přednastaví na nejzazší termín milníků
+    // (lze ho pak ještě ručně přepsat). Data jsou ve formátu YYYY-MM-DD,
+    // takže je lze porovnávat jako řetězce.
+    const konce = DILNA_FAZE.map((f) => next[f].do).filter(Boolean);
+    if (konce.length) setKonec(konce.reduce((a, b) => (b > a ? b : a)));
   }
 
   async function ulozit() {
