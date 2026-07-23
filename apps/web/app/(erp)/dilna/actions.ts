@@ -60,6 +60,39 @@ export async function ulozitFazi(
   return { ok: true };
 }
 
+/**
+ * Uloží vlastní termín (začátek → konec) zakázky/podzakázky. Podzakázka může mít
+ * jiný začátek i konec než hlavní akce; zapisuje se do zacatek/konec_aktualni,
+ * takže se propíše i do Zakázek a ganttů. Konec nesmí být před začátkem.
+ */
+export async function ulozitTermin(
+  zakazkaId: string,
+  zacatek: string,
+  konec: string,
+): Promise<Vysledek> {
+  const auth = await requireWriter();
+  if (!auth.ok) return auth;
+
+  const z = zacatek?.trim();
+  const k = konec?.trim();
+  if (!z || !DEN_RE.test(z)) return { ok: false, chyba: "Neplatný začátek." };
+  if (!k || !DEN_RE.test(k)) return { ok: false, chyba: "Neplatný konec." };
+  if (k < z) return { ok: false, chyba: "Konec nesmí být před začátkem." };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("zakazky")
+    .update({ zacatek: z, konec_aktualni: k })
+    .eq("id", zakazkaId);
+  if (error) return { ok: false, chyba: "Uložení se nezdařilo." };
+
+  revalidatePath("/dilna");
+  revalidatePath("/dilna/gantt");
+  revalidatePath(`/dilna/${zakazkaId}`);
+  revalidatePath(`/zakazky/${zakazkaId}`);
+  return { ok: true };
+}
+
 /** Uloží uskladnění dílu/stroje u zakázky (propisuje se i do Zakázek). */
 export async function ulozitUlozeni(zakazkaId: string, ulozeni: string): Promise<Vysledek> {
   const auth = await requireWriter();
