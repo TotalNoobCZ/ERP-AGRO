@@ -7,6 +7,7 @@ import { queryDueReminders } from "@/lib/poptavky-query";
 import { queryMojePoptavky, queryMojeZakazky } from "@/lib/moje-prace";
 import { StatusBadge, DeadlineBadge } from "@/components/poptavky/badges";
 import { StavBadge } from "@/components/zakazky/common";
+import { UvitaciNavod } from "@/components/UvitaciNavod";
 import { parseDay, formatCz } from "@/lib/zakazky/dates";
 import { poTerminu } from "@/lib/zakazky/orders";
 import { isAdmin, type Role, type Modul, type StavZakazky } from "@erp/core";
@@ -48,6 +49,7 @@ export default async function HomePage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 py-2">
+      {uid && <UvitaciNavod userId={uid} jmeno={jmeno || undefined} />}
       <div>
         <h1 className="text-2xl font-bold">Moje práce{jmeno ? ` — ${jmeno}` : ""}</h1>
         <p className="mt-1 text-sm text-text-muted">Co tě čeká napříč systémem.</p>
