@@ -327,6 +327,8 @@ export default function ZakazkyBoard({
                               zakazka={d}
                               editable={editable}
                               muzeOdebratKonstruktera={muzeOdebratKonstruktera}
+                              jePodzakazka
+                              zdedenaOdpovedna={g.akce.odpovednaOsoba}
                               onOpen={() => router.push(`${zakazkaBasePath}/${d.id}`)}
                               onOpenOsoba={(osobaId) => router.push(`/lide/${osobaId}`)}
                               onRemove={odebrat}
@@ -410,6 +412,8 @@ function ZakazkaTile({
   zakazka,
   editable,
   muzeOdebratKonstruktera,
+  jePodzakazka = false,
+  zdedenaOdpovedna = null,
   onOpen,
   onOpenOsoba,
   onRemove,
@@ -418,6 +422,9 @@ function ZakazkaTile({
   zakazka: BoardZakazka;
   editable: boolean;
   muzeOdebratKonstruktera: boolean;
+  /** Podzakázka – odpovědná osoba se řeší u akce, tady se jen dědí (read-only). */
+  jePodzakazka?: boolean;
+  zdedenaOdpovedna?: BoardZakazka["odpovednaOsoba"];
   onOpen: () => void;
   onOpenOsoba: (osobaId: string) => void;
   onRemove: (prirazeniId: string) => void;
@@ -438,10 +445,23 @@ function ZakazkaTile({
         {formatDen(zakazka.zacatek)} – {formatDen(zakazka.konecAktualni)}
       </p>
 
-      {/* Odpovědná osoba – samostatně nad pracovníky. */}
+      {/* Odpovědná osoba – u akce editovatelná (drag), u podzakázky jen zděděná. */}
       <div className="mb-2">
         <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-muted">Odpovědná osoba</p>
-        {odp ? (
+        {jePodzakazka ? (
+          zdedenaOdpovedna ? (
+            <span
+              onDoubleClick={() => onOpenOsoba(zdedenaOdpovedna.id)}
+              data-tip="Odpovědná osoba akce · dvojklik = karta zaměstnance"
+              className="inline-flex cursor-pointer items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold opacity-80 ring-1 ring-black/10"
+              style={{ backgroundColor: userColor(zdedenaOdpovedna.colorIndex), color: "#16181b" }}
+            >
+              ⭐ {zdedenaOdpovedna.name}
+            </span>
+          ) : (
+            <span className="text-xs text-text-muted">dle hlavní akce</span>
+          )
+        ) : odp ? (
           <span
             onDoubleClick={() => onOpenOsoba(odp.id)}
             data-tip="Dvojklik = karta zaměstnance"
