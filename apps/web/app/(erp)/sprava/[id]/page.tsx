@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { createClient, getCurrentProfile } from "@/lib/supabase/server";
+import { getCurrentProfile } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { ProfilForm } from "@/components/sprava/ProfilForm";
 import { HesloSprava } from "@/components/sprava/HesloSprava";
 import { upravitProfil, type ProfilStav } from "../actions";
@@ -13,7 +14,10 @@ export default async function UpravitProfilPage({ params }: { params: Promise<{ 
     return <p className="text-sm text-text-muted">Správa uživatelů je jen pro administrátory.</p>;
   }
 
-  const supabase = await createClient();
+  // Citlivé sloupce (email, poznamka) čteme přes service-role klienta – stránka
+  // je jen pro adminy (výše). Ostatní pole by šla i běžně, ale kvůli jedné
+  // konzistentní čtečce použijeme admin klienta na celý profil.
+  const supabase = createAdminClient();
   const { data: p } = await supabase
     .from("profiles")
     .select("id, name, email, role, oddeleni, assignable, sefkonstrukter, access_modules, color_index, active, pozice, osobni_cislo, poznamka, auth_user_id")

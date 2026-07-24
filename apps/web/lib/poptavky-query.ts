@@ -140,13 +140,13 @@ export async function queryDueReminders(
  */
 export async function queryFilterPersons(supabase: Awaited<ReturnType<typeof createClient>>) {
   const responsibles = await queryResponsibles(supabase);
-  const byId = new Map<string, { id: string; name: string; email: string | null }>(
+  const byId = new Map<string, { id: string; name: string }>(
     responsibles.map((p) => [p.id, p]),
   );
   const { data: rows } = await supabase.from("inquiries").select("person_id").not("person_id", "is", null);
   const ids = [...new Set((rows ?? []).map((r) => r.person_id as string))].filter((id) => !byId.has(id));
   if (ids.length) {
-    const { data: extra } = await supabase.from("profiles").select("id, name, email").in("id", ids);
+    const { data: extra } = await supabase.from("profiles").select("id, name").in("id", ids);
     for (const p of extra ?? []) byId.set(p.id, p);
   }
   return Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name, "cs"));
@@ -156,7 +156,7 @@ export async function queryFilterPersons(supabase: Awaited<ReturnType<typeof cre
 export async function queryPersons(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data } = await supabase
     .from("profiles")
-    .select("id, name, email")
+    .select("id, name")
     .eq("active", true)
     .order("name", { ascending: true });
   return data ?? [];
@@ -173,7 +173,7 @@ export async function queryResponsibles(
 ) {
   const { data } = await supabase
     .from("profiles")
-    .select("id, name, email")
+    .select("id, name")
     .eq("active", true)
     .or("role.eq.vedouci,oddeleni.eq.projektak,oddeleni.eq.obchodni_manazer")
     .order("name", { ascending: true });
@@ -182,7 +182,7 @@ export async function queryResponsibles(
   if (includeId && !list.some((p) => p.id === includeId)) {
     const { data: current } = await supabase
       .from("profiles")
-      .select("id, name, email")
+      .select("id, name")
       .eq("id", includeId)
       .maybeSingle();
     if (current) list.push(current);

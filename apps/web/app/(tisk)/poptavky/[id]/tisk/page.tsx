@@ -20,7 +20,7 @@ type PrintDetail = {
   contact_phone: string | null;
   contact_email: string | null;
   customer: { name: string; email: string | null; phone: string | null; address: string | null; country: string | null } | null;
-  person: { name: string; email: string } | null;
+  person: { name: string } | null;
   comments: { id: string; text: string; author: string; created_at: string }[];
   status_logs: { id: string; from_status: string | null; to_status: string; changed_by: string; created_at: string }[];
 };
@@ -42,7 +42,7 @@ export default async function InquiryPrintPage({
       `id, number, subject, description, source, status, deadline, received_at,
        contact_name, contact_phone, contact_email,
        customer:customers(name, email, phone, address, country),
-       person:profiles(name, email),
+       person:profiles(name),
        comments(id, text, author, created_at),
        status_logs(id, from_status, to_status, changed_by, created_at)`,
     )
@@ -77,7 +77,7 @@ export default async function InquiryPrintPage({
             <PrintRow label="Termín nabídky" value={inquiry.deadline ? formatDate(inquiry.deadline) : "bez termínu"} />
             <PrintRow
               label="Odpovědná osoba"
-              value={inquiry.person ? `${inquiry.person.name} (${inquiry.person.email})` : "—"}
+              value={inquiry.person ? inquiry.person.name : "—"}
             />
           </tbody>
         </table>

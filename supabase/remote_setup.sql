@@ -609,6 +609,11 @@ create policy profiles_delete on profiles
   for delete to authenticated
   using ((select is_admin()));
 
+-- Citlivé osobní údaje (e-mail, interní poznámka) běžný uživatel nesmí číst.
+-- RLS je řádková, ne sloupcová → odebíráme SELECT na tyto sloupce. Adminské
+-- čtení jde přes service-role klienta; auth flow (service_role) není dotčen.
+revoke select (email, poznamka) on profiles from anon, authenticated;
+
 -- ----------------------------------------------------------------------------
 --  audit_log: čtení pro každý profil, zápis pro editor/admin.
 --  Bez UPDATE/DELETE – log je neměnný.
