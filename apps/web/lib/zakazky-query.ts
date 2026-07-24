@@ -94,7 +94,10 @@ export async function queryZakazky(
 // ---------- Tabule zakázek (obrácené drag & drop: osoba → zakázka) ----------
 
 export type BoardOsobaZ = { id: string; name: string; oddeleni: string | null; role: string | null; colorIndex: number | null };
-export type BoardPrirazeni = { prirazeniId: string; osobaId: string; name: string; oddeleni: string | null; colorIndex: number | null };
+// Jeden pracovník = jedna položka na kartě, i když má víc přiřazení (např. po
+// dočasné výměně a návratu). prirazeniIds drží všechna jeho živá přiřazení,
+// aby křížek odebral pracovníka z akce úplně.
+export type BoardPrirazeni = { prirazeniIds: string[]; osobaId: string; name: string; oddeleni: string | null; colorIndex: number | null };
 export type BoardOdpovedna = { id: string; name: string; colorIndex: number | null };
 export type BoardZakazka = {
   id: string;
@@ -163,15 +166,24 @@ export async function queryZakazkyBoard(
 
   const zakazky: BoardZakazka[] = rawZ.map((z) => {
     const prir = z.prirazeni ?? [];
-    const pracovnici: BoardPrirazeni[] = prir
-      .filter((p) => !p.deleted_at)
-      .map((p) => ({
-        prirazeniId: p.id,
-        osobaId: p.osoba_id,
-        name: p.osoba?.name ?? "?",
-        oddeleni: p.osoba?.oddeleni ?? null,
-        colorIndex: p.osoba?.color_index ?? null,
-      }));
+    // Sloučení podle osoby: stejný pracovník s víc přiřazeními (dočasná výměna
+    // a návrat) se ukáže jen jednou; sbíráme všechna jeho přiřazení.
+    const pracovniciMap = new Map<string, BoardPrirazeni>();
+    for (const p of prir.filter((x) => !x.deleted_at)) {
+      const existuje = pracovniciMap.get(p.osoba_id);
+      if (existuje) {
+        existuje.prirazeniIds.push(p.id);
+      } else {
+        pracovniciMap.set(p.osoba_id, {
+          prirazeniIds: [p.id],
+          osobaId: p.osoba_id,
+          name: p.osoba?.name ?? "?",
+          oddeleni: p.osoba?.oddeleni ?? null,
+          colorIndex: p.osoba?.color_index ?? null,
+        });
+      }
+    }
+    const pracovnici: BoardPrirazeni[] = [...pracovniciMap.values()];
     return {
       id: z.id,
       kod: z.kod,

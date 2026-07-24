@@ -153,13 +153,17 @@ export default function ZakazkyBoard({
     router.refresh();
   }
 
-  async function odebrat(prirazeniId: string) {
+  async function odebrat(prirazeniIds: string[]) {
     if (!window.confirm("Odebrat pracovníka ze zakázky?")) return;
     setBusy(true);
     setChyba(null);
-    const res = await odebratPracovnika(prirazeniId, DUVOD_ODEBRAT);
+    // Pracovník může mít víc přiřazení (dočasná výměna a návrat) – odebereme je
+    // všechna, ať z akce zmizí úplně.
+    for (const id of prirazeniIds) {
+      const res = await odebratPracovnika(id, DUVOD_ODEBRAT);
+      if (!res.ok) { setBusy(false); setChyba(res.chyba ?? "Odebrání se nezdařilo."); return; }
+    }
     setBusy(false);
-    if (!res.ok) { setChyba(res.chyba ?? "Odebrání se nezdařilo."); return; }
     router.refresh();
   }
 
@@ -427,7 +431,7 @@ function ZakazkaTile({
   zdedenaOdpovedna?: BoardZakazka["odpovednaOsoba"];
   onOpen: () => void;
   onOpenOsoba: (osobaId: string) => void;
-  onRemove: (prirazeniId: string) => void;
+  onRemove: (prirazeniIds: string[]) => void;
   onRemoveOdpovedna: () => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `zak:${zakazka.id}` });
@@ -492,7 +496,7 @@ function ZakazkaTile({
       <div className="flex flex-wrap gap-1.5">
         {zakazka.pracovnici.map((p) => (
           <span
-            key={p.prirazeniId}
+            key={p.osobaId}
             onDoubleClick={() => onOpenOsoba(p.osobaId)}
             title="Dvojklik = karta zaměstnance"
             className="inline-flex cursor-pointer items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium"
@@ -507,7 +511,7 @@ function ZakazkaTile({
               ) : (
                 <button
                   type="button"
-                  onClick={() => onRemove(p.prirazeniId)}
+                  onClick={() => onRemove(p.prirazeniIds)}
                   className="text-black/60 hover:text-black"
                   data-tip="Odebrat pracovníka ze zakázky"
                   data-tip-pos="bottom"
