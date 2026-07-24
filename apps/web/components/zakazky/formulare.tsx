@@ -224,8 +224,7 @@ export function PoznamkyAkce({ zakazkaId, poznamky }: { zakazkaId: string; pozna
   }
 
   return (
-    <section>
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-muted">Poznámky</h2>
+    <>
       {chyba && <p className="err mb-2">{chyba}</p>}
 
       <div className="card divide-y divide-line">
@@ -251,7 +250,7 @@ export function PoznamkyAkce({ zakazkaId, poznamky }: { zakazkaId: string; pozna
           {busy ? "Ukládám…" : "Přidat poznámku"}
         </button>
       </div>
-    </section>
+    </>
   );
 }
 
@@ -319,9 +318,7 @@ export function MilnikyEditor({ zakazkaId, milniky }: { zakazkaId: string; milni
   }
 
   return (
-    <section>
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-muted">Milníky</h2>
-
+    <>
       {chyba && <p className="err mb-2">{chyba}</p>}
 
       <div className="card divide-y divide-line">
@@ -359,6 +356,6 @@ export function MilnikyEditor({ zakazkaId, milniky }: { zakazkaId: string; milni
           {busy ? "Přidávám…" : "Přidat milník"}
         </button>
       </div>
-    </section>
+    </>
   );
 }
