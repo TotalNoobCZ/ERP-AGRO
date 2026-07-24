@@ -5,6 +5,7 @@ import { createClient, getCurrentProfile } from "@/lib/supabase/server";
 import { povoleneModulyProProfil } from "@/lib/pristup";
 import { queryDueReminders } from "@/lib/poptavky-query";
 import { queryMojePoptavky, queryMojeZakazky } from "@/lib/moje-prace";
+import { queryZakazkyUpozorneni, DNI_DO_PROPLACENI, DNI_DO_FAKTURACE } from "@/lib/zakazky/upozorneni";
 import { StatusBadge, DeadlineBadge } from "@/components/poptavky/badges";
 import { StavBadge } from "@/components/zakazky/common";
 import { UvitaciNavod } from "@/components/UvitaciNavod";
@@ -33,17 +34,24 @@ export default async function HomePage() {
   const maPoptavky = moduly.includes("poptavky");
   const maZakazky = moduly.includes("zakazky") || moduly.includes("dilna");
 
-  const [pripominky, mojePoptavky, mojeZakazky] = await Promise.all([
+  const [pripominky, mojePoptavky, mojeZakazky, upozorneni] = await Promise.all([
     uid && maPoptavky ? queryDueReminders(supabase, uid) : Promise.resolve([]),
     uid && maPoptavky ? queryMojePoptavky(supabase, uid) : Promise.resolve([]),
     uid && maZakazky ? queryMojeZakazky(supabase, uid) : Promise.resolve([]),
+    uid && maZakazky
+      ? queryZakazkyUpozorneni(supabase, uid)
+      : Promise.resolve({ neproplacene: [], chybejiciFakturace: [] }),
   ]);
 
   const zakazkyPoTerminu = mojeZakazky.filter((z) =>
     poTerminu({ konecAktualni: parseDay(z.konecAktualni), stav: z.stav as StavZakazky }),
   ).length;
   const nicNecekaMe =
-    pripominky.length === 0 && mojePoptavky.length === 0 && mojeZakazky.length === 0;
+    pripominky.length === 0 &&
+    mojePoptavky.length === 0 &&
+    mojeZakazky.length === 0 &&
+    upozorneni.neproplacene.length === 0 &&
+    upozorneni.chybejiciFakturace.length === 0;
 
   const jmeno = profile?.name?.split(" ")[0] ?? "";
 
@@ -65,6 +73,50 @@ export default async function HomePage() {
                 <Link href={`/poptavky/${d.id}`} className="font-medium underline">
                   #{d.number} – {d.subject}
                 </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Neproplacené faktury – akce ve fakturaci déle než 30 dní */}
+      {upozorneni.neproplacene.length > 0 && (
+        <section className="rounded-lg border border-rose-300 bg-rose-50 p-4 text-rose-900">
+          <h2 className="mb-2 font-semibold">
+            💸 Neproplacené faktury ({upozorneni.neproplacene.length})
+          </h2>
+          <p className="mb-2 text-xs text-rose-700">
+            Akce jsou ve fakturaci déle než {DNI_DO_PROPLACENI} dní a nejsou označeny jako proplacené.
+          </p>
+          <ul className="space-y-1 text-sm">
+            {upozorneni.neproplacene.map((z) => (
+              <li key={z.id}>
+                <Link href={`/zakazky/${z.id}`} className="font-medium underline">
+                  <span className="font-mono">{z.kod}</span> · {z.popis}
+                </Link>{" "}
+                <span className="text-rose-700">— ve fakturaci {z.dniVeFakturaci} dní</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Hlavní akce po termínu bez posunu do fakturace (více než 7 dní) */}
+      {upozorneni.chybejiciFakturace.length > 0 && (
+        <section className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900">
+          <h2 className="mb-2 font-semibold">
+            🧾 Akce po termínu – chybí fakturace ({upozorneni.chybejiciFakturace.length})
+          </h2>
+          <p className="mb-2 text-xs text-amber-700">
+            Hlavní akce jsou více než {DNI_DO_FAKTURACE} dní po termínu ukončení a stále nebyly posunuty do fakturace.
+          </p>
+          <ul className="space-y-1 text-sm">
+            {upozorneni.chybejiciFakturace.map((z) => (
+              <li key={z.id}>
+                <Link href={`/zakazky/${z.id}`} className="font-medium underline">
+                  <span className="font-mono">{z.kod}</span> · {z.popis}
+                </Link>{" "}
+                <span className="text-amber-700">— {z.dniPoTerminu} dní po termínu</span>
               </li>
             ))}
           </ul>

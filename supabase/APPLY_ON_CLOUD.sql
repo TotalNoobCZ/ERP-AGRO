@@ -131,3 +131,13 @@ update public.zakazky set stav = 'FAKTURACE' where stav = 'DOKONCENO';
 
 alter table public.zakazky add constraint zakazky_stav_check
   check (stav in ('AKTIVNI', 'POZASTAVENO', 'FAKTURACE', 'PROPLACENO', 'ARCHIV'));
+
+-- ============================================================================
+--  13) Zakázky – sledování lhůty proplacení (upozornění)
+--  fakturace_od = kdy akce vstoupila do stavu „Fakturace". Slouží upozornění
+--  odpovědné osobě, když faktura není proplacena do 30 dní.
+-- ============================================================================
+alter table public.zakazky add column if not exists fakturace_od timestamptz;
+
+update public.zakazky set fakturace_od = coalesce(updated_at, now())
+  where stav = 'FAKTURACE' and fakturace_od is null;

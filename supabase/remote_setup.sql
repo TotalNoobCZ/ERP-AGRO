@@ -215,6 +215,7 @@ create table zakazky (
   stav               text not null default 'AKTIVNI'
                        check (stav in ('AKTIVNI','POZASTAVENO','FAKTURACE','PROPLACENO','ARCHIV')),
   archivovano_kdy    timestamptz,
+  fakturace_od       timestamptz,                     -- kdy akce vstoupila do stavu „Fakturace" (lhůta proplacení)
   poznamka           text,
   popis              text,                          -- „oč se jedná" (hlavně u podzakázek)
   ulozeni            text,                          -- kde je díl/stroj uskladněn (Dílna)
