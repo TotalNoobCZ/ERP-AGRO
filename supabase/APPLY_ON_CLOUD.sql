@@ -159,3 +159,10 @@ where p.owner_id is not null
     select 1 from public.prirazeni_zakazka pz
     where pz.zakazka_id = z.id and pz.osoba_id = p.owner_id and pz.deleted_at is null
   );
+
+-- ============================================================================
+--  15) Ochrana citlivých osobních údajů v profiles (e-mail, poznámka)
+--  Odebere čtení těchto sloupců rolím anon/authenticated (RLS je jen řádková).
+--  Adminské čtení jde přes service-role klienta; auth flow (service_role) OK.
+-- ============================================================================
+revoke select (email, poznamka) on public.profiles from anon, authenticated;

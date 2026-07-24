@@ -2,7 +2,7 @@
 // při změnách funkcí aktualizuj tuto stránku i datum níže.
 import type { ReactNode } from "react";
 
-const AKTUALIZOVANO = "24. 7. 2026 (odpovědná osoba zakázky jen Projekťák/Vedoucí, ne Kancelář)";
+const AKTUALIZOVANO = "24. 7. 2026 (ochrana citlivých údajů: e-mail a poznámka jen pro admina)";
 
 export const dynamic = "force-dynamic";
 
@@ -105,6 +105,7 @@ export default function NapovedaPage() {
         <li><strong>Přístupová práva k modulům</strong> — tlačítko <Code>🔐 Přístupová práva</Code> ve Správě otevře matici <em>oddělení × modul</em> (Poptávky / Zakázky / Konstrukce): zaškrtneš, které moduly dané oddělení vidí. U konkrétního zaměstnance lze v jeho profilu zvolit <strong>Vlastní nastavení</strong>, které přepíše oddělení. <strong>Administrátor vidí vždy vše</strong>; kartu Správa má vždy jen admin. Dokud není nic nastaveno, vidí všichni vše (zpětná kompatibilita).</li>
         <li><strong>Dílna jen přiřazené</strong> — uživatelé z kapitoly Dílna (výroba/montáž/elektro) vidí v <strong>Zakázkách</strong> jen zakázky, ke kterým jsou přiřazeni jako pracovník nebo odpovědná osoba (v seznamu Akce i na Tabuli).</li>
         <li><strong>Heslo uživatele</strong> (v jeho detailu): nastavit konkrétní, nebo vygenerovat náhodné a předat. Bez e-mailu se heslo neřeší.</li>
+        <li><strong>Ochrana citlivých údajů:</strong> <strong>e-mail</strong> a <strong>interní poznámka</strong> u zaměstnance vidí <strong>jen administrátor</strong> – nejen v rozhraní, ale i na úrovni databáze (běžný uživatel je nevytáhne ani přes API). Na kartě zaměstnance je ostatní neuvidí; jméno, oddělení, pozici a osobní číslo ano.</li>
       </UL>
 
       <H2>6. Poptávky</H2>

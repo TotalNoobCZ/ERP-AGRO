@@ -1,7 +1,8 @@
 // Správa uživatelů – jen pro administrátory (ostatní přesměrováni na /heslo).
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient, getCurrentProfile } from "@/lib/supabase/server";
+import { getCurrentProfile } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { ROLE_LABELS, ODDELENI, ODDELENI_LABELS, isAdmin, type Oddeleni, type Role } from "@erp/core";
 import { userColor } from "@erp/ui";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui";
@@ -24,7 +25,9 @@ export default async function SpravaPage({
   const sp = await searchParams;
   const aktivniOdd = ODDELENI.includes(sp.odd as Oddeleni) ? (sp.odd as Oddeleni) : null;
 
-  const supabase = await createClient();
+  // E-mail je citlivý sloupec (odebraný roli authenticated) → čteme přes
+  // service-role klienta. Stránka je jen pro adminy (výše redirect).
+  const supabase = createAdminClient();
   let dotaz = supabase
     .from("profiles")
     .select("id, name, email, role, oddeleni, assignable, color_index, active, auth_user_id")

@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient, getCurrentProfile } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { ODDELENI_LABELS, ROLE_LABELS, type Oddeleni, type Role } from "@erp/core";
 import { userColor } from "@erp/ui";
 
@@ -23,12 +24,24 @@ export default async function KartaZamestnancePage({ params }: { params: Promise
   const jsemAdmin = me.role === "admin";
 
   const supabase = await createClient();
+  // E-mail a poznámka jsou citlivé (odebrané roli authenticated) – běžný náhled
+  // je bez nich; adminovi je doplníme přes service-role klienta.
   const { data: p } = await supabase
     .from("profiles")
-    .select("id, name, email, role, oddeleni, sefkonstrukter, color_index, active, pozice, osobni_cislo, poznamka")
+    .select("id, name, role, oddeleni, sefkonstrukter, color_index, active, pozice, osobni_cislo")
     .eq("id", id)
     .maybeSingle();
   if (!p) notFound();
+
+  let citlive: { email: string | null; poznamka: string | null } = { email: null, poznamka: null };
+  if (jsemAdmin) {
+    const { data: c } = await createAdminClient()
+      .from("profiles")
+      .select("email, poznamka")
+      .eq("id", id)
+      .maybeSingle();
+    if (c) citlive = { email: c.email, poznamka: c.poznamka };
+  }
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
@@ -62,9 +75,9 @@ export default async function KartaZamestnancePage({ params }: { params: Promise
             <Radek popisek="Role v konstrukci" hodnota="Šéfkonstruktér" />
           )}
           <Radek popisek="Osobní číslo" hodnota={p.osobni_cislo} />
-          <Radek popisek="E-mail" hodnota={p.email} />
+          {jsemAdmin && <Radek popisek="E-mail" hodnota={citlive.email} />}
           {jsemAdmin && <Radek popisek="Oprávnění" hodnota={ROLE_LABELS[p.role as Role]} />}
-          {jsemAdmin && <Radek popisek="Poznámka" hodnota={p.poznamka} />}
+          {jsemAdmin && <Radek popisek="Poznámka" hodnota={citlive.poznamka} />}
         </dl>
       </div>
 

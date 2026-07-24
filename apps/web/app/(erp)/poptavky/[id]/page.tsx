@@ -33,7 +33,7 @@ type InquiryDetail = {
   received_at: string;
   needs_contact: boolean;
   customer: { id: string; name: string; email: string | null; phone: string | null; address: string | null; country: string | null } | null;
-  person: { id: string; name: string; email: string } | null;
+  person: { id: string; name: string } | null;
   comments: { id: string; text: string; author: string; created_at: string }[];
   status_logs: { id: string; from_status: string | null; to_status: string; changed_by: string; note: string | null; created_at: string }[];
 };
@@ -49,7 +49,7 @@ export default async function InquiryDetailPage({ params }: { params: Promise<{ 
       `id, number, subject, description, source, contact_name, contact_phone, contact_email,
        status, deadline, received_at, needs_contact,
        customer:customers(id, name, email, phone, address, country),
-       person:profiles(id, name, email),
+       person:profiles(id, name),
        comments(id, text, author, created_at),
        status_logs(id, from_status, to_status, changed_by, note, created_at)`,
     )
@@ -151,7 +151,7 @@ export default async function InquiryDetailPage({ params }: { params: Promise<{ 
               <Row label="Druh poptávky" value={inquiry.source || "—"} />
               <Row label="Datum přijetí" value={formatDate(inquiry.received_at)} />
               <Row label="Termín nabídky" value={inquiry.deadline ? formatDate(inquiry.deadline) : "—"} />
-              <Row label="Odpovědná osoba" value={person ? `${person.name} (${person.email})` : "—"} />
+              <Row label="Odpovědná osoba" value={person ? person.name : "—"} />
             </CardContent>
           </Card>
 
