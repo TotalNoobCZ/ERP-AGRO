@@ -64,7 +64,7 @@ export default function PlanBoard({
   const [chyba, setChyba] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   // Sbalené akce v pravém sloupci (skryjí své projekty).
-  const { has: jeAkceZavrena, toggle: prepnoutAkci } = usePersistentSet("erp_konstrukce_plan_sbaleneAkce");
+  const { has: jeAkceZavrena, toggle: prepnoutAkci, replace: nastavitSbalene } = usePersistentSet("erp_konstrukce_plan_sbaleneAkce");
 
   const q = query.trim().toLowerCase();
   const taskMatches = (u: Ukol) =>
@@ -247,7 +247,23 @@ export default function PlanBoard({
 
         {/* Pravá 2/3 – masonry projektů (zároveň drop zóna pro odebrání) */}
         <UnassignZone>
-          <div className="mb-3 flex items-center justify-end">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            {akceSkupiny.length > 0 ? (
+              <div className="flex gap-2">
+                <button type="button" className="btn-ghost text-xs" onClick={() => nastavitSbalene([])}>
+                  ▾ Rozbalit vše
+                </button>
+                <button
+                  type="button"
+                  className="btn-ghost text-xs"
+                  onClick={() => nastavitSbalene(akceSkupiny.map((g) => g.akceId))}
+                >
+                  ▸ Sbalit vše
+                </button>
+              </div>
+            ) : (
+              <span />
+            )}
             {editable && (
               <button className="btn-primary" onClick={() => setShowNewProject(true)}>
                 {KONSTRUKCE_LABELS.addProject}
