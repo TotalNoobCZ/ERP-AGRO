@@ -44,25 +44,15 @@ function refreshKonstrukce() {
 }
 
 /**
- * Propíše konstruktéra k zakázce: dostane-li úkol řešitele, přidá se tato
- * osoba jako pracovník k zakázce, do níž patří projekt úkolu (na celé období
- * zakázky). Pokud už tam přiřazená je, neudělá nic.
+ * Přidá osobu jako pracovníka k zakázce (na celé její období), pokud tam ještě
+ * není. Sdílené pro propsání konstruktéra z úkolu i ze zodpovědnosti za projekt,
+ * ať je vidět na zakázkové tabuli i v detailu zakázky.
  */
-async function propsatKonstrukteraDoZakazky(supabase: Db, taskId: string, osobaId: string): Promise<void> {
-  const { data: task } = await supabase.from("tasks").select("project_id, zakazka_id").eq("id", taskId).maybeSingle();
-  if (!task) return;
-  // Podúkol může reprezentovat konkrétní zakázku k akci → propíšeme na ni;
-  // jinak na zakázku projektu (celou akci).
-  let cilZakazkaId = task.zakazka_id;
-  if (!cilZakazkaId) {
-    const { data: proj } = await supabase.from("projects").select("zakazka_id").eq("id", task.project_id).maybeSingle();
-    if (!proj) return;
-    cilZakazkaId = proj.zakazka_id;
-  }
+async function pridatOsobuNaZakazku(supabase: Db, zakazkaId: string, osobaId: string): Promise<void> {
   const { data: zak } = await supabase
     .from("zakazky")
     .select("id, zacatek, konec_aktualni, deleted_at")
-    .eq("id", cilZakazkaId)
+    .eq("id", zakazkaId)
     .maybeSingle();
   if (!zak || zak.deleted_at) return;
 
@@ -84,6 +74,25 @@ async function propsatKonstrukteraDoZakazky(supabase: Db, taskId: string, osobaI
   revalidatePath("/zakazky/tabule");
   revalidatePath("/zakazky/plan");
   revalidatePath(`/zakazky/${zak.id}`);
+}
+
+/**
+ * Propíše konstruktéra k zakázce: dostane-li úkol řešitele, přidá se tato
+ * osoba jako pracovník k zakázce, do níž patří projekt úkolu (na celé období
+ * zakázky). Pokud už tam přiřazená je, neudělá nic.
+ */
+async function propsatKonstrukteraDoZakazky(supabase: Db, taskId: string, osobaId: string): Promise<void> {
+  const { data: task } = await supabase.from("tasks").select("project_id, zakazka_id").eq("id", taskId).maybeSingle();
+  if (!task) return;
+  // Podúkol může reprezentovat konkrétní zakázku k akci → propíšeme na ni;
+  // jinak na zakázku projektu (celou akci).
+  let cilZakazkaId = task.zakazka_id;
+  if (!cilZakazkaId) {
+    const { data: proj } = await supabase.from("projects").select("zakazka_id").eq("id", task.project_id).maybeSingle();
+    if (!proj) return;
+    cilZakazkaId = proj.zakazka_id;
+  }
+  if (cilZakazkaId) await pridatOsobuNaZakazku(supabase, cilZakazkaId, osobaId);
 }
 
 /**
@@ -199,6 +208,14 @@ export async function upravitProjekt(
   }
   const { error } = await supabase.from("projects").update(update).eq("id", id);
   if (error) return { ok: false, chyba: "Uložení se nezdařilo." };
+
+  // Zodpovědný konstruktér za projekt (celou akci) se propíše i k zakázce –
+  // ať je vidět na zakázkové tabuli a v detailu, ne jen v Konstrukci.
+  if (update.owner_id) {
+    const { data: proj } = await supabase.from("projects").select("zakazka_id").eq("id", id).maybeSingle();
+    if (proj?.zakazka_id) await pridatOsobuNaZakazku(supabase, proj.zakazka_id, update.owner_id);
+  }
+
   refreshKonstrukce();
   return { ok: true };
 }
