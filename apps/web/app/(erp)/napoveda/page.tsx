@@ -2,7 +2,7 @@
 // při změnách funkcí aktualizuj tuto stránku i datum níže.
 import type { ReactNode } from "react";
 
-const AKTUALIZOVANO = "24. 7. 2026 (sbalitelné sekce; filtr oddělení; kolizní okno s náhradníkem na Tabuli)";
+const AKTUALIZOVANO = "24. 7. 2026 (kolizní okno na Tabuli; vyhledávání u zákazníků)";
 
 export const dynamic = "force-dynamic";
 
@@ -121,6 +121,7 @@ export default function NapovedaPage() {
         <li><strong>Odložené:</strong> záložka se všemi odloženými poptávkami a datem připomenutí; ty, u kterých už čas nastal, jsou zvýrazněné. Tlačítkem <Code>↩ Obnovit</Code> se poptávka vrátí zpět mezi aktivní.</li>
         <li><strong>Připomenutí:</strong> jakmile nastane datum připomenutí, odpovědné osobě se nahoře v Poptávkách ukáže upozornění „⏰ Nastal čas kontaktovat".</li>
         <li><strong>Objednáno:</strong> poptávky, ze kterých se tvoří zakázky.</li>
+        <li><strong>Zákazníci:</strong> seznam má <strong>okamžité vyhledávání</strong> – piš do políčka nad tabulkou a filtruje se podle názvu, e-mailu, telefonu i státu (vpravo počet nalezených).</li>
         <li>Seznam má filtry a <strong>Export do PDF</strong>.</li>
       </UL>
 
