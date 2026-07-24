@@ -1,6 +1,6 @@
 // Dashboard modulu Poptávky (1:1 z Popt-vky/app/dashboard/page.tsx).
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCurrentProfile } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { StatusBadge, DeadlineBadge } from "@/components/poptavky/badges";
 import {
@@ -45,44 +45,71 @@ function InquiryRow({ inq }: { inq: Row }) {
   );
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ vse?: string }>;
+}) {
   const supabase = await createClient();
+  const profile = await getCurrentProfile();
+  const uid = profile?.id ?? null;
   const now = new Date().toISOString();
   // „Po termínu" / nadcházející termín platí jen dokud není nabídka odeslána.
   const open = INQUIRY_OPEN_DEADLINE_STATUSES;
 
+  // Přehled je defaultně personalizovaný na přihlášeného uživatele („moje").
+  // Přepínač „Vše" (?vse=1) zobrazí čísla za všechny.
+  const sp = await searchParams;
+  const mine = sp.vse === "1" ? null : uid;
+  // Omezení dotazu na moje poptávky (person_id = já), když je zapnuté „moje".
+  function omez<T>(q: T): T {
+    return (mine ? (q as { eq: (c: string, v: string) => T }).eq("person_id", mine) : q) as T;
+  }
+  // Přípona pro odkazy do seznamu, aby i tam zůstal filtr osoby.
+  const osobaQS = mine ? `personId=${mine}` : "";
+
   // Všechny dotazy paralelně – rychlejší načtení.
   const [statusRows, overdueCount, upcoming, overdue, contactCount, toContact] = await Promise.all([
-    supabase.from("inquiries").select("status"),
-    supabase
-      .from("inquiries")
-      .select("id", { count: "exact", head: true })
-      .lt("deadline", now)
-      .in("status", open),
-    supabase
-      .from("inquiries")
-      .select(ROW_SELECT)
-      .in("status", open)
-      .gte("deadline", now)
-      .order("deadline", { ascending: true })
-      .limit(5),
-    supabase
-      .from("inquiries")
-      .select(ROW_SELECT)
-      .in("status", open)
-      .lt("deadline", now)
-      .order("deadline", { ascending: true })
-      .limit(5),
-    supabase
-      .from("inquiries")
-      .select("id", { count: "exact", head: true })
-      .eq("needs_contact", true),
-    supabase
-      .from("inquiries")
-      .select(ROW_SELECT)
-      .eq("needs_contact", true)
-      .order("number", { ascending: false })
-      .limit(5),
+    omez(supabase.from("inquiries").select("status")),
+    omez(
+      supabase
+        .from("inquiries")
+        .select("id", { count: "exact", head: true })
+        .lt("deadline", now)
+        .in("status", open),
+    ),
+    omez(
+      supabase
+        .from("inquiries")
+        .select(ROW_SELECT)
+        .in("status", open)
+        .gte("deadline", now)
+        .order("deadline", { ascending: true })
+        .limit(5),
+    ),
+    omez(
+      supabase
+        .from("inquiries")
+        .select(ROW_SELECT)
+        .in("status", open)
+        .lt("deadline", now)
+        .order("deadline", { ascending: true })
+        .limit(5),
+    ),
+    omez(
+      supabase
+        .from("inquiries")
+        .select("id", { count: "exact", head: true })
+        .eq("needs_contact", true),
+    ),
+    omez(
+      supabase
+        .from("inquiries")
+        .select(ROW_SELECT)
+        .eq("needs_contact", true)
+        .order("number", { ascending: false })
+        .limit(5),
+    ),
   ]);
 
   // Počty podle stavu (Prisma groupBy → spočtení v JS).
@@ -98,11 +125,23 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold">Přehled{mine ? " — moje poptávky" : ""}</h1>
+        {uid && (
+          <div className="flex gap-1">
+            <Link href="/poptavky/dashboard" className={`btn-ghost ${mine ? "border-link text-link" : "border-transparent"}`}>
+              Moje
+            </Link>
+            <Link href="/poptavky/dashboard?vse=1" className={`btn-ghost ${!mine ? "border-link text-link" : "border-transparent"}`}>
+              Vše
+            </Link>
+          </div>
+        )}
+      </div>
 
       {/* Karty s počty podle stavu – prokliknutelné na filtrovaný seznam */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-7">
-        <Link href="/poptavky">
+        <Link href={`/poptavky${osobaQS ? `?${osobaQS}` : ""}`}>
           <Card className="transition-colors hover:bg-accent">
             <CardHeader className="p-4 pb-2">
               <CardTitle className="text-xs font-medium text-muted-foreground">Celkem</CardTitle>
@@ -113,7 +152,7 @@ export default async function DashboardPage() {
           </Card>
         </Link>
         {INQUIRY_STATUS_ORDER.map((s) => (
-          <Link key={s} href={`/poptavky?status=${s}`}>
+          <Link key={s} href={`/poptavky?status=${s}${osobaQS ? `&${osobaQS}` : ""}`}>
             <Card className="transition-colors hover:bg-accent">
               <CardHeader className="p-4 pb-2">
                 <CardTitle className="text-xs font-medium text-muted-foreground">
@@ -144,7 +183,7 @@ export default async function DashboardPage() {
       {/* Po termínu */}
       <Card className={nOverdue > 0 ? "border-red-400/50" : ""}>
         <CardHeader>
-          <Link href="/poptavky?deadline=overdue" className="flex items-center justify-between gap-2 hover:underline">
+          <Link href={`/poptavky?deadline=overdue${osobaQS ? `&${osobaQS}` : ""}`} className="flex items-center justify-between gap-2 hover:underline">
             <CardTitle className="flex items-center gap-2">
               <span className={nOverdue > 0 ? "text-red-500" : "text-muted-foreground"}>⚠️</span>
               Po termínu: {nOverdue}
@@ -158,7 +197,7 @@ export default async function DashboardPage() {
           )}
           {overdueRows.map((inq) => <InquiryRow key={inq.id} inq={inq} />)}
           {nOverdue > overdueRows.length && (
-            <Link href="/poptavky?deadline=overdue" className="block pt-1 text-sm text-red-500 hover:underline">
+            <Link href={`/poptavky?deadline=overdue${osobaQS ? `&${osobaQS}` : ""}`} className="block pt-1 text-sm text-red-500 hover:underline">
               … a dalších {nOverdue - overdueRows.length} – zobrazit všechny
             </Link>
           )}
@@ -168,7 +207,7 @@ export default async function DashboardPage() {
       {/* Ke kontaktování */}
       <Card className={nContact > 0 ? "border-orange-400/50" : ""}>
         <CardHeader>
-          <Link href="/poptavky?contact=1" className="flex items-center justify-between gap-2 hover:underline">
+          <Link href={`/poptavky?contact=1${osobaQS ? `&${osobaQS}` : ""}`} className="flex items-center justify-between gap-2 hover:underline">
             <CardTitle className="flex items-center gap-2">
               <span className={nContact > 0 ? "text-orange-500" : "text-muted-foreground"}>📞</span>
               Ke kontaktování: {nContact}
@@ -182,7 +221,7 @@ export default async function DashboardPage() {
           )}
           {toContactRows.map((inq) => <InquiryRow key={inq.id} inq={inq} />)}
           {nContact > toContactRows.length && (
-            <Link href="/poptavky?contact=1" className="block pt-1 text-sm text-orange-500 hover:underline">
+            <Link href={`/poptavky?contact=1${osobaQS ? `&${osobaQS}` : ""}`} className="block pt-1 text-sm text-orange-500 hover:underline">
               … a dalších {nContact - toContactRows.length} – zobrazit všechny
             </Link>
           )}

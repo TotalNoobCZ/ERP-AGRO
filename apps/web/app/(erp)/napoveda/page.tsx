@@ -108,6 +108,7 @@ export default function NapovedaPage() {
       <H2>6. Poptávky</H2>
       <P>Záložky: Přehled · Poptávky · Tabule · Odložené · Objednáno · Zákazníci.</P>
       <UL>
+        <li><strong>Přehled je defaultně „moje":</strong> počty, termíny i „ke kontaktování" jsou přednastavené na přihlášeného uživatele (jeho poptávky). Přepínačem <strong>Moje / Vše</strong> vpravo nahoře zobrazíš čísla za všechny; prokliky do seznamu si filtr osoby nesou s sebou.</li>
         <li><strong>Nová poptávka:</strong> Předmět, Zákazník a <strong>Kontaktní osoba</strong> jsou povinné (<Code>*</Code>). U existujícího zákazníka se v kontaktech nabízejí jen jeho kontakty.</li>
         <li><strong>Kontakty se ukládají:</strong> nový zákazník se uloží i s kontaktní osobou; u stálého zákazníka se nová kontaktní osoba automaticky přidá mezi jeho kontakty (příště se nabídne v seznamu).</li>
         <li><strong>Odpovědná osoba je nepovinná</strong> — doplníš i později; vybírá se z role Vedoucí nebo oddělení Projekťák / Obchodní manažer.</li>
