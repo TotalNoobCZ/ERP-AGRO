@@ -2,7 +2,7 @@
 // při změnách funkcí aktualizuj tuto stránku i datum níže.
 import type { ReactNode } from "react";
 
-const AKTUALIZOVANO = "24. 7. 2026 (upozornění na neproplacené faktury a akce po termínu bez fakturace)";
+const AKTUALIZOVANO = "24. 7. 2026 (upozornění na faktury; sbalitelné sekce v detailu zakázky)";
 
 export const dynamic = "force-dynamic";
 
@@ -135,6 +135,7 @@ export default function NapovedaPage() {
         <li><strong>Odebrání konstruktéra ze zakázky</strong> smí provést jen <strong>šéfkonstruktér</strong> nebo <strong>administrátor</strong> (u ostatních je místo křížku zámek 🔒). Běžné pracovníky odebírá kdokoli s právem zápisu. Šéfkonstruktéra nastaví admin ve Správě u profilu z oddělení Konstrukce.</li>
         <li><strong>Lidé na akci:</strong> u akce se všude zobrazují <strong>všichni lidé</strong> (dělníci, elektrikáři, konstruktéři i odpovědná osoba) sečtení přes akci a její zakázky k akci; u každé zakázky k akci vidíš její lidi zvlášť (seznam Akce – rozbalovací, detail i Tabule).</li>
         <li><strong>Detail:</strong> pracovníci, milníky, prodloužení/přerušení, stav, <strong>konstruktéři z podúkolů</strong>, historie, poznámky, Export do PDF. Tlačítka <strong>životního cyklu</strong> (Hotovo / Proplaceno / …) jsou nahoře v hlavičce vedle Exportu.</li>
+        <li><strong>Sbalitelné sekce:</strong> každou sekci detailu (Termíny, Přiřazení pracovníci, Zakázky k akci, Milníky, Poznámky, Změna termínu, Přerušení, Konstrukční projekty, Historie) <strong>sbalíš/rozbalíš</strong> kliknutím na její nadpis (šipka <Code>▸</Code>). Volba se <strong>pamatuje v prohlížeči</strong> a platí u všech zakázek – nepotřebné panely tak zůstanou skryté a detail nezahltí obrazovku.</li>
         <li><strong>Filtr podle stavů = multi-výběr:</strong> klikni jeden stav (zobrazí jen ten) nebo víc stavů (= všechny kromě zbytku). „Po termínu" je samostatný přepínač. Nic vybráno = vše kromě archivu.</li>
         <li><strong>Zakázky k akci:</strong> jedna hlavní akce může sdružovat víc <strong>dceřiných zakázek</strong> (každá má vlastní název). V detailu akce (pod „Přiřazení pracovníci") je rychle přidáš lištou <strong>Název akce + Popis</strong>; místo, termíny a prioritu zdědí od hlavní akce. V seznamu Akce se ukazují jako <strong>rozbalovací seznam</strong> pod hlavní akcí. V <strong>Konstrukci</strong> se zakázka k akci přidá jako <strong>podúkol do projektu hlavní akce</strong>.</li>
         <li><strong>Životní cyklus akce (finále přes fakturaci):</strong> běžící akci na detailu tlačítkem <strong>✓ Hotovo</strong> uzavřeš – nabídne volbu <em>🧾 Poslat do fakturace</em> (bude se fakturovat) nebo <em>✓ Uzavřít bez fakturace</em> (nefakturuje se → rovnou do archivu). Akce ve stavu <strong>Fakturace</strong> se řeší na liště Fakturace; tlačítkem <strong>✓ Označit proplaceno</strong> se posune do <strong>Proplaceno</strong> = hotové (finále). Krok zpět je vždy možný.</li>

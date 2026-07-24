@@ -16,6 +16,7 @@ import {
 } from "../actions";
 import { ProdlouzeniForm, PreruseniForm, PoznamkyAkce, MilnikyEditor } from "@/components/zakazky/formulare";
 import { AkceStavAkce } from "@/components/zakazky/AkceStavAkce";
+import { SbaliciSekce } from "@/components/SbaliciSekce";
 import Timeline, { type TRadek } from "@/components/zakazky/Timeline";
 import { ZalozitProjekt } from "@/components/konstrukce/ZalozitProjekt";
 import { ZalozitPodzakazku } from "@/components/zakazky/ZalozitPodzakazku";
@@ -261,8 +262,7 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
         )}
       </div>
 
-      <section className="card p-4">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-muted">Termíny</h2>
+      <SbaliciSekce titul="Termíny" persistKey="zakazka_terminy">
         <div className="grid grid-cols-3 gap-4 text-sm">
           <div><span className="text-text-muted">Začátek</span><br />{formatCz(zacatekD)}</div>
           <div>
@@ -279,13 +279,10 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
           <div><span className="text-text-muted">Prodlouženo</span><br />{prodlouzeni.length}×</div>
         </div>
         {z.poznamka && <p className="mt-3 text-sm text-text-muted">{z.poznamka}</p>}
-      </section>
+      </SbaliciSekce>
 
       {(z.ulozeni || faze.length > 0) && (
-        <section className="card p-4">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-muted">
-            Dílna (výroba)
-          </h2>
+        <SbaliciSekce titul="Dílna (výroba)" persistKey="zakazka_dilna">
           {z.ulozeni && (
             <p className="mb-3 text-sm">
               <span className="text-text-muted">Uskladnění:</span> {z.ulozeni}
@@ -310,12 +307,11 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
             </div>
           )}
           <p className="mt-3 text-xs text-text-muted">Zadává se v modulu Dílna.</p>
-        </section>
+        </SbaliciSekce>
       )}
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-text-muted">Přiřazení pracovníci</h2>
-
+      <SbaliciSekce titul="Přiřazení pracovníci" persistKey="zakazka_prirazeni" karta={false}>
+        <div className="space-y-3">
         {tlRadky.length > 0 && <Timeline start={tlStart} konec={tlKonec} radky={tlRadky} />}
 
         <div className="card divide-y divide-line">
@@ -329,12 +325,12 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
             </div>
           ))}
         </div>
-      </section>
+        </div>
+      </SbaliciSekce>
 
       {/* Zakázky k akci + souhrn všech lidí na akci (rychlé založení pod pracovníky) */}
-      <section className="card space-y-3 p-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-text-muted">Zakázky k akci</h2>
-
+      <SbaliciSekce titul="Zakázky k akci" persistKey="zakazka_podzakazky">
+        <div className="space-y-3">
         {podzakazky.length > 0 && lideAkce.length > 0 && (
           <div className="flex flex-wrap items-center gap-2 rounded-md border border-line bg-bg p-2 text-sm">
             <span className="text-text-muted">Lidé na akci:</span>
@@ -359,23 +355,27 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
           </div>
         )}
         <ZalozitPodzakazku parentId={z.id} />
-      </section>
+        </div>
+      </SbaliciSekce>
 
-      <MilnikyEditor
-        zakazkaId={z.id}
-        milniky={milniky.map((m) => ({
-          id: m.id,
-          typ: m.typ,
-          datum: m.datum,
-          cas: m.cas,
-          poznamka: m.poznamka,
-        }))}
-      />
+      <SbaliciSekce titul="Milníky" persistKey="zakazka_milniky">
+        <MilnikyEditor
+          zakazkaId={z.id}
+          milniky={milniky.map((m) => ({
+            id: m.id,
+            typ: m.typ,
+            datum: m.datum,
+            cas: m.cas,
+            poznamka: m.poznamka,
+          }))}
+        />
+      </SbaliciSekce>
 
-      <PoznamkyAkce zakazkaId={z.id} poznamky={poznamky} />
+      <SbaliciSekce titul="Poznámky" persistKey="zakazka_poznamky">
+        <PoznamkyAkce zakazkaId={z.id} poznamky={poznamky} />
+      </SbaliciSekce>
 
-      <section className="card p-4">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-muted">Změna termínu (prodloužit / zkrátit)</h2>
+      <SbaliciSekce titul="Změna termínu (prodloužit / zkrátit)" persistKey="zakazka_termin_zmena">
         <ProdlouzeniForm akce={akceProdlouzit} />
         {prodlouzeni.length > 0 && (
           <div className="mt-4 space-y-2 border-t border-line pt-4 text-sm">
@@ -388,10 +388,9 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
             ))}
           </div>
         )}
-      </section>
+      </SbaliciSekce>
 
-      <section className="card p-4">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-muted">Přerušení akce</h2>
+      <SbaliciSekce titul="Přerušení akce" persistKey="zakazka_preruseni">
         {otevrenePreruseni ? (
           <div className="space-y-3">
             <div className="rounded-md border border-amber-400/40 bg-amber-400/10 p-3 text-sm text-amber-500">
@@ -423,20 +422,16 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
             ))}
           </div>
         )}
-      </section>
+      </SbaliciSekce>
 
 
       {/* Integrace: konstrukční projekty této zakázky */}
-      <section className="card p-4">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-muted">
-          Konstrukční projekty
-        </h2>
+      <SbaliciSekce titul="Konstrukční projekty" persistKey="zakazka_konstrukce">
         <KonstrukcniProjekty zakazkaId={z.id} />
-      </section>
+      </SbaliciSekce>
 
 
-      <section>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-muted">Historie změn</h2>
+      <SbaliciSekce titul="Historie změn" persistKey="zakazka_historie" karta={false}>
         <div className="card divide-y divide-line text-sm">
           {audit.map((a) => {
             const popis = a.nova_hodnota && typeof a.nova_hodnota === "object" && a.nova_hodnota.popis
@@ -455,7 +450,7 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
           })}
           {audit.length === 0 && <p className="px-4 py-2 text-text-muted">Žádné záznamy.</p>}
         </div>
-      </section>
+      </SbaliciSekce>
 
       <section className="border-t border-line pt-4">
         <SmazatButton akce={akceSmazat} label={smazatLabel} confirmText={smazatConfirm} />
