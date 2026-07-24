@@ -187,8 +187,11 @@ export default function ZakazkyBoard({
       const z = zakazky.find((x) => x.id === zakId);
       // Projekťák / vedoucí → odpovědná osoba; ostatní → pracovník.
       if (jeOdpovednaKandidat(osoba)) {
-        if (z?.odpovednaOsobaId === osoba.id) return; // už je odpovědná
-        await nastavitOdpovednou(zakId, osoba.id);
+        // Odpovědná osoba je za celou akci – u podzakázky ji nastavíme na hlavní akci.
+        const cilId = z?.parentId ?? zakId;
+        const cil = zakazky.find((x) => x.id === cilId) ?? z;
+        if (cil?.odpovednaOsobaId === osoba.id) return; // už je odpovědná
+        await nastavitOdpovednou(cilId, osoba.id);
         return;
       }
       if (z?.pracovnici.some((p) => p.osobaId === osoba.id)) return; // už tam je

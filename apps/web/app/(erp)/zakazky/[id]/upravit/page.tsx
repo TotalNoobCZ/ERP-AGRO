@@ -17,7 +17,7 @@ export default async function UpravitZakazkuPage({ params }: { params: Promise<{
   const { data } = await supabase
     .from("zakazky")
     .select(
-      `id, kod, misto_plneni, priorita, zacatek, konec_aktualni, poznamka, odpovedna_osoba_id, deleted_at,
+      `id, kod, misto_plneni, priorita, zacatek, konec_aktualni, poznamka, odpovedna_osoba_id, parent_id, deleted_at,
        prirazeni:prirazeni_zakazka(id, osoba_id, datum_od, datum_do, deleted_at, osoba:profiles(name, oddeleni))`,
     )
     .eq("id", id)
@@ -32,6 +32,7 @@ export default async function UpravitZakazkuPage({ params }: { params: Promise<{
     konec_aktualni: string;
     poznamka: string | null;
     odpovedna_osoba_id: string | null;
+    parent_id: string | null;
     prirazeni: { id: string; osoba_id: string; datum_od: string; datum_do: string; deleted_at: string | null; osoba: { name: string; oddeleni: string | null } | null }[];
   };
   const prirazeni = z.prirazeni
@@ -71,6 +72,7 @@ export default async function UpravitZakazkuPage({ params }: { params: Promise<{
       <ZakazkaEditForm
         akce={akce}
         osoby={kancelar}
+        jePodzakazka={!!z.parent_id}
         zakazka={{
           id: z.id,
           kod: z.kod,
