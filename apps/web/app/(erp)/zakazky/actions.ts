@@ -606,7 +606,7 @@ export async function zmenitStav(
   if (!u) return;
   const supabase = await createClient();
   const { data: z } = await supabase
-    .from("zakazky").select("id, stav, fakturace_od, deleted_at").eq("id", zakazkaId).maybeSingle();
+    .from("zakazky").select("id, stav, fakturace_od, parent_id, deleted_at").eq("id", zakazkaId).maybeSingle();
   if (!z || z.deleted_at) return;
 
   // fakturace_od = kdy akce vstoupila do stavu Fakturace (lhůta proplacení).
@@ -632,9 +632,37 @@ export async function zmenitStav(
     typZmeny: stav === "ARCHIV" ? "ARCHIVACE" : "UPRAVA",
     uzivatelId: u.id, puvodni: { stav: z.stav }, nova: { stav },
   });
+
+  // Uvolnění dělníků při přechodu do fakturace: akce je hotová (občas dřív),
+  // proto se její přiřazení pracovníků uvolní, ať jdou hned nasadit jinam.
+  // U hlavní akce se uvolní i pracovníci na jejích zakázkách k akci (podzakázkách).
+  if (stav === "FAKTURACE" && z.stav !== "FAKTURACE") {
+    let cileIds = [zakazkaId];
+    if (!z.parent_id) {
+      const { data: deti } = await supabase
+        .from("zakazky").select("id").eq("parent_id", zakazkaId).is("deleted_at", null);
+      cileIds = [zakazkaId, ...(deti ?? []).map((d) => d.id)];
+    }
+    const { data: uvolnene } = await supabase
+      .from("prirazeni_zakazka")
+      .update({ deleted_at: new Date().toISOString() })
+      .in("zakazka_id", cileIds)
+      .is("deleted_at", null)
+      .select("id");
+    if (uvolnene && uvolnene.length > 0) {
+      await zapisAudit(supabase, {
+        entita: "zakazka", entitaId: zakazkaId, typZmeny: "UPRAVA", uzivatelId: u.id,
+        nova: { popis: `Fakturace: uvolněno ${uvolnene.length} přiřazení pracovníků (akce hotová – lze je nasadit jinam)` },
+      });
+    }
+  }
+
   revalidatePath(`/zakazky/${zakazkaId}`);
   revalidatePath("/zakazky");
   revalidatePath("/zakazky/fakturace");
+  revalidatePath("/zakazky/tabule");
+  revalidatePath("/zakazky/plan");
+  revalidatePath("/dilna/tabule");
 }
 
 export async function smazatZakazku(zakazkaId: string, _fd?: FormData) {

@@ -44,7 +44,7 @@ export function AkceStavAkce({ id, stav }: { id: string; stav: StavZakazky }) {
               className="block w-full px-3 py-2 text-left text-sm hover:bg-accent disabled:opacity-40"
             >
               🧾 Poslat do fakturace
-              <span className="block text-xs text-text-muted">akce se bude fakturovat</span>
+              <span className="block text-xs text-text-muted">akce se bude fakturovat · uvolní dělníky</span>
             </button>
             <button
               type="button"
