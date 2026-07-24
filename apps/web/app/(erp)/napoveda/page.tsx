@@ -2,7 +2,7 @@
 // při změnách funkcí aktualizuj tuto stránku i datum níže.
 import type { ReactNode } from "react";
 
-const AKTUALIZOVANO = "24. 7. 2026 (fakturace uvolní dělníky – zůstávají v evidenci akce)";
+const AKTUALIZOVANO = "24. 7. 2026 (zodpovědný konstruktér projektu se propíše na zakázkovou tabuli)";
 
 export const dynamic = "force-dynamic";
 
@@ -158,7 +158,7 @@ export default function NapovedaPage() {
         <li><strong>Projekt vzniká automaticky se zakázkou</strong>; v detailu zakázky ho lze rozdělit na víc projektů.</li>
         <li><strong>Zodpovědný za konstrukční projekt</strong> je vždy <strong>konstruktér</strong> (oddělení Konstrukce) – nikoho jiného tam vybrat nejde. Řešitelé úkolů jsou také konstruktéři.</li>
         <li><strong>Plánovací tabule:</strong> vlevo dlaždice členů, vpravo projekty <strong>seskupené pod akci</strong> (sbalitelné; nahoře <strong>Rozbalit vše / Sbalit vše</strong>). Přepínač <strong>Moje / Vše</strong> zobrazí jen tvou dlaždici a projekty, kde jsi zodpovědný nebo máš úkol; <strong>poslední volba se pamatuje</strong>. Přetáhni úkol na člena = přiřadíš řešitele; uvnitř dlaždice řadíš tažením. <strong>Sundat konstruktéra z úkolu</strong> (tažení zpět doprava) a <strong>zrušit zodpovědného konstruktéra</strong> u projektu smí jen <strong>šéfkonstruktér</strong> nebo <strong>administrátor</strong>; přehodit úkol na jiného konstruktéra může kdokoli s právem zápisu.</li>
-        <li><strong>Propojení:</strong> přiřazením řešitele k úkolu se <strong>konstruktér propíše k zakázce</strong> a je vidět v jejím detailu.</li>
+        <li><strong>Propojení:</strong> přiřazením řešitele k úkolu <strong>i nastavením zodpovědného konstruktéra za projekt</strong> (celou akci) se <strong>konstruktér propíše k zakázce</strong> – objeví se na <strong>zakázkové tabuli</strong> i v detailu zakázky.</li>
         <li><strong>Gantt:</strong> termíny úkolů posouváš tažením; zobrazují se absence. Kolize systém vždy nahlásí (uložit lze i tak).</li>
         <li><strong>Absence</strong> se zadávají v dialogu člena (klik na dlaždici).</li>
       </UL>
