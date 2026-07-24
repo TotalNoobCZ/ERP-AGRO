@@ -2,13 +2,17 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient, getCurrentProfile } from "@/lib/supabase/server";
-import { ROLE_LABELS, ODDELENI_LABELS, isAdmin, type Oddeleni, type Role } from "@erp/core";
+import { ROLE_LABELS, ODDELENI, ODDELENI_LABELS, isAdmin, type Oddeleni, type Role } from "@erp/core";
 import { userColor } from "@erp/ui";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
-export default async function SpravaPage() {
+export default async function SpravaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ odd?: string }>;
+}) {
   const profile = await getCurrentProfile();
   const role = (profile?.role ?? "viewer") as Role;
 
@@ -17,12 +21,17 @@ export default async function SpravaPage() {
     redirect("/heslo");
   }
 
+  const sp = await searchParams;
+  const aktivniOdd = ODDELENI.includes(sp.odd as Oddeleni) ? (sp.odd as Oddeleni) : null;
+
   const supabase = await createClient();
-  const { data: profily } = await supabase
+  let dotaz = supabase
     .from("profiles")
     .select("id, name, email, role, oddeleni, assignable, color_index, active, auth_user_id")
     .order("active", { ascending: false })
     .order("name", { ascending: true });
+  if (aktivniOdd) dotaz = dotaz.eq("oddeleni", aktivniOdd);
+  const { data: profily } = await dotaz;
 
   return (
     <div className="space-y-6">
@@ -43,6 +52,40 @@ export default async function SpravaPage() {
           </Link>
         </div>
       </div>
+
+      {/* Filtr dle oddělení */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="mr-1 text-sm font-medium text-text-muted">Oddělení:</span>
+        <Link
+          href="/sprava"
+          className={`rounded-full px-3 py-1 text-xs font-medium ${
+            aktivniOdd === null
+              ? "bg-primary text-primary-foreground"
+              : "border border-line text-text-muted hover:border-link hover:text-link"
+          }`}
+        >
+          Vše
+        </Link>
+        {ODDELENI.map((o) => (
+          <Link
+            key={o}
+            href={`/sprava?odd=${o}`}
+            className={`rounded-full px-3 py-1 text-xs font-medium ${
+              aktivniOdd === o
+                ? "bg-primary text-primary-foreground"
+                : "border border-line text-text-muted hover:border-link hover:text-link"
+            }`}
+          >
+            {ODDELENI_LABELS[o]}
+          </Link>
+        ))}
+      </div>
+
+      <p className="text-sm text-text-muted">
+        {aktivniOdd
+          ? `${(profily ?? []).length} uživatelů v oddělení ${ODDELENI_LABELS[aktivniOdd]}`
+          : `${(profily ?? []).length} uživatelů celkem`}
+      </p>
 
       <div className="rounded-xl border bg-card">
         <Table>
