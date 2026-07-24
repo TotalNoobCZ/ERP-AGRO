@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient, getCurrentProfile } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { StatusBadge, DeadlineBadge } from "@/components/poptavky/badges";
+import { PrehledScope } from "@/components/poptavky/PrehledScope";
 import {
   INQUIRY_STATUS_ORDER,
   INQUIRY_STATUS_LABELS,
@@ -125,11 +126,12 @@ export default async function DashboardPage({
 
   return (
     <div className="space-y-6">
+      {uid && <PrehledScope explicit={sp.vse === "0" || sp.vse === "1"} vse={sp.vse === "1"} />}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Přehled{mine ? " — moje poptávky" : ""}</h1>
         {uid && (
           <div className="flex gap-1">
-            <Link href="/poptavky/dashboard" className={`btn-ghost ${mine ? "border-link text-link" : "border-transparent"}`}>
+            <Link href="/poptavky/dashboard?vse=0" className={`btn-ghost ${mine ? "border-link text-link" : "border-transparent"}`}>
               Moje
             </Link>
             <Link href="/poptavky/dashboard?vse=1" className={`btn-ghost ${!mine ? "border-link text-link" : "border-transparent"}`}>
