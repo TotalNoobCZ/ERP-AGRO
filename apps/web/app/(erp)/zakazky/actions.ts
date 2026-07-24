@@ -16,7 +16,7 @@ import {
   prodlouzeniSchema,
   milnikSchema,
 } from "@/lib/zakazky/validations";
-import { parseDay, formatDay, formatCz, dayBefore, addDays } from "@/lib/zakazky/dates";
+import { parseDay, formatDay, formatCz, dayBefore, addDays, today } from "@/lib/zakazky/dates";
 import { najdiKolize, navrhniReseni, type ExistujiciPrirazeni } from "@/lib/zakazky/collisions";
 
 export type KolizeInfo = {
@@ -633,9 +633,11 @@ export async function zmenitStav(
     uzivatelId: u.id, puvodni: { stav: z.stav }, nova: { stav },
   });
 
-  // Uvolnění dělníků při přechodu do fakturace: akce je hotová (občas dřív),
-  // proto se její přiřazení pracovníků uvolní, ať jdou hned nasadit jinam.
-  // U hlavní akce se uvolní i pracovníci na jejích zakázkách k akci (podzakázkách).
+  // Uvolnění dělníků při přechodu do fakturace: akce je hotová (občas dřív).
+  // Pracovníkům se přiřazení UKONČÍ k dnešnímu dni (nemažou se – zůstávají
+  // v evidenci, že na akci pracovali, dají se zpětně dohledat), ale zároveň
+  // se uvolní termín, takže jdou hned nasadit jinam. U hlavní akce se to týká
+  // i pracovníků na jejích zakázkách k akci (podzakázkách).
   if (stav === "FAKTURACE" && z.stav !== "FAKTURACE") {
     let cileIds = [zakazkaId];
     if (!z.parent_id) {
@@ -643,16 +645,45 @@ export async function zmenitStav(
         .from("zakazky").select("id").eq("parent_id", zakazkaId).is("deleted_at", null);
       cileIds = [zakazkaId, ...(deti ?? []).map((d) => d.id)];
     }
-    const { data: uvolnene } = await supabase
+    const dnes = formatDay(today());
+    const ted = new Date().toISOString();
+
+    // Kdo na akci reálně byl (pro záznam do historie) – před úpravou.
+    const { data: zive } = await supabase
       .from("prirazeni_zakazka")
-      .update({ deleted_at: new Date().toISOString() })
+      .select("id, datum_od, osoba:profiles(name)")
+      .in("zakazka_id", cileIds)
+      .is("deleted_at", null);
+
+    // Kdo ještě nezačal (termín je celý v budoucnu) – na akci nepracoval,
+    // přiřazení se zruší úplně.
+    await supabase
+      .from("prirazeni_zakazka")
+      .update({ deleted_at: ted })
       .in("zakazka_id", cileIds)
       .is("deleted_at", null)
-      .select("id");
-    if (uvolnene && uvolnene.length > 0) {
+      .gt("datum_od", dnes);
+    // Kdo pracoval (začátek dnes nebo v minulosti) a přesahuje dnešek – konec
+    // zkrátíme na dnešek: zůstává v evidenci, ale od zítřka je volný.
+    await supabase
+      .from("prirazeni_zakazka")
+      .update({ datum_do: dnes })
+      .in("zakazka_id", cileIds)
+      .is("deleted_at", null)
+      .gt("datum_do", dnes);
+
+    const jmena = [
+      ...new Set(
+        (zive ?? [])
+          .filter((p) => p.datum_od <= dnes)
+          .map((p) => (p.osoba as unknown as { name: string } | null)?.name)
+          .filter(Boolean),
+      ),
+    ];
+    if (jmena.length > 0) {
       await zapisAudit(supabase, {
         entita: "zakazka", entitaId: zakazkaId, typZmeny: "UPRAVA", uzivatelId: u.id,
-        nova: { popis: `Fakturace: uvolněno ${uvolnene.length} přiřazení pracovníků (akce hotová – lze je nasadit jinam)` },
+        nova: { popis: `Fakturace: pracovníci uvolněni (akce hotová), konec přiřazení k ${formatCz(today())} – zůstávají v evidenci: ${jmena.join(", ")}` },
       });
     }
   }
