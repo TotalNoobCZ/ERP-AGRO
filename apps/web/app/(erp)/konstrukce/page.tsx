@@ -33,6 +33,7 @@ export default async function KonstrukcePage() {
       zakazky={(zakazkyRes.data ?? []).map((z) => ({ id: z.id, kod: z.kod, mistoPlneni: z.misto_plneni }))}
       editable={editable}
       muzeOdebratKonstruktera={smiOdebratKonstruktera}
+      meId={profile?.id ?? null}
     />
   );
 }
