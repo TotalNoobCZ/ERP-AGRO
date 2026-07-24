@@ -98,7 +98,7 @@ export function ZakazkaEditForm({
           <label className="label">Odpovědná osoba</label>
           <OsobaSelect osoby={osoby} value={odpovedny} onChange={setOdpovedny} name="odpovednaOsobaId" />
           <p className="mt-1 text-xs text-text-muted">
-            Nepovinné. Vybírá se z Kanceláře, Projekťáků nebo lidí s rolí Vedoucí. Platí pro celou akci včetně podzakázek.
+            Nepovinné. Vybírá se z Projekťáků nebo lidí s rolí Vedoucí (ne Kancelář). Platí pro celou akci včetně podzakázek.
           </p>
         </div>
       )}

@@ -27,7 +27,7 @@ export default async function NovaZakazkaPage({
       .from("profiles")
       .select("id, name, oddeleni")
       .eq("active", true)
-      .or("oddeleni.in.(kancelar,projektak),role.eq.vedouci")
+      .or("oddeleni.eq.projektak,role.eq.vedouci")
       .order("name", { ascending: true }),
   ]);
 

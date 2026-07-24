@@ -51,11 +51,11 @@ export default async function UpravitZakazkuPage({ params }: { params: Promise<{
       .from("profiles")
       .select("id, name, oddeleni")
       .eq("active", true)
-      .or("oddeleni.in.(kancelar,projektak),role.eq.vedouci")
+      .or("oddeleni.eq.projektak,role.eq.vedouci")
       .order("name", { ascending: true }),
   ]);
   const osoby = (vsichni ?? []) as OsobaLite[];
-  const kancelar = (odpovedniData ?? []) as OsobaLite[];
+  const odpovedniOsoby = (odpovedniData ?? []) as OsobaLite[];
   const pracovnici = osoby.filter((o) => o.oddeleni !== "kancelar");
 
   const me = await getCurrentProfile();
@@ -71,7 +71,7 @@ export default async function UpravitZakazkuPage({ params }: { params: Promise<{
 
       <ZakazkaEditForm
         akce={akce}
-        osoby={kancelar}
+        osoby={odpovedniOsoby}
         jePodzakazka={!!z.parent_id}
         zakazka={{
           id: z.id,
