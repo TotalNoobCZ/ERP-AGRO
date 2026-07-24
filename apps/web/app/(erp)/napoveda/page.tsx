@@ -2,7 +2,7 @@
 // při změnách funkcí aktualizuj tuto stránku i datum níže.
 import type { ReactNode } from "react";
 
-const AKTUALIZOVANO = "24. 7. 2026 (upozornění na faktury; sbalitelné sekce; filtr oddělení ve Správě)";
+const AKTUALIZOVANO = "24. 7. 2026 (sbalitelné sekce; filtr oddělení; kolizní okno s náhradníkem na Tabuli)";
 
 export const dynamic = "force-dynamic";
 
@@ -131,7 +131,7 @@ export default function NapovedaPage() {
         <li><strong>Odpovědná osoba</strong> (nepovinná) — z Kanceláře, Projekťáků nebo role Vedoucí. Platí <strong>za celou akci včetně podzakázek</strong>, proto se u podzakázek už nezadává (dědí ji z hlavní akce). Na Tabuli přetažení odpovědné osoby na podzakázku nastaví osobu rovnou na hlavní akci.</li>
         <li><strong>Pracovníci jsou nepovinní</strong> — přiřadíš i později (na Tabuli).</li>
         <li><strong>Gantt:</strong> „Podle akcí" (posun termínů tažením) a „Podle zaměstnance" s filtrem kapitoly <strong>Dílna / Kancelář / Vše</strong>.</li>
-        <li><strong>Tabule (obrácené drag &amp; drop):</strong> vlevo osoby dle kapitol a oddělení (sbalitelné), vpravo zakázky. Přetáhni osobu na zakázku = přiřadíš pracovníka; při kolizi termínů systém upozorní. <strong>Dvojklik na osobu</strong> (vlevo i na dlaždici zakázky) otevře její <strong>kartu zaměstnance</strong> (administrátor ji může upravit, ostatní jen prohlížejí).</li>
+        <li><strong>Tabule (obrácené drag &amp; drop):</strong> vlevo osoby dle kapitol a oddělení (sbalitelné), vpravo zakázky. Přetáhni osobu na zakázku = přiřadíš pracovníka. <strong>Při kolizi termínů</strong> (osoba je už na jiné akci) naskočí <strong>stejné okno s náhradníkem</strong> jako při zakládání akce – stávající akce se osobě rozdělí kolem nového období a na překryv se dosadí náhradník; po vyřešení se osoba přidá. <strong>Dvojklik na osobu</strong> (vlevo i na dlaždici zakázky) otevře její <strong>kartu zaměstnance</strong> (administrátor ji může upravit, ostatní jen prohlížejí).</li>
         <li><strong>Odpovědné osoby</strong> (projekťák / vedoucí) mají vlevo <strong>vlastní skupinu</strong> a na dlaždici zakázky se zobrazují <strong>zvlášť nad pracovníky</strong>. Přetažením projekťáka/vedoucího na zakázku se zaeviduje jako <strong>odpovědná osoba</strong> (ne pracovník); křížkem u ní ji zrušíš.</li>
         <li><strong>Odebrání konstruktéra ze zakázky</strong> smí provést jen <strong>šéfkonstruktér</strong> nebo <strong>administrátor</strong> (u ostatních je místo křížku zámek 🔒). Běžné pracovníky odebírá kdokoli s právem zápisu. Šéfkonstruktéra nastaví admin ve Správě u profilu z oddělení Konstrukce.</li>
         <li><strong>Lidé na akci:</strong> u akce se všude zobrazují <strong>všichni lidé</strong> (dělníci, elektrikáři, konstruktéři i odpovědná osoba) sečtení přes akci a její zakázky k akci; u každé zakázky k akci vidíš její lidi zvlášť (seznam Akce – rozbalovací, detail i Tabule).</li>

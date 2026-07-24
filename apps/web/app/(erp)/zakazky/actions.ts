@@ -936,6 +936,78 @@ export async function pridatPracovnika(
   return { ok: true };
 }
 
+/**
+ * Zjistí kolize při přidání pracovníka na akci (na celé období akce) BEZ zápisu –
+ * pro kolizní dialog s náhradníky na Tabuli. Stejná logika jako u zakládání akce.
+ */
+export async function zjistitKoliziPridani(
+  zakazkaId: string,
+  osobaId: string,
+): Promise<{ ok: boolean; chyba?: string; kolize?: KolizeInfo[] }> {
+  const u = await writer();
+  if (!u) return { ok: false, chyba: "Nejste přihlášeni nebo nemáte právo zápisu." };
+  if (!osobaId) return { ok: false, chyba: "Chybí osoba." };
+  const supabase = await createClient();
+
+  const { data: z } = await supabase
+    .from("zakazky").select("id, zacatek, konec_aktualni, deleted_at").eq("id", zakazkaId).maybeSingle();
+  if (!z || z.deleted_at) return { ok: false, chyba: "Akce nenalezena." };
+
+  const novy = { datumOd: parseDay(z.zacatek), datumDo: parseDay(z.konec_aktualni) };
+  const existujici = await nactiExistujiciPrirazeni(supabase, [osobaId]);
+  const kandidati: ExistujiciPrirazeni[] = existujici
+    .filter((e) => e.osoba_id === osobaId)
+    .map((e) => ({
+      id: e.id,
+      zakazkaId: e.zakazka_id,
+      zakazkaKod: e.zakazka.kod,
+      datumOd: parseDay(e.datum_od),
+      datumDo: parseDay(e.datum_do),
+    }));
+
+  const kolize: KolizeInfo[] = [];
+  for (const k of najdiKolize(novy, kandidati)) {
+    const navrh = navrhniReseni(novy, k);
+    const os = existujici.find((e) => e.id === k.id)!.osoba;
+    const prekrOd = navrh.obdobiProNahradnika.datumOd;
+    const prekrDo = navrh.obdobiProNahradnika.datumDo;
+
+    const { data: obsazeniRaw } = await supabase
+      .from("prirazeni_zakazka")
+      .select("osoba_id, datum_od, datum_do, zakazka:zakazky!inner(deleted_at)")
+      .is("deleted_at", null)
+      .is("zakazka.deleted_at", null)
+      .lte("datum_od", formatDay(prekrDo))
+      .gte("datum_do", formatDay(prekrOd));
+    const obsazeni = (obsazeniRaw ?? []).map((o) => ({
+      osobaId: o.osoba_id,
+      od: formatCz(parseDay(o.datum_od)),
+      do: formatCz(parseDay(o.datum_do)),
+    }));
+
+    kolize.push({
+      osobaId,
+      osobaJmeno: os?.name ?? "?",
+      prirazeniId: k.id,
+      zakazkaId: k.zakazkaId,
+      zakazkaKod: k.zakazkaKod,
+      od: formatDay(k.datumOd),
+      do: formatDay(k.datumDo),
+      novyOd: formatDay(novy.datumOd),
+      novyDo: formatDay(novy.datumDo),
+      predOd: navrh.castPred ? formatDay(navrh.castPred.datumOd) : null,
+      predDo: navrh.castPred ? formatDay(navrh.castPred.datumDo) : null,
+      poOd: navrh.castPo ? formatDay(navrh.castPo.datumOd) : null,
+      poDo: navrh.castPo ? formatDay(navrh.castPo.datumDo) : null,
+      nahradnikOd: formatDay(navrh.obdobiProNahradnika.datumOd),
+      nahradnikDo: formatDay(navrh.obdobiProNahradnika.datumDo),
+      obsazeni,
+    });
+  }
+
+  return { ok: true, kolize };
+}
+
 export async function odebratPracovnika(prirazeniId: string, duvod: string): Promise<PracVysledek> {
   const u = await writer();
   if (!u) return { ok: false, chyba: "Nejste přihlášeni nebo nemáte právo zápisu." };

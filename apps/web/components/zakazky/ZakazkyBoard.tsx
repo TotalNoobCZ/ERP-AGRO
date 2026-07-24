@@ -20,7 +20,9 @@ import { userColor } from "@erp/ui";
 import { ODDELENI, ODDELENI_LABELS, KAPITOLY, KAPITOLA_LABELS, ODDELENI_KAPITOLA } from "@erp/core";
 import { formatDen } from "@/lib/format";
 import { usePersistentSet } from "@/lib/usePersistentSet";
-import { pridatPracovnika, odebratPracovnika, nastavitOdpovednouOsobu } from "@/app/(erp)/zakazky/actions";
+import { pridatPracovnika, odebratPracovnika, nastavitOdpovednouOsobu, zjistitKoliziPridani, type KolizeInfo } from "@/app/(erp)/zakazky/actions";
+import { KolizeDialog } from "./KolizeDialog";
+import type { OsobaLite } from "./common";
 import type { BoardOsobaZ, BoardZakazka } from "@/lib/zakazky-query";
 
 /** Odpovědná osoba zakázky = Projekťák (oddělení) nebo role Vedoucí. */
@@ -59,6 +61,14 @@ export default function ZakazkyBoard({
   const { has: jeAkceSbalena, toggle: prepnoutAkci } = usePersistentSet("erp_zakazky_tabule_sbaleneAkce");
   // Potvrzení kolize (osoba obsazená u jiné akce).
   const [potvrzeni, setPotvrzeni] = useState<{ zakId: string; osobaId: string; text: string } | null>(null);
+  // Bohatý kolizní dialog s náhradníky (stejný jako u zakládání akce).
+  const [kolizePridani, setKolizePridani] = useState<{ zakId: string; osobaId: string; kolize: KolizeInfo[] } | null>(null);
+
+  // Osoby pro kolizní dialog (náhradníci) v podobě OsobaLite.
+  const osobyLite: OsobaLite[] = useMemo(
+    () => osoby.map((o) => ({ id: o.id, name: o.name, oddeleni: o.oddeleni })),
+    [osoby],
+  );
 
   const q = query.trim().toLowerCase();
   const osobaMatches = (o: BoardOsobaZ) => !q || o.name.toLowerCase().includes(q);
@@ -153,6 +163,35 @@ export default function ZakazkyBoard({
     router.refresh();
   }
 
+  // Přidání pracovníka z tabule s bohatým kolizním dialogem: nejdřív zjistíme
+  // kolize (osoba obsazená na jiné akci); když nějaké jsou, otevřeme dialog
+  // s náhradníky (stejný jako u zakládání akce). Bez kolize přidáme rovnou.
+  async function zkusitPridat(zakId: string, osobaId: string) {
+    setBusy(true);
+    setChyba(null);
+    const res = await zjistitKoliziPridani(zakId, osobaId);
+    setBusy(false);
+    if (!res.ok) { setChyba(res.chyba ?? "Přiřazení se nezdařilo."); return; }
+    if (res.kolize && res.kolize.length > 0) {
+      setKolizePridani({ zakId, osobaId, kolize: res.kolize });
+      return;
+    }
+    await priradit(zakId, osobaId, false);
+  }
+
+  async function zavritKolizePridani(vseVyreseno: boolean) {
+    const info = kolizePridani;
+    setKolizePridani(null);
+    if (!info) return;
+    if (vseVyreseno) {
+      // Kolize vyřešené (náhradníci dosazeni) – osobu na akci přidáme.
+      await priradit(info.zakId, info.osobaId, true);
+    } else {
+      // Uživatel zavřel bez vyřešení – jen obnovíme (mohl dosadit část náhradníků).
+      router.refresh();
+    }
+  }
+
   async function odebrat(prirazeniIds: string[]) {
     if (!window.confirm("Odebrat pracovníka ze zakázky?")) return;
     setBusy(true);
@@ -199,7 +238,7 @@ export default function ZakazkyBoard({
         return;
       }
       if (z?.pracovnici.some((p) => p.osobaId === osoba.id)) return; // už tam je
-      await priradit(zakId, osoba.id, false);
+      await zkusitPridat(zakId, osoba.id);
     }
   }
 
@@ -366,6 +405,16 @@ export default function ZakazkyBoard({
       </DragOverlay>
 
       {busy && <p className="mt-2 text-xs text-text-muted">Ukládám…</p>}
+
+      {/* Bohatý kolizní dialog s náhradníky (stejný jako u zakládání akce) */}
+      {kolizePridani && (
+        <KolizeDialog
+          kolize={kolizePridani.kolize}
+          osoby={osobyLite}
+          onClose={zavritKolizePridani}
+          zavrenoText="Vše vyřešeno. Po zavření se osoba přidá na akci."
+        />
+      )}
 
       {/* Potvrzení kolize */}
       {potvrzeni && (
