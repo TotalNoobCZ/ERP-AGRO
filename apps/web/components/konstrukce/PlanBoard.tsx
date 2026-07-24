@@ -2,7 +2,7 @@
 // Karta Plánování (ZADANI.md kap. 7): vlevo 1/3 dlaždice členů, vpravo 2/3
 // masonry projektů. Drag & drop úkolů (dnd-kit): z projektu na člena, mezi
 // členy, zpět doprava (odebrání), řazení uvnitř dlaždice člena.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   DndContext,
@@ -41,6 +41,7 @@ export default function PlanBoard({
   zakazky,
   editable,
   muzeOdebratKonstruktera,
+  meId,
 }: {
   clenove: Clen[];
   projektaci: Clen[];
@@ -51,6 +52,8 @@ export default function PlanBoard({
   editable: boolean;
   /** smí sundat konstruktéra z úkolu / zrušit zodpovědného (šéfkonstruktér / admin) */
   muzeOdebratKonstruktera: boolean;
+  /** id přihlášeného uživatele – pro přepínač „Moje / Vše" */
+  meId: string | null;
 }) {
   const router = useRouter();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
@@ -65,6 +68,27 @@ export default function PlanBoard({
   const [query, setQuery] = useState("");
   // Sbalené akce v pravém sloupci (skryjí své projekty).
   const { has: jeAkceZavrena, toggle: prepnoutAkci, replace: nastavitSbalene } = usePersistentSet("erp_konstrukce_plan_sbaleneAkce");
+
+  // Přepínač „Moje / Vše" – poslední volba se pamatuje v prohlížeči.
+  const [moje, setMoje] = useState(false);
+  const mojeNacteno = useRef(false);
+  useEffect(() => {
+    try {
+      setMoje(localStorage.getItem("erp_konstrukce_plan_moje") === "1");
+    } catch {
+      /* localStorage nemusí být dostupné */
+    }
+    mojeNacteno.current = true;
+  }, []);
+  useEffect(() => {
+    if (!mojeNacteno.current) return;
+    try {
+      localStorage.setItem("erp_konstrukce_plan_moje", moje ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }, [moje]);
+  const mojeAktivni = moje && !!meId;
 
   const q = query.trim().toLowerCase();
   const taskMatches = (u: Ukol) =>
@@ -194,11 +218,18 @@ export default function PlanBoard({
   const openProjectData = openProject ? projekty.find((p) => p.id === openProject) : null;
   const openMemberData = openMember ? clenove.find((c) => c.id === openMember) : null;
 
-  const visibleProjekty = q
-    ? projekty.filter(
-        (p) => p.name.toLowerCase().includes(q) || (ukolyProjektu.get(p.id) ?? []).some(taskMatches),
-      )
-    : projekty;
+  // „Moje" = projekty, kde jsem zodpovědný nebo mám přiřazený úkol.
+  const jeMujProjekt = (p: Projekt) =>
+    !mojeAktivni ||
+    p.ownerId === meId ||
+    (ukolyProjektu.get(p.id) ?? []).some((u) => u.assigneeId === meId);
+  const visibleProjekty = projekty.filter(
+    (p) =>
+      jeMujProjekt(p) &&
+      (!q || p.name.toLowerCase().includes(q) || (ukolyProjektu.get(p.id) ?? []).some(taskMatches)),
+  );
+  // Levý sloupec: v režimu „Moje" jen moje dlaždice.
+  const viditelniClenove = mojeAktivni ? clenove.filter((c) => c.id === meId) : clenove;
 
   // Projekty seskupené pod akci (nadřazenou zakázku); pořadí dle prvního výskytu.
   const akceSkupiny = useMemo(() => {
@@ -224,11 +255,29 @@ export default function PlanBoard({
           />
         </div>
         {q && <button className="btn-ghost" onClick={() => setQuery("")}>✕ Zrušit</button>}
+        {meId && (
+          <div className="ml-auto flex gap-1">
+            <button
+              type="button"
+              className={`btn-ghost text-sm ${moje ? "border-link text-link" : "border-transparent"}`}
+              onClick={() => setMoje(true)}
+            >
+              Moje
+            </button>
+            <button
+              type="button"
+              className={`btn-ghost text-sm ${!moje ? "border-link text-link" : "border-transparent"}`}
+              onClick={() => setMoje(false)}
+            >
+              Vše
+            </button>
+          </div>
+        )}
       </div>
       <div className="flex gap-4">
         {/* Levá 1/3 – dlaždice členů */}
         <div className="w-1/3 min-w-[260px] space-y-3">
-          {clenove.map((c) => (
+          {viditelniClenove.map((c) => (
             <MemberTile
               key={c.id}
               clen={c}
@@ -238,9 +287,9 @@ export default function PlanBoard({
               onTaskClick={(id) => setOpenTask(id)}
             />
           ))}
-          {clenove.length === 0 && (
+          {viditelniClenove.length === 0 && (
             <p className="text-sm text-text-muted">
-              Žádné dlaždice. Ve Správě přiřaď uživatelům oddělení „Konstrukce“.
+              {mojeAktivni ? "Nejsi tu jako konstruktér – přepni na Vše." : "Žádné dlaždice. Ve Správě přiřaď uživatelům oddělení „Konstrukce“."}
             </p>
           )}
         </div>
