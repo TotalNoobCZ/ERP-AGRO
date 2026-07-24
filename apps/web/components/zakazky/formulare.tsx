@@ -42,10 +42,13 @@ export function ZakazkaEditForm({
   akce,
   zakazka,
   osoby,
+  jePodzakazka = false,
 }: {
   akce: (prev: ZakazkaStav, fd: FormData) => Promise<ZakazkaStav>;
   zakazka: Init;
   osoby: OsobaLite[];
+  /** Podzakázka – odpovědná osoba se řeší u hlavní akce, tady se skryje. */
+  jePodzakazka?: boolean;
 }) {
   const [stav, formAction] = useActionState<ZakazkaStav, FormData>(akce, {});
   const [odpovedny, setOdpovedny] = useState(zakazka.odpovednaOsobaId ?? "");
@@ -85,13 +88,20 @@ export function ZakazkaEditForm({
         {ch.mistoPlneni && <p className="err">{ch.mistoPlneni}</p>}
       </div>
 
-      <div>
-        <label className="label">Odpovědná osoba</label>
-        <OsobaSelect osoby={osoby} value={odpovedny} onChange={setOdpovedny} name="odpovednaOsobaId" />
-        <p className="mt-1 text-xs text-text-muted">
-          Nepovinné. Vybírá se z Kanceláře, Projekťáků nebo lidí s rolí Vedoucí.
+      {/* Odpovědná osoba jen u hlavní akce; podzakázka ji dědí. */}
+      {jePodzakazka ? (
+        <p className="rounded-md border border-line bg-muted/30 p-2 text-xs text-text-muted">
+          Odpovědná osoba se řeší u hlavní akce a platí i pro tuto podzakázku.
         </p>
-      </div>
+      ) : (
+        <div>
+          <label className="label">Odpovědná osoba</label>
+          <OsobaSelect osoby={osoby} value={odpovedny} onChange={setOdpovedny} name="odpovednaOsobaId" />
+          <p className="mt-1 text-xs text-text-muted">
+            Nepovinné. Vybírá se z Kanceláře, Projekťáků nebo lidí s rolí Vedoucí. Platí pro celou akci včetně podzakázek.
+          </p>
+        </div>
+      )}
 
       <div>
         <label className="label">Začátek akce *</label>

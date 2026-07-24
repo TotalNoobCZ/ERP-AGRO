@@ -96,10 +96,14 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
     konec_aktualni: string;
   }[];
 
-  let rodic: { id: string; kod: string } | null = null;
+  let rodic: { id: string; kod: string; odpovedna: { name: string } | null } | null = null;
   if (z.parent_id) {
-    const { data: p } = await supabase.from("zakazky").select("id, kod").eq("id", z.parent_id).maybeSingle();
-    if (p) rodic = { id: p.id, kod: p.kod };
+    const { data: p } = await supabase
+      .from("zakazky")
+      .select("id, kod, odpovedna:profiles!zakazky_odpovedna_osoba_id_fkey(name)")
+      .eq("id", z.parent_id)
+      .maybeSingle();
+    if (p) rodic = { id: p.id, kod: p.kod, odpovedna: (p.odpovedna as unknown as { name: string } | null) ?? null };
   }
 
   // Dílna: výrobní fáze (propisují se z modulu Dílna).
@@ -228,8 +232,17 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
           </div>
         </div>
         <p className="mt-1 text-text-muted">{z.misto_plneni}</p>
-        {z.odpovedna && (
-          <p className="mt-1 text-sm text-text-muted">Odpovědná osoba: {z.odpovedna.name}</p>
+        {/* Odpovědná osoba je za celou akci; podzakázka ji dědí z hlavní akce. */}
+        {rodic ? (
+          rodic.odpovedna && (
+            <p className="mt-1 text-sm text-text-muted">
+              Odpovědná osoba (akce {rodic.kod}): {rodic.odpovedna.name}
+            </p>
+          )
+        ) : (
+          z.odpovedna && (
+            <p className="mt-1 text-sm text-text-muted">Odpovědná osoba: {z.odpovedna.name}</p>
+          )
         )}
         {/* Integrace: původ zakázky */}
         {(z.inquiry || z.customer) && (

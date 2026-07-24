@@ -126,7 +126,7 @@ export default function NapovedaPage() {
       <P>Záložky: Přehled · Akce · Tabule · Gantt · <strong>Fakturace</strong> · Archiv.</P>
       <UL>
         <li><strong>Vznik:</strong> obvykle z objednané poptávky (zdědí zákazníka; <strong>Název akce se předvyplní názvem poptávky</strong> a jde změnit). Nová akce: Název akce, Místo plnění, Začátek, Konec (povinné <Code>*</Code>), priorita.</li>
-        <li><strong>Odpovědná osoba</strong> (nepovinná) — z Kanceláře, Projekťáků nebo role Vedoucí.</li>
+        <li><strong>Odpovědná osoba</strong> (nepovinná) — z Kanceláře, Projekťáků nebo role Vedoucí. Platí <strong>za celou akci včetně podzakázek</strong>, proto se u podzakázek už nezadává (dědí ji z hlavní akce). Na Tabuli přetažení odpovědné osoby na podzakázku nastaví osobu rovnou na hlavní akci.</li>
         <li><strong>Pracovníci jsou nepovinní</strong> — přiřadíš i později (na Tabuli).</li>
         <li><strong>Gantt:</strong> „Podle akcí" (posun termínů tažením) a „Podle zaměstnance" s filtrem kapitoly <strong>Dílna / Kancelář / Vše</strong>.</li>
         <li><strong>Tabule (obrácené drag &amp; drop):</strong> vlevo osoby dle kapitol a oddělení (sbalitelné), vpravo zakázky. Přetáhni osobu na zakázku = přiřadíš pracovníka; při kolizi termínů systém upozorní. <strong>Dvojklik na osobu</strong> (vlevo i na dlaždici zakázky) otevře její <strong>kartu zaměstnance</strong> (administrátor ji může upravit, ostatní jen prohlížejí).</li>
