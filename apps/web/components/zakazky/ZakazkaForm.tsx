@@ -37,7 +37,7 @@ export default function ZakazkaForm({
   parent,
 }: {
   osoby: OsobaLite[];
-  odpovedni: OsobaLite[]; // odpovědná osoba = Kancelář / Projekťák / role Vedoucí
+  odpovedni: OsobaLite[]; // odpovědná osoba = Projekťák / role Vedoucí (ne Kancelář)
   inquiry?: InquiryOrigin | null;
   parent?: { id: string; kod: string } | null; // hlavní akce (zakládám podzakázku)
 }) {
@@ -137,7 +137,7 @@ export default function ZakazkaForm({
             <label className="label">Odpovědná osoba</label>
             <OsobaSelect osoby={odpovedni} value={odpovedny} onChange={setOdpovedny} name="odpovednaOsobaId" />
             <p className="mt-1 text-xs text-text-muted">
-              Nepovinné. Vybírá se z Kanceláře, Projekťáků nebo lidí s rolí Vedoucí. Platí pro celou akci včetně podzakázek.
+              Nepovinné. Vybírá se z Projekťáků nebo lidí s rolí Vedoucí (ne Kancelář). Platí pro celou akci včetně podzakázek.
             </p>
           </div>
         )}

@@ -2,7 +2,7 @@
 // při změnách funkcí aktualizuj tuto stránku i datum níže.
 import type { ReactNode } from "react";
 
-const AKTUALIZOVANO = "24. 7. 2026 (zodpovědný konstruktér projektu se propíše na zakázkovou tabuli)";
+const AKTUALIZOVANO = "24. 7. 2026 (odpovědná osoba zakázky jen Projekťák/Vedoucí, ne Kancelář)";
 
 export const dynamic = "force-dynamic";
 
@@ -129,7 +129,7 @@ export default function NapovedaPage() {
       <P>Záložky: Přehled · Akce · Tabule · Gantt · <strong>Fakturace</strong> · Archiv.</P>
       <UL>
         <li><strong>Vznik:</strong> obvykle z objednané poptávky (zdědí zákazníka; <strong>Název akce se předvyplní názvem poptávky</strong> a jde změnit). Nová akce: Název akce, Místo plnění, Začátek, Konec (povinné <Code>*</Code>), priorita.</li>
-        <li><strong>Odpovědná osoba</strong> (nepovinná) — z Kanceláře, Projekťáků nebo role Vedoucí. Platí <strong>za celou akci včetně podzakázek</strong>, proto se u podzakázek už nezadává (dědí ji z hlavní akce). Na Tabuli přetažení odpovědné osoby na podzakázku nastaví osobu rovnou na hlavní akci.</li>
+        <li><strong>Odpovědná osoba</strong> (nepovinná) — jen <strong>Projekťák</strong> nebo role <strong>Vedoucí</strong> (Kancelář ne). Platí <strong>za celou akci včetně podzakázek</strong>, proto se u podzakázek už nezadává (dědí ji z hlavní akce). Na Tabuli přetažení odpovědné osoby na podzakázku nastaví osobu rovnou na hlavní akci.</li>
         <li><strong>Pracovníci jsou nepovinní</strong> — přiřadíš i později (na Tabuli).</li>
         <li><strong>Gantt:</strong> „Podle akcí" (posun termínů tažením) a „Podle zaměstnance" s filtrem kapitoly <strong>Dílna / Kancelář / Vše</strong>.</li>
         <li><strong>Tabule (obrácené drag &amp; drop):</strong> vlevo osoby dle kapitol a oddělení (sbalitelné), vpravo zakázky. Přetáhni osobu na zakázku = přiřadíš pracovníka. <strong>Při kolizi termínů</strong> (osoba je už na jiné akci) naskočí <strong>stejné okno s náhradníkem</strong> jako při zakládání akce – stávající akce se osobě rozdělí kolem nového období a na překryv se dosadí náhradník; po vyřešení se osoba přidá. <strong>Dvojklik na osobu</strong> (vlevo i na dlaždici zakázky) otevře její <strong>kartu zaměstnance</strong> (administrátor ji může upravit, ostatní jen prohlížejí).</li>

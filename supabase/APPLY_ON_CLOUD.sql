@@ -141,3 +141,21 @@ alter table public.zakazky add column if not exists fakturace_od timestamptz;
 
 update public.zakazky set fakturace_od = coalesce(updated_at, now())
   where stav = 'FAKTURACE' and fakturace_od is null;
+
+-- ============================================================================
+--  14) Backfill: zodpovědní konstruktéři projektů → pracovníci na zakázce
+--  Jednorázově propíše už nastavené zodpovědné konstruktéry (projects.owner_id)
+--  na zakázku jejich projektu, aby byli vidět na zakázkové tabuli i v detailu.
+--  Idempotentní – koho už na zakázce máme, znovu nepřidá.
+-- ============================================================================
+insert into public.prirazeni_zakazka (zakazka_id, osoba_id, datum_od, datum_do)
+select z.id, p.owner_id, z.zacatek, z.konec_aktualni
+from public.projects p
+join public.zakazky z on z.id = p.zakazka_id
+where p.owner_id is not null
+  and p.status = 'active'
+  and z.deleted_at is null
+  and not exists (
+    select 1 from public.prirazeni_zakazka pz
+    where pz.zakazka_id = z.id and pz.osoba_id = p.owner_id and pz.deleted_at is null
+  );

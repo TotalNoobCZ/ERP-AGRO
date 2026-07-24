@@ -101,6 +101,16 @@ function ziskatData(fd: FormData) {
   };
 }
 
+/**
+ * Odpovědnou osobou akce smí být jen Projekťák (oddělení) nebo role Vedoucí –
+ * ne Kancelář. Prázdná hodnota je v pořádku (odpovědná osoba je nepovinná).
+ */
+async function jeOdpovednaPovolena(supabase: Db, osobaId: string | null | undefined): Promise<boolean> {
+  if (!osobaId) return true;
+  const { data } = await supabase.from("profiles").select("oddeleni, role").eq("id", osobaId).maybeSingle();
+  return !!data && (data.oddeleni === "projektak" || data.role === "vedouci");
+}
+
 /** Všechna živá přiřazení daných osob (join na kód zakázky a jméno osoby). */
 async function nactiExistujiciPrirazeni(supabase: Db, osobaIds: string[]) {
   const { data } = await supabase
@@ -171,6 +181,10 @@ export async function vytvoritZakazku(_prev: ZakazkaStav, fd: FormData): Promise
     return { chyby };
   }
   const d = parsed.data;
+
+  if (!(await jeOdpovednaPovolena(supabase, d.odpovednaOsobaId))) {
+    return { chyby: { odpovednaOsobaId: "Odpovědnou osobou může být jen Projekťák nebo Vedoucí." } };
+  }
 
   const { data: kodExistuje } = await supabase
     .from("zakazky").select("id").eq("kod", d.kod).is("deleted_at", null).maybeSingle();
@@ -548,6 +562,10 @@ export async function upravitZakazku(zakazkaId: string, _prev: ZakazkaStav, fd: 
     return { chyby };
   }
   const d = parsed.data;
+
+  if (!(await jeOdpovednaPovolena(supabase, d.odpovednaOsobaId))) {
+    return { chyby: { odpovednaOsobaId: "Odpovědnou osobou může být jen Projekťák nebo Vedoucí." } };
+  }
 
   const { data: kodExistuje } = await supabase
     .from("zakazky").select("id").eq("kod", d.kod).is("deleted_at", null).neq("id", zakazkaId).maybeSingle();
