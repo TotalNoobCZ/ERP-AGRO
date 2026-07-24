@@ -2,7 +2,7 @@
 // při změnách funkcí aktualizuj tuto stránku i datum níže.
 import type { ReactNode } from "react";
 
-const AKTUALIZOVANO = "23. 7. 2026 (Dílna, Fakturace jako finále akce, multi-filtr stavů, kontakty na tabuli, Moje práce)";
+const AKTUALIZOVANO = "24. 7. 2026 (upozornění na neproplacené faktury a akce po termínu bez fakturace)";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +35,8 @@ export default function NapovedaPage() {
       </P>
       <P>
         Po přihlášení tě uvítá <strong>„Moje práce"</strong> — osobní rozcestník: připomínky odložených
-        poptávek, tvoje otevřené poptávky, tvoje aktivní zakázky a dlaždice modulů (podle práv).
+        poptávek, tvoje otevřené poptávky, tvoje aktivní zakázky, <strong>upozornění na neproplacené
+        faktury a akce po termínu bez fakturace</strong> a dlaždice modulů (podle práv).
       </P>
 
       <H2>1. Přihlášení a heslo</H2>
@@ -138,6 +139,12 @@ export default function NapovedaPage() {
         <li><strong>Zakázky k akci:</strong> jedna hlavní akce může sdružovat víc <strong>dceřiných zakázek</strong> (každá má vlastní název). V detailu akce (pod „Přiřazení pracovníci") je rychle přidáš lištou <strong>Název akce + Popis</strong>; místo, termíny a prioritu zdědí od hlavní akce. V seznamu Akce se ukazují jako <strong>rozbalovací seznam</strong> pod hlavní akcí. V <strong>Konstrukci</strong> se zakázka k akci přidá jako <strong>podúkol do projektu hlavní akce</strong>.</li>
         <li><strong>Životní cyklus akce (finále přes fakturaci):</strong> běžící akci na detailu tlačítkem <strong>✓ Hotovo</strong> uzavřeš – nabídne volbu <em>🧾 Poslat do fakturace</em> (bude se fakturovat) nebo <em>✓ Uzavřít bez fakturace</em> (nefakturuje se → rovnou do archivu). Akce ve stavu <strong>Fakturace</strong> se řeší na liště Fakturace; tlačítkem <strong>✓ Označit proplaceno</strong> se posune do <strong>Proplaceno</strong> = hotové (finále). Krok zpět je vždy možný.</li>
         <li><strong>Lišta Fakturace:</strong> dvě sekce — <em>Fakturace – čeká na proplacení</em> a <em>Proplaceno – hotové</em>. U každé akce vidíš zákazníka, termín a odpovědnou osobu a přímo tu ji posuneš dál.</li>
+        <li><strong>Hlídání fakturace a proplacení (upozornění na „Moje práci"):</strong> odpovědné osobě naskočí po otevření ERP dvě upozornění:
+          <ul className="ml-4 mt-1 list-disc space-y-1">
+            <li><strong>💸 Neproplacené faktury</strong> — akce je ve stavu <strong>Fakturace</strong> déle než <strong>30 dní</strong> a stále není označena jako proplacená.</li>
+            <li><strong>🧾 Akce po termínu – chybí fakturace</strong> — hlavní akce je více než <strong>7 dní</strong> po termínu ukončení a dosud nebyla posunuta do fakturace.</li>
+          </ul>
+          Lhůta u fakturace se počítá od chvíle, kdy akce vstoupila do stavu Fakturace (návrat do výroby ji nuluje). Odpovědnou osobu má vždy hlavní akce; podzakázky ji dědí.</li>
         <li><strong>Archiv:</strong> obsahuje jen <strong>archivované</strong> akce. Akce ve fakturaci a proplacené najdeš na liště <strong>Fakturace</strong>.</li>
       </UL>
 

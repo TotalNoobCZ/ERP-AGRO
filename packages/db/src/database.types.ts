@@ -163,6 +163,7 @@ export type ZakazkaRow = {
   konec_aktualni: string;
   stav: StavZakazkyDb;
   archivovano_kdy: string | null;
+  fakturace_od: string | null;
   poznamka: string | null;
   zalozil_id: string;
   archivoval_id: string | null;

@@ -606,16 +606,26 @@ export async function zmenitStav(
   if (!u) return;
   const supabase = await createClient();
   const { data: z } = await supabase
-    .from("zakazky").select("id, stav, deleted_at").eq("id", zakazkaId).maybeSingle();
+    .from("zakazky").select("id, stav, fakturace_od, deleted_at").eq("id", zakazkaId).maybeSingle();
   if (!z || z.deleted_at) return;
+
+  // fakturace_od = kdy akce vstoupila do stavu Fakturace (lhůta proplacení).
+  // Nastaví se při přechodu na FAKTURACE (nepřepisuje se, když už tam je),
+  // vynuluje se při návratu do výroby (AKTIVNI/POZASTAVENO).
+  const uprava: { stav: typeof stav; archivovano_kdy: string | null; archivoval_id: string | null; fakturace_od?: string | null } = {
+    stav,
+    archivovano_kdy: stav === "ARCHIV" ? new Date().toISOString() : null,
+    archivoval_id: stav === "ARCHIV" ? u.id : null,
+  };
+  if (stav === "FAKTURACE" && z.stav !== "FAKTURACE") {
+    uprava.fakturace_od = z.fakturace_od ?? new Date().toISOString();
+  } else if (stav === "AKTIVNI" || stav === "POZASTAVENO") {
+    uprava.fakturace_od = null;
+  }
 
   await supabase
     .from("zakazky")
-    .update({
-      stav,
-      archivovano_kdy: stav === "ARCHIV" ? new Date().toISOString() : null,
-      archivoval_id: stav === "ARCHIV" ? u.id : null,
-    })
+    .update(uprava)
     .eq("id", zakazkaId);
   await zapisAudit(supabase, {
     entita: "zakazka", entitaId: zakazkaId,
