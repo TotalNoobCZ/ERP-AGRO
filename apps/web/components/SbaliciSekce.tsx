@@ -1,13 +1,14 @@
 "use client";
-// Sbalitelná sekce s vlastním nadpisem. Stav (otevřeno/sbaleno) se pamatuje
-// v prohlížeči podle klíče `persistKey` – volba platí napříč záznamy (např.
-// „Milníky" zůstanou sbalené u všech zakázek), aby detail nezahltil obrazovku.
+// Sbalitelná sekce s vlastním nadpisem. Ve výchozím stavu je sbalená; jakmile
+// ji uživatel rozbalí, volba se pamatuje v prohlížeči podle klíče `persistKey`
+// a platí napříč záznamy (např. „Milníky" u všech zakázek), aby detail
+// nezahltil obrazovku.
 import { useState, useEffect, useRef, type ReactNode } from "react";
 
 export function SbaliciSekce({
   titul,
   persistKey,
-  vychoziOtevreno = true,
+  vychoziOtevreno = false,
   karta = true,
   akce,
   children,
