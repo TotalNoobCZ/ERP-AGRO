@@ -9,7 +9,40 @@ import { createAdminClient } from "@/lib/supabase/admin";
  *    s heslem (bez ověřovacího mailu) a napojí se profiles.auth_user_id
  * 4. e-mail neodpovídá → odmítnout
  */
+
+// ---------------------------------------------------------------------------
+//  Limit pokusů: veřejný endpoint (před přihlášením) – brání hrubé síle /
+//  hádání e-mailů. Paměťový čítač na IP: max PO​KUSU pokusů za OKNO_MS.
+//  (Na serverless běží per-instance – je to první brána, ne jediná ochrana.)
+// ---------------------------------------------------------------------------
+const OKNO_MS = 15 * 60 * 1000;
+const MAX_POKUSU = 10;
+const pokusy = new Map<string, { pocet: number; od: number }>();
+
+function prekrocenLimit(ip: string): boolean {
+  const ted = Date.now();
+  // úklid starých záznamů, ať mapa neroste donekonečna
+  if (pokusy.size > 5000) {
+    for (const [k, v] of pokusy) if (ted - v.od > OKNO_MS) pokusy.delete(k);
+  }
+  const z = pokusy.get(ip);
+  if (!z || ted - z.od > OKNO_MS) {
+    pokusy.set(ip, { pocet: 1, od: ted });
+    return false;
+  }
+  z.pocet += 1;
+  return z.pocet > MAX_POKUSU;
+}
+
 export async function POST(request: Request) {
+  const ip = (request.headers.get("x-forwarded-for") ?? "?").split(",")[0]!.trim();
+  if (prekrocenLimit(ip)) {
+    return NextResponse.json(
+      { error: "Příliš mnoho pokusů. Zkus to prosím za 15 minut." },
+      { status: 429 },
+    );
+  }
+
   let body: { email?: string; password?: string };
   try {
     body = await request.json();
@@ -20,7 +53,7 @@ export async function POST(request: Request) {
   const email = body.email?.trim().toLowerCase();
   const password = body.password ?? "";
 
-  if (!email || password.length < 8) {
+  if (!email || email.length > 200 || password.length < 8 || password.length > 200) {
     return NextResponse.json(
       { error: "Zadej e-mail a heslo (alespoň 8 znaků)." },
       { status: 400 },
