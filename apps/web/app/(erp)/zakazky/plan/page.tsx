@@ -62,6 +62,7 @@ type ZakazkaRowT = {
   kod: string;
   misto_plneni: string;
   parent_id: string | null;
+  montaz_typ: "MONTAZ" | "DEMONTAZ" | null;
   zacatek: string;
   konec_puvodni: string;
   konec_aktualni: string;
@@ -92,7 +93,7 @@ export default async function PlanPage({
     const { data } = await supabase
       .from("zakazky")
       .select(
-        `id, kod, misto_plneni, parent_id, zacatek, konec_puvodni, konec_aktualni, stav,
+        `id, kod, misto_plneni, parent_id, montaz_typ, zacatek, konec_puvodni, konec_aktualni, stav,
          milniky(typ, datum, deleted_at),
          prirazeni:prirazeni_zakazka(osoba_id, datum_od, datum_do, deleted_at, osoba:profiles(name))`,
       )
@@ -136,9 +137,10 @@ export default async function PlanPage({
         });
       }
 
+      const montazPredpona = z.montaz_typ === "MONTAZ" ? "Montáž: " : z.montaz_typ === "DEMONTAZ" ? "Demontáž: " : "";
       return {
         id: z.id,
-        label: z.kod,
+        label: `${montazPredpona}${z.kod}`,
         sublabel: z.misto_plneni,
         datum: `${formatCz(parseDay(z.zacatek))} – ${formatCz(parseDay(z.konec_aktualni))}`,
         href: `/zakazky/${z.id}`,

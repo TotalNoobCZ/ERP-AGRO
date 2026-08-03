@@ -176,6 +176,7 @@ export type ZakazkaRow = {
   inquiry_id: string | null;
   customer_id: string | null;
   parent_id: string | null;
+  montaz_typ: MontazTypDb | null;
   popis: string | null;
   ulozeni: string | null;
   created_at: string;

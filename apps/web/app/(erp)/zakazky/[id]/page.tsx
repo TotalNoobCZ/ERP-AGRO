@@ -82,37 +82,36 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
   if (!data || (data as { deleted_at: string | null }).deleted_at) notFound();
   const z = data as unknown as Detail;
 
-  // Podzakázky (dceřiné) + odkaz na hlavní akci.
+  // Podzakázky (dceřiné) + odkaz na hlavní akci. Montáž/Demontáž jsou také
+  // podzakázky (montaz_typ != null) – zobrazíme je zvlášť.
   const { data: podzakazkyData } = await supabase
     .from("zakazky")
-    .select("id, kod, misto_plneni, popis, stav, konec_aktualni")
+    .select("id, kod, misto_plneni, popis, stav, zacatek, konec_aktualni, montaz_typ")
     .eq("parent_id", z.id)
     .is("deleted_at", null)
     .order("kod", { ascending: true });
-  const podzakazky = (podzakazkyData ?? []) as {
+  const vsechnyDeti = (podzakazkyData ?? []) as {
     id: string;
     kod: string;
     misto_plneni: string;
     popis: string | null;
     stav: StavZakazky;
+    zacatek: string;
     konec_aktualni: string;
+    montaz_typ: "MONTAZ" | "DEMONTAZ" | null;
   }[];
-
-  // Montáž / Demontáž záznamy u akce.
-  const { data: montazeData } = await supabase
-    .from("akce_montaz")
-    .select("id, typ, zakazka_ref, popis, datum_od, datum_do")
-    .eq("zakazka_id", z.id)
-    .is("deleted_at", null)
-    .order("created_at", { ascending: true });
-  const montaze: MontazZaznam[] = (montazeData ?? []).map((m) => ({
-    id: m.id,
-    typ: m.typ as MontazZaznam["typ"],
-    zakazkaRef: m.zakazka_ref,
-    popis: m.popis,
-    datumOd: m.datum_od,
-    datumDo: m.datum_do,
-  }));
+  const podzakazky = vsechnyDeti.filter((p) => !p.montaz_typ);
+  const montaze: MontazZaznam[] = vsechnyDeti
+    .filter((p) => p.montaz_typ)
+    .map((p) => ({
+      id: p.id,
+      typ: p.montaz_typ as MontazZaznam["typ"],
+      kod: p.kod,
+      popis: p.popis,
+      zacatek: p.zacatek,
+      konec: p.konec_aktualni,
+      stav: p.stav,
+    }));
 
   let rodic: { id: string; kod: string; odpovedna: { name: string } | null } | null = null;
   if (z.parent_id) {
@@ -131,8 +130,9 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
     .eq("zakazka_id", z.id);
   const faze = (fazeData ?? []) as { typ: string; datum_od: string | null; datum_do: string | null }[];
 
-  // Lidé na akci = přiřazení + odpovědní napříč akcí a jejími zakázkami k akci.
-  const lidiMap = await nacistLidiZakazek(supabase, [z.id, ...podzakazky.map((p) => p.id)]);
+  // Lidé na akci = přiřazení + odpovědní napříč akcí a jejími zakázkami k akci
+  // (včetně montáží/demontáží – ty jsou také podzakázky).
+  const lidiMap = await nacistLidiZakazek(supabase, [z.id, ...vsechnyDeti.map((p) => p.id)]);
   const lideAkce = sjednotitOsoby([lidiMap.get(z.id), ...podzakazky.map((p) => lidiMap.get(p.id))]);
 
   const prirazeni = z.prirazeni

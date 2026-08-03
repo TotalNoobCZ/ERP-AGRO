@@ -491,7 +491,14 @@ function ZakazkaTile({
       className={`rounded-xl border border-line bg-surface p-3 transition ${isOver ? "ring-2 ring-link" : ""}`}
     >
       <button type="button" onClick={onOpen} className="mb-1 block text-left hover:underline">
-        <p className="font-bold">{zakazka.kod}</p>
+        <p className="font-bold">
+          {zakazka.montazTyp && (
+            <span className={`badge mr-1 align-middle ${zakazka.montazTyp === "MONTAZ" ? "bg-sky-100 text-sky-700" : "bg-amber-100 text-amber-700"}`}>
+              {zakazka.montazTyp === "MONTAZ" ? "Montáž" : "Demontáž"}
+            </span>
+          )}
+          {zakazka.kod}
+        </p>
         <p className="text-xs text-text-muted">{zakazka.popis || zakazka.mistoPlneni}</p>
       </button>
       <p className="mb-2 text-[11px] text-text-muted">

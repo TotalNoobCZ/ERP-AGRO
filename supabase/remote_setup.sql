@@ -228,6 +228,7 @@ create table zakazky (
   inquiry_id         uuid references inquiries (id),   -- z jaké poptávky zakázka vznikla
   customer_id        uuid references customers (id),   -- zděděný zákazník
   parent_id          uuid references zakazky (id),     -- hlavní akce (podzakázka → rodič)
+  montaz_typ         text check (montaz_typ in ('MONTAZ','DEMONTAZ')), -- podzakázka montáž/demontáž
 
   created_at         timestamptz not null default now(),
   updated_at         timestamptz not null default now(),

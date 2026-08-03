@@ -871,38 +871,77 @@ export async function smazatPoznamku(poznamkaId: string): Promise<{ ok: boolean;
   return { ok: true };
 }
 
-// ---- Montáž / Demontáž u akce ---------------------------------------------
+// ---- Montáž / Demontáž = zakázka k akci s příznakem typu -------------------
 type MontazVstup = { typ: string; zakazkaRef?: string; popis?: string; od?: string; do?: string };
 
+/**
+ * Založí montáž/demontáž jako zakázku k akci (podzakázku) s montaz_typ – díky
+ * tomu se objeví na Tabuli i v Ganttu a jde jí přiřazovat lidi jako každé
+ * jiné zakázce k akci. Konstrukční podúkol se u ní NEzakládá.
+ */
 export async function pridatMontaz(
-  zakazkaId: string,
+  parentId: string,
   vstup: MontazVstup,
-): Promise<{ ok: boolean; chyba?: string }> {
+): Promise<{ ok: boolean; chyba?: string; id?: string }> {
   const u = await writer();
   if (!u) return { ok: false, chyba: "Nejste přihlášeni nebo nemáte právo zápisu." };
   if (vstup.typ !== "MONTAZ" && vstup.typ !== "DEMONTAZ") {
     return { ok: false, chyba: "Vyberte montáž nebo demontáž." };
   }
   const supabase = await createClient();
-  const { data: z } = await supabase.from("zakazky").select("id, deleted_at").eq("id", zakazkaId).maybeSingle();
-  if (!z || z.deleted_at) return { ok: false, chyba: "Akce nenalezena." };
+  const { data: parent } = await supabase
+    .from("zakazky")
+    .select("id, kod, misto_plneni, zacatek, konec_aktualni, priorita, customer_id, deleted_at")
+    .eq("id", parentId)
+    .maybeSingle();
+  if (!parent || parent.deleted_at) return { ok: false, chyba: "Hlavní akce nenalezena." };
 
   const DEN = /^\d{4}-\d{2}-\d{2}$/;
-  const od = vstup.od && DEN.test(vstup.od) ? vstup.od : null;
-  const doo = vstup.do && DEN.test(vstup.do) ? vstup.do : null;
-  if (od && doo && od > doo) return { ok: false, chyba: "Termín od nesmí být po termínu do." };
+  const zacatek = vstup.od && DEN.test(vstup.od) ? vstup.od : parent.zacatek;
+  const konec = vstup.do && DEN.test(vstup.do) ? vstup.do : parent.konec_aktualni;
+  if (zacatek > konec) return { ok: false, chyba: "Termín od nesmí být po termínu do." };
 
-  const { error } = await supabase.from("akce_montaz").insert({
-    zakazka_id: zakazkaId,
-    typ: vstup.typ,
-    zakazka_ref: vstup.zakazkaRef?.trim() || null,
-    popis: vstup.popis?.trim() || null,
-    datum_od: od,
-    datum_do: doo,
+  const label = vstup.typ === "MONTAZ" ? "Montáž" : "Demontáž";
+  const prefix = vstup.typ === "MONTAZ" ? "M" : "D";
+  const rucni = vstup.zakazkaRef?.trim();
+
+  // Kód podzakázky: buď ruční (pole „Zakázka"), nebo automaticky s pořadím;
+  // při kolizi kódu zkusíme přidat příponu.
+  let child: { id: string } | null = null;
+  for (let pokus = 0; pokus < 6 && !child; pokus++) {
+    const auto = `${parent.kod}-${prefix}${Date.now().toString().slice(-4)}${pokus || ""}`;
+    const kod = rucni ? (pokus === 0 ? rucni : `${rucni} (${pokus})`) : auto;
+    const { data, error } = await supabase
+      .from("zakazky")
+      .insert({
+        kod,
+        misto_plneni: parent.misto_plneni,
+        popis: vstup.popis?.trim() || label,
+        priorita: parent.priorita,
+        zacatek,
+        konec_puvodni: konec,
+        konec_aktualni: konec,
+        parent_id: parentId,
+        customer_id: parent.customer_id,
+        montaz_typ: vstup.typ,
+        zalozil_id: u.id,
+      })
+      .select("id")
+      .single();
+    if (!error && data) { child = data; break; }
+    if (error?.code !== "23505") return { ok: false, chyba: "Uložení se nezdařilo." };
+  }
+  if (!child) return { ok: false, chyba: "Zakázka s tímto označením už existuje – zvol jiné." };
+
+  await zapisAudit(supabase, {
+    entita: "zakazka", entitaId: child.id, typZmeny: "VYTVORENI", uzivatelId: u.id,
+    nova: { kod: rucni || label, montazTyp: vstup.typ, kAkci: parentId },
   });
-  if (error) return { ok: false, chyba: "Uložení se nezdařilo." };
-  revalidatePath(`/zakazky/${zakazkaId}`);
-  return { ok: true };
+  revalidatePath(`/zakazky/${parentId}`);
+  revalidatePath("/zakazky");
+  revalidatePath("/zakazky/tabule");
+  revalidatePath("/zakazky/plan");
+  return { ok: true, id: child.id };
 }
 
 export async function smazatMontaz(id: string): Promise<{ ok: boolean; chyba?: string }> {
@@ -910,10 +949,19 @@ export async function smazatMontaz(id: string): Promise<{ ok: boolean; chyba?: s
   if (!u) return { ok: false, chyba: "Nemáte právo zápisu." };
   const supabase = await createClient();
   const { data: m } = await supabase
-    .from("akce_montaz").select("id, zakazka_id, deleted_at").eq("id", id).maybeSingle();
-  if (!m || m.deleted_at) return { ok: false, chyba: "Záznam nenalezen." };
-  await supabase.from("akce_montaz").update({ deleted_at: new Date().toISOString() }).eq("id", id);
-  revalidatePath(`/zakazky/${m.zakazka_id}`);
+    .from("zakazky").select("id, parent_id, montaz_typ, deleted_at").eq("id", id).maybeSingle();
+  if (!m || m.deleted_at || !m.montaz_typ) return { ok: false, chyba: "Záznam nenalezen." };
+
+  const ted = new Date().toISOString();
+  await supabase.from("prirazeni_zakazka").update({ deleted_at: ted }).eq("zakazka_id", id).is("deleted_at", null);
+  await supabase.from("zakazky").update({ deleted_at: ted }).eq("id", id);
+  await zapisAudit(supabase, {
+    entita: "zakazka", entitaId: id, typZmeny: "SMAZANI", uzivatelId: u.id, puvodni: { montazTyp: m.montaz_typ },
+  });
+  if (m.parent_id) revalidatePath(`/zakazky/${m.parent_id}`);
+  revalidatePath("/zakazky");
+  revalidatePath("/zakazky/tabule");
+  revalidatePath("/zakazky/plan");
   return { ok: true };
 }
 

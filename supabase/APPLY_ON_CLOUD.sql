@@ -210,3 +210,9 @@ create policy akce_montaz_update on public.akce_montaz
 drop policy if exists akce_montaz_delete on public.akce_montaz;
 create policy akce_montaz_delete on public.akce_montaz
   for delete to authenticated using ((select can_write()));
+
+-- ============================================================================
+--  18) Montáž / Demontáž jako zakázka k akci (příznak typu na zakázce)
+-- ============================================================================
+alter table public.zakazky add column if not exists montaz_typ text
+  check (montaz_typ in ('MONTAZ', 'DEMONTAZ'));
