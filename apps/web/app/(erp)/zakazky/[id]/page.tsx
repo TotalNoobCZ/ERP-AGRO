@@ -16,6 +16,7 @@ import {
 } from "../actions";
 import { ProdlouzeniForm, PreruseniForm, PoznamkyAkce, MilnikyEditor } from "@/components/zakazky/formulare";
 import { AkceStavAkce } from "@/components/zakazky/AkceStavAkce";
+import { MontazDemontazEditor, type MontazZaznam } from "@/components/zakazky/MontazDemontazEditor";
 import { SbaliciSekce } from "@/components/SbaliciSekce";
 import Timeline, { type TRadek } from "@/components/zakazky/Timeline";
 import { ZalozitProjekt } from "@/components/konstrukce/ZalozitProjekt";
@@ -96,6 +97,22 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
     stav: StavZakazky;
     konec_aktualni: string;
   }[];
+
+  // Montáž / Demontáž záznamy u akce.
+  const { data: montazeData } = await supabase
+    .from("akce_montaz")
+    .select("id, typ, zakazka_ref, popis, datum_od, datum_do")
+    .eq("zakazka_id", z.id)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: true });
+  const montaze: MontazZaznam[] = (montazeData ?? []).map((m) => ({
+    id: m.id,
+    typ: m.typ as MontazZaznam["typ"],
+    zakazkaRef: m.zakazka_ref,
+    popis: m.popis,
+    datumOd: m.datum_od,
+    datumDo: m.datum_do,
+  }));
 
   let rodic: { id: string; kod: string; odpovedna: { name: string } | null } | null = null;
   if (z.parent_id) {
@@ -369,6 +386,10 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
             poznamka: m.poznamka,
           }))}
         />
+      </SbaliciSekce>
+
+      <SbaliciSekce titul="Montáž / Demontáž" persistKey="zakazka_montaz">
+        <MontazDemontazEditor zakazkaId={z.id} zaznamy={montaze} />
       </SbaliciSekce>
 
       <SbaliciSekce titul="Poznámky" persistKey="zakazka_poznamky">

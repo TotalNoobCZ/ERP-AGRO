@@ -257,6 +257,20 @@ export type AkcePoznamkaRow = {
   deleted_at: string | null;
 }
 
+export type MontazTypDb = "MONTAZ" | "DEMONTAZ";
+
+export type AkceMontazRow = {
+  id: string;
+  zakazka_id: string;
+  typ: MontazTypDb;
+  zakazka_ref: string | null;
+  popis: string | null;
+  datum_od: string | null;
+  datum_do: string | null;
+  created_at: string;
+  deleted_at: string | null;
+}
+
 export type AuditLogRow = {
   id: string;
   entita: string;
@@ -393,6 +407,11 @@ export type Database = {
         AkcePoznamkaRow,
         "zakazka_id" | "uzivatel_id" | "text",
         [Fk<"zakazka_id", "zakazky">, Fk<"uzivatel_id", "profiles">]
+      >;
+      akce_montaz: TableShape<
+        AkceMontazRow,
+        "zakazka_id" | "typ",
+        [Fk<"zakazka_id", "zakazky">]
       >;
       audit_log: TableShape<
         AuditLogRow,
