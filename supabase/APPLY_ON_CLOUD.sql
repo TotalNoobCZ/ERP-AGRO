@@ -166,3 +166,13 @@ where p.owner_id is not null
 --  Adminské čtení jde přes service-role klienta; auth flow (service_role) OK.
 -- ============================================================================
 revoke select (email, poznamka) on public.profiles from anon, authenticated;
+
+-- ============================================================================
+--  16) Nové typy milníků: Montáž, Demontáž, Expedice
+-- ============================================================================
+alter table public.milniky drop constraint if exists milniky_typ_check;
+alter table public.milniky add constraint milniky_typ_check
+  check (typ in (
+    'ZAHAJENI_VYROBY','PREDANI_LAKOVANI','UKONCENI_VYROBY','UKONCENI_LAKOVANI',
+    'MONTAZ','DEMONTAZ','EXPEDICE'
+  ));

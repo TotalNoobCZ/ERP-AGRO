@@ -250,7 +250,7 @@ create table milniky (
   id         uuid primary key default gen_random_uuid(),
   zakazka_id uuid not null references zakazky (id),
   typ        text not null
-               check (typ in ('ZAHAJENI_VYROBY','PREDANI_LAKOVANI','UKONCENI_VYROBY','UKONCENI_LAKOVANI')),
+               check (typ in ('ZAHAJENI_VYROBY','PREDANI_LAKOVANI','UKONCENI_VYROBY','UKONCENI_LAKOVANI','MONTAZ','DEMONTAZ','EXPEDICE')),
   datum      date not null,
   cas        text,                              -- "HH:mm", nepovinné
   poznamka   text,

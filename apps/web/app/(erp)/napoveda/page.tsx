@@ -2,7 +2,7 @@
 // při změnách funkcí aktualizuj tuto stránku i datum níže.
 import type { ReactNode } from "react";
 
-const AKTUALIZOVANO = "24. 7. 2026 (ochrana citlivých údajů: e-mail a poznámka jen pro admina)";
+const AKTUALIZOVANO = "24. 7. 2026 (přiřazení pracovníků od–do / na celou akci; milníky montáž, demontáž, expedice)";
 
 export const dynamic = "force-dynamic";
 
@@ -131,7 +131,8 @@ export default function NapovedaPage() {
       <UL>
         <li><strong>Vznik:</strong> obvykle z objednané poptávky (zdědí zákazníka; <strong>Název akce se předvyplní názvem poptávky</strong> a jde změnit). Nová akce: Název akce, Místo plnění, Začátek, Konec (povinné <Code>*</Code>), priorita.</li>
         <li><strong>Odpovědná osoba</strong> (nepovinná) — jen <strong>Projekťák</strong> nebo role <strong>Vedoucí</strong> (Kancelář ne). Platí <strong>za celou akci včetně podzakázek</strong>, proto se u podzakázek už nezadává (dědí ji z hlavní akce). Na Tabuli přetažení odpovědné osoby na podzakázku nastaví osobu rovnou na hlavní akci.</li>
-        <li><strong>Pracovníci jsou nepovinní</strong> — přiřadíš i později (na Tabuli).</li>
+        <li><strong>Pracovníci jsou nepovinní</strong> — přiřadíš i později (na Tabuli). Při zakládání akce zadáš u každého pracovníka <strong>termín od–do</strong>, nebo zaškrtneš <strong>„Na celou akci"</strong> (přiřadí se na celé trvání akce).</li>
+        <li><strong>Milníky</strong> akce: Zahájení výroby, Předání do lakování, Ukončení výroby, Ukončení lakování, <strong>Montáž, Demontáž, Expedice</strong> (každý s datem a časem).</li>
         <li><strong>Gantt:</strong> „Podle akcí" (posun termínů tažením) a „Podle zaměstnance" s filtrem kapitoly <strong>Dílna / Kancelář / Vše</strong>.</li>
         <li><strong>Tabule (obrácené drag &amp; drop):</strong> vlevo osoby dle kapitol a oddělení (sbalitelné), vpravo zakázky. Přetáhni osobu na zakázku = přiřadíš pracovníka. <strong>Při kolizi termínů</strong> (osoba je už na jiné akci) naskočí <strong>stejné okno s náhradníkem</strong> jako při zakládání akce – stávající akce se osobě rozdělí kolem nového období a na překryv se dosadí náhradník; po vyřešení se osoba přidá. <strong>Dvojklik na osobu</strong> (vlevo i na dlaždici zakázky) otevře její <strong>kartu zaměstnance</strong> (administrátor ji může upravit, ostatní jen prohlížejí).</li>
         <li><strong>Odpovědné osoby</strong> (projekťák / vedoucí) mají vlevo <strong>vlastní skupinu</strong> a na dlaždici zakázky se zobrazují <strong>zvlášť nad pracovníky</strong>. Přetažením projekťáka/vedoucího na zakázku se zaeviduje jako <strong>odpovědná osoba</strong> (ne pracovník); křížkem u ní ji zrušíš.</li>

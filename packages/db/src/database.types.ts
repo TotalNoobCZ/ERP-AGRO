@@ -150,7 +150,10 @@ export type TypMilnikuDb =
   | "ZAHAJENI_VYROBY"
   | "PREDANI_LAKOVANI"
   | "UKONCENI_VYROBY"
-  | "UKONCENI_LAKOVANI";
+  | "UKONCENI_LAKOVANI"
+  | "MONTAZ"
+  | "DEMONTAZ"
+  | "EXPEDICE";
 export type TypZmenyDb = "VYTVORENI" | "UPRAVA" | "SMAZANI" | "PRODLOUZENI" | "ARCHIVACE";
 
 export type ZakazkaRow = {
