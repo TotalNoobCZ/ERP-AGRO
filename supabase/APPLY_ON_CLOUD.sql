@@ -168,11 +168,14 @@ where p.owner_id is not null
 revoke select (email, poznamka) on public.profiles from anon, authenticated;
 
 -- ============================================================================
---  16) Nové typy milníků: Montáž, Demontáž, Expedice
+--  16) Nové typy milníků: Montáž/Demontáž (začátek+konec), Expedice
 -- ============================================================================
 alter table public.milniky drop constraint if exists milniky_typ_check;
+-- přemapování případných starších hodnot MONTAZ/DEMONTAZ na „začátek"
+update public.milniky set typ = 'MONTAZ_ZACATEK'   where typ = 'MONTAZ';
+update public.milniky set typ = 'DEMONTAZ_ZACATEK' where typ = 'DEMONTAZ';
 alter table public.milniky add constraint milniky_typ_check
   check (typ in (
     'ZAHAJENI_VYROBY','PREDANI_LAKOVANI','UKONCENI_VYROBY','UKONCENI_LAKOVANI',
-    'MONTAZ','DEMONTAZ','EXPEDICE'
+    'MONTAZ_ZACATEK','MONTAZ_KONEC','DEMONTAZ_ZACATEK','DEMONTAZ_KONEC','EXPEDICE'
   ));
