@@ -14,7 +14,7 @@ import {
   pridatPoznamku,
   smazatPoznamku,
 } from "@/app/(erp)/zakazky/actions";
-import { MILNIK_LABELS, MILNIK_TYPY_PREDVOLBA, type TypMilniku } from "@erp/core";
+import { MILNIK_LABELS, MILNIK_TYPY_PREDVOLBA, MONTAZ_LABELS, type MontazTyp, type TypMilniku } from "@erp/core";
 import { OsobaSelect, type OsobaLite } from "./common";
 import { DateField } from "@/components/DateField";
 
@@ -43,12 +43,15 @@ export function ZakazkaEditForm({
   zakazka,
   osoby,
   jePodzakazka = false,
+  montazTyp = null,
 }: {
   akce: (prev: ZakazkaStav, fd: FormData) => Promise<ZakazkaStav>;
   zakazka: Init;
   osoby: OsobaLite[];
   /** Podzakázka – odpovědná osoba se řeší u hlavní akce, tady se skryje. */
   jePodzakazka?: boolean;
+  /** Montáž/Demontáž – pole „Název" upravuje popis, ne interní kód. */
+  montazTyp?: MontazTyp | null;
 }) {
   const [stav, formAction] = useActionState<ZakazkaStav, FormData>(akce, {});
   const [odpovedny, setOdpovedny] = useState(zakazka.odpovednaOsobaId ?? "");
@@ -66,9 +69,12 @@ export function ZakazkaEditForm({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className="label">Název akce *</label>
+          <label className="label">{montazTyp ? `Název (${MONTAZ_LABELS[montazTyp]}) *` : "Název akce *"}</label>
           <input name="kod" className="field" value={kod} onChange={(e) => setKod(e.target.value)} required />
           {ch.kod && <p className="err">{ch.kod}</p>}
+          {montazTyp && (
+            <p className="mt-1 text-xs text-text-muted">Interní kód akce se nemění, ukládá se jen tento název.</p>
+          )}
         </div>
         <div>
           <label className="label">Priorita</label>
