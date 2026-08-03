@@ -902,14 +902,22 @@ export async function pridatMontaz(
   if (zacatek > konec) return { ok: false, chyba: "Termín od nesmí být po termínu do." };
 
   const label = vstup.typ === "MONTAZ" ? "Montáž" : "Demontáž";
-  const prefix = vstup.typ === "MONTAZ" ? "M" : "D";
   const rucni = vstup.zakazkaRef?.trim();
 
-  // Kód podzakázky: buď ruční (pole „Zakázka"), nebo automaticky s pořadím;
-  // při kolizi kódu zkusíme přidat příponu.
+  // Pořadové číslo montáže/demontáže dané akce (pro čitelný automatický kód).
+  const { count } = await supabase
+    .from("zakazky")
+    .select("id", { count: "exact", head: true })
+    .eq("parent_id", parentId)
+    .eq("montaz_typ", vstup.typ)
+    .is("deleted_at", null);
+  const zaklad = (count ?? 0) + 1;
+
+  // Kód podzakázky: buď ruční (pole „Zakázka"), nebo čitelný automatický
+  // („<akce> · Montáž 1"); při kolizi kódu zkusíme další pořadí.
   let child: { id: string } | null = null;
   for (let pokus = 0; pokus < 6 && !child; pokus++) {
-    const auto = `${parent.kod}-${prefix}${Date.now().toString().slice(-4)}${pokus || ""}`;
+    const auto = `${parent.kod} · ${label} ${zaklad + pokus}`;
     const kod = rucni ? (pokus === 0 ? rucni : `${rucni} (${pokus})`) : auto;
     const { data, error } = await supabase
       .from("zakazky")

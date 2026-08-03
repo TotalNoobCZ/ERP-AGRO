@@ -65,13 +65,16 @@ export function MontazDemontazEditor({
         {zaznamy.length === 0 && <p className="px-4 py-3 text-sm text-text-muted">Zatím žádná montáž / demontáž.</p>}
         {zaznamy.map((z) => (
           <div key={z.id} className="flex flex-wrap items-center gap-2 px-4 py-2 text-sm">
-            <span className={`badge ${z.typ === "MONTAZ" ? "bg-sky-100 text-sky-700" : "bg-amber-100 text-amber-700"}`}>
-              {MONTAZ_LABELS[z.typ]}
+            <span
+              className={`inline-block rounded-md px-2 py-0.5 text-xs font-bold uppercase tracking-wide ${
+                z.typ === "MONTAZ" ? "bg-sky-600 text-white" : "bg-amber-500 text-white"
+              }`}
+            >
+              {z.typ === "MONTAZ" ? "🔧 Montáž" : "🔩 Demontáž"}
             </span>
-            <Link href={`/zakazky/${z.id}`} className="font-mono font-semibold text-link hover:underline">
-              {z.kod}
+            <Link href={`/zakazky/${z.id}`} className="font-semibold text-link hover:underline">
+              {z.popis || MONTAZ_LABELS[z.typ]}
             </Link>
-            {z.popis && z.popis !== MONTAZ_LABELS[z.typ] && <span className="text-text-muted">{z.popis}</span>}
             <span className="text-text-muted">
               {formatCz(parseDay(z.zacatek))} – {formatCz(parseDay(z.konec))}
             </span>
