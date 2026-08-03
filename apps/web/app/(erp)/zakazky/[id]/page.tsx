@@ -48,11 +48,12 @@ type Detail = {
   ulozeni: string | null;
   deleted_at: string | null;
   parent_id: string | null;
+  montaz_typ: "MONTAZ" | "DEMONTAZ" | null;
   inquiry: { id: string; number: number; subject: string } | null;
   customer: { id: string; name: string } | null;
   odpovedna: { name: string } | null;
   prirazeni: { id: string; osoba_id: string; datum_od: string; datum_do: string; deleted_at: string | null; osoba: { name: string } | null }[];
-  milniky: { id: string; typ: string; datum: string; cas: string | null; poznamka: string | null; deleted_at: string | null }[];
+  milniky: { id: string; typ: string; nazev: string | null; datum: string; cas: string | null; poznamka: string | null; deleted_at: string | null }[];
   prodlouzeni: { id: string; stary_konec: string; novy_konec: string; duvod: string; created_at: string; provedl: { name: string } | null }[];
   poznamky: { id: string; text: string; uzivatel_id: string; created_at: string; deleted_at: string | null; uzivatel: { name: string } | null }[];
   preruseni: { id: string; datum_od: string; datum_do: string | null; zbyvajici_dny: number; duvod: string; created_at: string; prerusil: { name: string } | null; obnovil: { name: string } | null }[];
@@ -65,12 +66,12 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
   const { data } = await supabase
     .from("zakazky")
     .select(
-      `id, kod, misto_plneni, priorita, zacatek, konec_puvodni, konec_aktualni, stav, poznamka, ulozeni, deleted_at, parent_id,
+      `id, kod, misto_plneni, priorita, zacatek, konec_puvodni, konec_aktualni, stav, poznamka, ulozeni, deleted_at, parent_id, montaz_typ,
        inquiry:inquiries(id, number, subject),
        customer:customers(id, name),
        odpovedna:profiles!zakazky_odpovedna_osoba_id_fkey(name),
        prirazeni:prirazeni_zakazka(id, osoba_id, datum_od, datum_do, deleted_at, osoba:profiles(name)),
-       milniky(id, typ, datum, cas, poznamka, deleted_at),
+       milniky(id, typ, nazev, datum, cas, poznamka, deleted_at),
        prodlouzeni(id, stary_konec, novy_konec, duvod, created_at, provedl:profiles!prodlouzeni_provedl_id_fkey(name)),
        poznamky:akce_poznamky(id, text, uzivatel_id, created_at, deleted_at, uzivatel:profiles(name)),
        preruseni(id, datum_od, datum_do, zbyvajici_dny, duvod, created_at,
@@ -378,9 +379,11 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
       <SbaliciSekce titul="Milníky" persistKey="zakazka_milniky">
         <MilnikyEditor
           zakazkaId={z.id}
+          volny={!!z.montaz_typ}
           milniky={milniky.map((m) => ({
             id: m.id,
             typ: m.typ,
+            nazev: m.nazev,
             datum: m.datum,
             cas: m.cas,
             poznamka: m.poznamka,
@@ -388,9 +391,12 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
         />
       </SbaliciSekce>
 
-      <SbaliciSekce titul="Montáž / Demontáž" persistKey="zakazka_montaz">
-        <MontazDemontazEditor zakazkaId={z.id} zaznamy={montaze} />
-      </SbaliciSekce>
+      {/* Montáž / Demontáž se zadává jen u hlavní akce, ne v jejím detailu. */}
+      {!z.montaz_typ && (
+        <SbaliciSekce titul="Montáž / Demontáž" persistKey="zakazka_montaz">
+          <MontazDemontazEditor zakazkaId={z.id} zaznamy={montaze} />
+        </SbaliciSekce>
+      )}
 
       <SbaliciSekce titul="Poznámky" persistKey="zakazka_poznamky">
         <PoznamkyAkce zakazkaId={z.id} poznamky={poznamky} />
@@ -446,10 +452,12 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
       </SbaliciSekce>
 
 
-      {/* Integrace: konstrukční projekty této zakázky */}
-      <SbaliciSekce titul="Konstrukční projekty" persistKey="zakazka_konstrukce">
-        <KonstrukcniProjekty zakazkaId={z.id} />
-      </SbaliciSekce>
+      {/* Integrace: konstrukční projekty této zakázky (ne u montáže/demontáže) */}
+      {!z.montaz_typ && (
+        <SbaliciSekce titul="Konstrukční projekty" persistKey="zakazka_konstrukce">
+          <KonstrukcniProjekty zakazkaId={z.id} />
+        </SbaliciSekce>
+      )}
 
 
       <SbaliciSekce titul="Historie změn" persistKey="zakazka_historie" karta={false}>

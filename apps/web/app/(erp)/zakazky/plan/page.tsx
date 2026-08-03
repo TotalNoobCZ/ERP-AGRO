@@ -68,7 +68,7 @@ type ZakazkaRowT = {
   konec_puvodni: string;
   konec_aktualni: string;
   stav: StavZakazky;
-  milniky: { typ: string; datum: string; deleted_at: string | null }[];
+  milniky: { typ: string; nazev: string | null; datum: string; deleted_at: string | null }[];
   prirazeni: { osoba_id: string; datum_od: string; datum_do: string; deleted_at: string | null; osoba: { name: string } | null }[];
 };
 
@@ -95,7 +95,7 @@ export default async function PlanPage({
       .from("zakazky")
       .select(
         `id, kod, misto_plneni, popis, parent_id, montaz_typ, zacatek, konec_puvodni, konec_aktualni, stav,
-         milniky(typ, datum, deleted_at),
+         milniky(typ, nazev, datum, deleted_at),
          prirazeni:prirazeni_zakazka(osoba_id, datum_od, datum_do, deleted_at, osoba:profiles(name))`,
       )
       .is("deleted_at", null)
@@ -167,7 +167,7 @@ export default async function PlanPage({
           ...milniky.map((m) => ({
             datum: parseDay(m.datum),
             barva: m.typ.includes("LAKOVANI") ? BARVA.lakovani : BARVA.vyroba,
-            titulek: MILNIK_LABELS[m.typ as TypMilniku] ?? m.typ,
+            titulek: m.nazev?.trim() || MILNIK_LABELS[m.typ as TypMilniku] || m.typ,
           })),
         ],
         podradky: Array.from(podleOsoby.values()),

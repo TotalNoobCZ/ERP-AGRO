@@ -765,7 +765,7 @@ export async function smazatZakazku(zakazkaId: string, _fd?: FormData) {
 }
 
 // ---- Milníky --------------------------------------------------------------
-type MilnikVstup = { typ: string; datum: string; cas?: string; poznamka?: string };
+type MilnikVstup = { typ: string; nazev?: string; datum: string; cas?: string; poznamka?: string };
 type MilnikVysledek = { ok: boolean; chyba?: string };
 
 export async function pridatMilnik(zakazkaId: string, vstup: MilnikVstup): Promise<MilnikVysledek> {
@@ -776,19 +776,24 @@ export async function pridatMilnik(zakazkaId: string, vstup: MilnikVstup): Promi
   const parsed = milnikSchema.safeParse(vstup);
   if (!parsed.success) return { ok: false, chyba: parsed.error.issues[0]?.message ?? "Neplatné údaje." };
   const d = parsed.data;
+  const nazev = d.nazev?.trim() || null;
+  if (d.typ === "VLASTNI" && !nazev) return { ok: false, chyba: "Zadejte název milníku." };
 
-  const { data: existuje } = await supabase
-    .from("milniky").select("id").eq("zakazka_id", zakazkaId).eq("typ", d.typ).is("deleted_at", null).maybeSingle();
-  if (existuje) return { ok: false, chyba: "Tento typ milníku už u akce je." };
+  // Předvolený typ může být u akce jen jednou; vlastní (VLASTNI) se může opakovat.
+  if (d.typ !== "VLASTNI") {
+    const { data: existuje } = await supabase
+      .from("milniky").select("id").eq("zakazka_id", zakazkaId).eq("typ", d.typ).is("deleted_at", null).maybeSingle();
+    if (existuje) return { ok: false, chyba: "Tento typ milníku už u akce je." };
+  }
 
   const { data: m, error } = await supabase
     .from("milniky")
-    .insert({ zakazka_id: zakazkaId, typ: d.typ, datum: d.datum, cas: d.cas || null, poznamka: d.poznamka || null })
+    .insert({ zakazka_id: zakazkaId, typ: d.typ, nazev, datum: d.datum, cas: d.cas || null, poznamka: d.poznamka || null })
     .select("id")
     .single();
   if (error || !m) return { ok: false, chyba: "Uložení se nezdařilo." };
 
-  await zapisAudit(supabase, { entita: "milnik", entitaId: m.id, typZmeny: "VYTVORENI", uzivatelId: u.id, nova: { typ: d.typ, datum: d.datum } });
+  await zapisAudit(supabase, { entita: "milnik", entitaId: m.id, typZmeny: "VYTVORENI", uzivatelId: u.id, nova: { typ: d.typ, nazev, datum: d.datum } });
   revalidatePath(`/zakazky/${zakazkaId}`);
   revalidatePath("/zakazky/plan");
   return { ok: true };
@@ -806,8 +811,10 @@ export async function upravitMilnik(milnikId: string, vstup: MilnikVstup): Promi
   const parsed = milnikSchema.safeParse(vstup);
   if (!parsed.success) return { ok: false, chyba: parsed.error.issues[0]?.message ?? "Neplatné údaje." };
   const d = parsed.data;
+  const nazev = d.nazev?.trim() || null;
+  if (d.typ === "VLASTNI" && !nazev) return { ok: false, chyba: "Zadejte název milníku." };
 
-  if (d.typ !== m.typ) {
+  if (d.typ !== "VLASTNI" && d.typ !== m.typ) {
     const { data: kolize } = await supabase
       .from("milniky").select("id")
       .eq("zakazka_id", m.zakazka_id).eq("typ", d.typ).is("deleted_at", null).neq("id", milnikId).maybeSingle();
@@ -815,9 +822,9 @@ export async function upravitMilnik(milnikId: string, vstup: MilnikVstup): Promi
   }
 
   await supabase.from("milniky")
-    .update({ typ: d.typ, datum: d.datum, cas: d.cas || null, poznamka: d.poznamka || null })
+    .update({ typ: d.typ, nazev, datum: d.datum, cas: d.cas || null, poznamka: d.poznamka || null })
     .eq("id", milnikId);
-  await zapisAudit(supabase, { entita: "milnik", entitaId: milnikId, typZmeny: "UPRAVA", uzivatelId: u.id, nova: { typ: d.typ, datum: d.datum } });
+  await zapisAudit(supabase, { entita: "milnik", entitaId: milnikId, typZmeny: "UPRAVA", uzivatelId: u.id, nova: { typ: d.typ, nazev, datum: d.datum } });
   revalidatePath(`/zakazky/${m.zakazka_id}`);
   revalidatePath("/zakazky/plan");
   return { ok: true };

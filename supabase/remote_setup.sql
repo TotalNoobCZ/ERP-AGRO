@@ -251,7 +251,8 @@ create table milniky (
   id         uuid primary key default gen_random_uuid(),
   zakazka_id uuid not null references zakazky (id),
   typ        text not null
-               check (typ in ('ZAHAJENI_VYROBY','PREDANI_LAKOVANI','UKONCENI_VYROBY','UKONCENI_LAKOVANI','MONTAZ_ZACATEK','MONTAZ_KONEC','DEMONTAZ_ZACATEK','DEMONTAZ_KONEC','EXPEDICE')),
+               check (typ in ('ZAHAJENI_VYROBY','PREDANI_LAKOVANI','UKONCENI_VYROBY','UKONCENI_LAKOVANI','MONTAZ_ZACATEK','MONTAZ_KONEC','DEMONTAZ_ZACATEK','DEMONTAZ_KONEC','EXPEDICE','VLASTNI')),
+  nazev      text,                              -- vlastní název milníku (typ VLASTNI)
   datum      date not null,
   cas        text,                              -- "HH:mm", nepovinné
   poznamka   text,

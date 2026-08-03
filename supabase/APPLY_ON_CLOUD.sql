@@ -216,3 +216,15 @@ create policy akce_montaz_delete on public.akce_montaz
 -- ============================================================================
 alter table public.zakazky add column if not exists montaz_typ text
   check (montaz_typ in ('MONTAZ', 'DEMONTAZ'));
+
+-- ============================================================================
+--  19) Volné milníky (vlastní název) – hlavně montáž/demontáž
+-- ============================================================================
+alter table public.milniky add column if not exists nazev text;
+alter table public.milniky drop constraint if exists milniky_typ_check;
+alter table public.milniky add constraint milniky_typ_check
+  check (typ in (
+    'ZAHAJENI_VYROBY','PREDANI_LAKOVANI','UKONCENI_VYROBY','UKONCENI_LAKOVANI',
+    'MONTAZ_ZACATEK','MONTAZ_KONEC','DEMONTAZ_ZACATEK','DEMONTAZ_KONEC','EXPEDICE',
+    'VLASTNI'
+  ));

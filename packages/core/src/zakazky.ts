@@ -32,8 +32,12 @@ export const MILNIK_TYPY = [
   "DEMONTAZ_ZACATEK",
   "DEMONTAZ_KONEC",
   "EXPEDICE",
+  "VLASTNI",
 ] as const;
 export type TypMilniku = (typeof MILNIK_TYPY)[number];
+
+/** Předvolené typy do výběru (bez „VLASTNI" – to je jen volný název). */
+export const MILNIK_TYPY_PREDVOLBA = MILNIK_TYPY.filter((t) => t !== "VLASTNI");
 
 export const MILNIK_LABELS: Record<TypMilniku, string> = {
   ZAHAJENI_VYROBY: "Zahájení výroby",
@@ -45,6 +49,7 @@ export const MILNIK_LABELS: Record<TypMilniku, string> = {
   DEMONTAZ_ZACATEK: "Demontáž – začátek",
   DEMONTAZ_KONEC: "Demontáž – konec",
   EXPEDICE: "Expedice",
+  VLASTNI: "Vlastní",
 };
 
 export const TYP_ZMENY = ["VYTVORENI", "UPRAVA", "SMAZANI", "PRODLOUZENI", "ARCHIVACE"] as const;

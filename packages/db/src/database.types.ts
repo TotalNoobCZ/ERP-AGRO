@@ -155,7 +155,8 @@ export type TypMilnikuDb =
   | "MONTAZ_KONEC"
   | "DEMONTAZ_ZACATEK"
   | "DEMONTAZ_KONEC"
-  | "EXPEDICE";
+  | "EXPEDICE"
+  | "VLASTNI";
 export type TypZmenyDb = "VYTVORENI" | "UPRAVA" | "SMAZANI" | "PRODLOUZENI" | "ARCHIVACE";
 
 export type ZakazkaRow = {
@@ -201,6 +202,7 @@ export type MilnikRow = {
   id: string;
   zakazka_id: string;
   typ: TypMilnikuDb;
+  nazev: string | null;
   datum: string;
   cas: string | null;
   poznamka: string | null;

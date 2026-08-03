@@ -15,6 +15,7 @@ export default async function KonstrukcePage() {
       .from("zakazky")
       .select("id, kod, misto_plneni")
       .is("deleted_at", null)
+      .is("montaz_typ", null)
       .neq("stav", "ARCHIV")
       .order("kod", { ascending: true }),
   ]);

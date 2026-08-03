@@ -14,7 +14,7 @@ import {
   pridatPoznamku,
   smazatPoznamku,
 } from "@/app/(erp)/zakazky/actions";
-import { MILNIK_LABELS, MILNIK_TYPY, type TypMilniku } from "@erp/core";
+import { MILNIK_LABELS, MILNIK_TYPY_PREDVOLBA, type TypMilniku } from "@erp/core";
 import { OsobaSelect, type OsobaLite } from "./common";
 import { DateField } from "@/components/DateField";
 
@@ -257,20 +257,35 @@ export function PoznamkyAkce({ zakazkaId, poznamky }: { zakazkaId: string; pozna
 // ---------- Milníky ----------
 const barva = (t: string) => (t.includes("LAKOVANI") ? "text-purple-500" : "text-orange-500");
 
-type Milnik = { id: string; typ: string; datum: string; cas: string | null; poznamka: string | null };
-type MilnikFormData = { typ: string; datum: string; cas: string; poznamka: string };
+type Milnik = { id: string; typ: string; nazev: string | null; datum: string; cas: string | null; poznamka: string | null };
+type MilnikFormData = { typ: string; nazev: string; datum: string; cas: string; poznamka: string };
 
-const PRAZDNY: MilnikFormData = { typ: "ZAHAJENI_VYROBY", datum: "", cas: "", poznamka: "" };
+const PRAZDNY: MilnikFormData = { typ: "ZAHAJENI_VYROBY", nazev: "", datum: "", cas: "", poznamka: "" };
+// U montáže / demontáže píšeme jen vlastní názvy milníků (žádná předvolba).
+const PRAZDNY_VLASTNI: MilnikFormData = { typ: "VLASTNI", nazev: "", datum: "", cas: "", poznamka: "" };
+
+/** Popisek milníku – u vlastního bereme napsaný název, jinak předvolený label. */
+const milnikPopisek = (typ: string, nazev: string | null) =>
+  nazev?.trim() || MILNIK_LABELS[typ as TypMilniku] || typ;
 
 // Mimo hlavní komponentu, aby pole při psaní neztrácela fokus.
-function PoleMilniku({ f, set }: { f: MilnikFormData; set: (f: MilnikFormData) => void }) {
+function PoleMilniku({ f, set, volny }: { f: MilnikFormData; set: (f: MilnikFormData) => void; volny?: boolean }) {
   return (
     <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-      <select className="field" value={f.typ} onChange={(e) => set({ ...f, typ: e.target.value })}>
-        {MILNIK_TYPY.map((t) => (
-          <option key={t} value={t}>{MILNIK_LABELS[t as TypMilniku]}</option>
-        ))}
-      </select>
+      {volny ? (
+        <input
+          className="field"
+          placeholder="Název milníku"
+          value={f.nazev}
+          onChange={(e) => set({ ...f, nazev: e.target.value })}
+        />
+      ) : (
+        <select className="field" value={f.typ} onChange={(e) => set({ ...f, typ: e.target.value })}>
+          {MILNIK_TYPY_PREDVOLBA.map((t) => (
+            <option key={t} value={t}>{MILNIK_LABELS[t as TypMilniku]}</option>
+          ))}
+        </select>
+      )}
       <DateField value={f.datum} onChange={(v) => set({ ...f, datum: v })} />
       <input type="time" className="field" value={f.cas} onChange={(e) => set({ ...f, cas: e.target.value })} />
       <input className="field" placeholder="Poznámka" value={f.poznamka} onChange={(e) => set({ ...f, poznamka: e.target.value })} />
@@ -278,13 +293,14 @@ function PoleMilniku({ f, set }: { f: MilnikFormData; set: (f: MilnikFormData) =
   );
 }
 
-export function MilnikyEditor({ zakazkaId, milniky }: { zakazkaId: string; milniky: Milnik[] }) {
+export function MilnikyEditor({ zakazkaId, milniky, volny }: { zakazkaId: string; milniky: Milnik[]; volny?: boolean }) {
   const router = useRouter();
+  const prazdny = volny ? PRAZDNY_VLASTNI : PRAZDNY;
   const [editId, setEditId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [chyba, setChyba] = useState<string | null>(null);
-  const [novy, setNovy] = useState<MilnikFormData>(PRAZDNY);
-  const [edit, setEdit] = useState<MilnikFormData>(PRAZDNY);
+  const [novy, setNovy] = useState<MilnikFormData>(prazdny);
+  const [edit, setEdit] = useState<MilnikFormData>(prazdny);
 
   async function pridat() {
     setChyba(null);
@@ -292,13 +308,13 @@ export function MilnikyEditor({ zakazkaId, milniky }: { zakazkaId: string; milni
     const res = await pridatMilnik(zakazkaId, novy);
     setBusy(false);
     if (!res.ok) return setChyba(res.chyba ?? "Chyba.");
-    setNovy(PRAZDNY);
+    setNovy(prazdny);
     router.refresh();
   }
   function zacitUpravu(m: Milnik) {
     setChyba(null);
     setEditId(m.id);
-    setEdit({ typ: m.typ, datum: m.datum, cas: m.cas ?? "", poznamka: m.poznamka ?? "" });
+    setEdit({ typ: m.typ, nazev: m.nazev ?? "", datum: m.datum, cas: m.cas ?? "", poznamka: m.poznamka ?? "" });
   }
   async function ulozitUpravu(id: string) {
     setChyba(null);
@@ -327,7 +343,7 @@ export function MilnikyEditor({ zakazkaId, milniky }: { zakazkaId: string; milni
         {milniky.map((m) =>
           editId === m.id ? (
             <div key={m.id} className="space-y-2 px-4 py-3">
-              <PoleMilniku f={edit} set={setEdit} />
+              <PoleMilniku f={edit} set={setEdit} volny={volny} />
               <div className="flex gap-2">
                 <button className="btn-primary" disabled={busy} onClick={() => ulozitUpravu(m.id)}>
                   {busy ? "Ukládám…" : "Uložit"}
@@ -337,7 +353,7 @@ export function MilnikyEditor({ zakazkaId, milniky }: { zakazkaId: string; milni
             </div>
           ) : (
             <div key={m.id} className="flex items-center gap-3 px-4 py-2 text-sm">
-              <span className={`font-medium ${barva(m.typ)}`}>{MILNIK_LABELS[m.typ as TypMilniku] ?? m.typ}</span>
+              <span className={`font-medium ${barva(m.typ)}`}>{milnikPopisek(m.typ, m.nazev)}</span>
               <span className="text-text-muted">{m.datum}{m.cas ? ` ${m.cas}` : ""}</span>
               {m.poznamka && <span className="text-text-muted">— {m.poznamka}</span>}
               <span className="ml-auto flex gap-2">
@@ -351,8 +367,8 @@ export function MilnikyEditor({ zakazkaId, milniky }: { zakazkaId: string; milni
 
       <div className="card mt-3 space-y-2 p-4">
         <p className="text-sm font-medium text-text-muted">Přidat milník</p>
-        <PoleMilniku f={novy} set={setNovy} />
-        <button className="btn-primary" disabled={busy || !novy.datum} onClick={pridat}>
+        <PoleMilniku f={novy} set={setNovy} volny={volny} />
+        <button className="btn-primary" disabled={busy || !novy.datum || (volny && !novy.nazev.trim())} onClick={pridat}>
           {busy ? "Přidávám…" : "Přidat milník"}
         </button>
       </div>
