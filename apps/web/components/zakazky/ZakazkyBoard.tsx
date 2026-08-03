@@ -488,11 +488,26 @@ function ZakazkaTile({
   return (
     <div
       ref={setNodeRef}
-      className={`rounded-xl border border-line bg-surface p-3 transition ${isOver ? "ring-2 ring-link" : ""}`}
+      className={`rounded-xl border p-3 transition ${isOver ? "ring-2 ring-link" : ""} ${
+        zakazka.montazTyp === "MONTAZ"
+          ? "border-sky-300 bg-sky-50"
+          : zakazka.montazTyp === "DEMONTAZ"
+            ? "border-amber-300 bg-amber-50"
+            : "border-line bg-surface"
+      }`}
     >
       <button type="button" onClick={onOpen} className="mb-1 block text-left hover:underline">
-        <p className="font-bold">{zakazka.kod}</p>
-        <p className="text-xs text-text-muted">{zakazka.popis || zakazka.mistoPlneni}</p>
+        {zakazka.montazTyp && (
+          <span
+            className={`mb-1 inline-block rounded-md px-2 py-0.5 text-xs font-bold uppercase tracking-wide ${
+              zakazka.montazTyp === "MONTAZ" ? "bg-sky-600 text-white" : "bg-amber-500 text-white"
+            }`}
+          >
+            {zakazka.montazTyp === "MONTAZ" ? "🔧 Montáž" : "🔩 Demontáž"}
+          </span>
+        )}
+        <p className="font-bold">{zakazka.montazTyp ? zakazka.popis || zakazka.mistoPlneni : zakazka.kod}</p>
+        <p className="text-xs text-text-muted">{zakazka.montazTyp ? zakazka.mistoPlneni : zakazka.popis || zakazka.mistoPlneni}</p>
       </button>
       <p className="mb-2 text-[11px] text-text-muted">
         {formatDen(zakazka.zacatek)} – {formatDen(zakazka.konecAktualni)}

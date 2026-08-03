@@ -155,7 +155,8 @@ export type TypMilnikuDb =
   | "MONTAZ_KONEC"
   | "DEMONTAZ_ZACATEK"
   | "DEMONTAZ_KONEC"
-  | "EXPEDICE";
+  | "EXPEDICE"
+  | "VLASTNI";
 export type TypZmenyDb = "VYTVORENI" | "UPRAVA" | "SMAZANI" | "PRODLOUZENI" | "ARCHIVACE";
 
 export type ZakazkaRow = {
@@ -176,6 +177,7 @@ export type ZakazkaRow = {
   inquiry_id: string | null;
   customer_id: string | null;
   parent_id: string | null;
+  montaz_typ: MontazTypDb | null;
   popis: string | null;
   ulozeni: string | null;
   created_at: string;
@@ -200,6 +202,7 @@ export type MilnikRow = {
   id: string;
   zakazka_id: string;
   typ: TypMilnikuDb;
+  nazev: string | null;
   datum: string;
   cas: string | null;
   poznamka: string | null;

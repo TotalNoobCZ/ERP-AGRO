@@ -1,6 +1,9 @@
 "use client";
-// Montáž / Demontáž u akce: výběr typu + nepovinná zakázka, popis a termín od–do.
+// Montáž / Demontáž = zakázka k akci s příznakem typu. Přidání vytvoří
+// podzakázku (objeví se na Tabuli i Ganttu, jde jí přiřazovat lidi). Seznam
+// odkazuje na detail podzakázky, kde se řeší pracovníci, termíny atd.
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { DateField } from "@/components/DateField";
 import { pridatMontaz, smazatMontaz } from "@/app/(erp)/zakazky/actions";
@@ -10,10 +13,11 @@ import { parseDay, formatCz } from "@/lib/zakazky/dates";
 export type MontazZaznam = {
   id: string;
   typ: MontazTyp;
-  zakazkaRef: string | null;
+  kod: string;
   popis: string | null;
-  datumOd: string | null;
-  datumDo: string | null;
+  zacatek: string;
+  konec: string;
+  stav: string;
 };
 
 export function MontazDemontazEditor({
@@ -46,43 +50,38 @@ export function MontazDemontazEditor({
   }
 
   async function smazat(id: string) {
-    if (!window.confirm("Smazat záznam?")) return;
+    if (!window.confirm("Smazat tuto montáž / demontáž?")) return;
     setBusy(true);
     await smazatMontaz(id);
     setBusy(false);
     router.refresh();
   }
 
-  const termin = (z: MontazZaznam) => {
-    const o = z.datumOd ? formatCz(parseDay(z.datumOd)) : null;
-    const d = z.datumDo ? formatCz(parseDay(z.datumDo)) : null;
-    if (o && d) return `${o} – ${d}`;
-    if (o) return `od ${o}`;
-    if (d) return `do ${d}`;
-    return null;
-  };
-
   return (
     <>
       {chyba && <p className="err mb-2">{chyba}</p>}
 
       <div className="card divide-y divide-line">
-        {zaznamy.length === 0 && <p className="px-4 py-3 text-sm text-text-muted">Zatím žádné záznamy.</p>}
+        {zaznamy.length === 0 && <p className="px-4 py-3 text-sm text-text-muted">Zatím žádná montáž / demontáž.</p>}
         {zaznamy.map((z) => (
           <div key={z.id} className="flex flex-wrap items-center gap-2 px-4 py-2 text-sm">
             <span
-              className={`badge ${z.typ === "MONTAZ" ? "bg-sky-100 text-sky-700" : "bg-amber-100 text-amber-700"}`}
+              className={`inline-block rounded-md px-2 py-0.5 text-xs font-bold uppercase tracking-wide ${
+                z.typ === "MONTAZ" ? "bg-sky-600 text-white" : "bg-amber-500 text-white"
+              }`}
             >
-              {MONTAZ_LABELS[z.typ]}
+              {z.typ === "MONTAZ" ? "🔧 Montáž" : "🔩 Demontáž"}
             </span>
-            {z.zakazkaRef && <span className="font-medium">{z.zakazkaRef}</span>}
-            {z.popis && <span className="text-text-muted">{z.popis}</span>}
-            {termin(z) && <span className="text-text-muted">· {termin(z)}</span>}
-            <button
-              type="button"
-              onClick={() => smazat(z.id)}
-              className="ml-auto text-red-500 hover:underline"
-            >
+            <Link href={`/zakazky/${z.id}`} className="font-semibold text-link hover:underline">
+              {z.popis || MONTAZ_LABELS[z.typ]}
+            </Link>
+            <span className="text-text-muted">
+              {formatCz(parseDay(z.zacatek))} – {formatCz(parseDay(z.konec))}
+            </span>
+            <Link href={`/zakazky/${z.id}`} className="ml-auto text-xs text-link hover:underline">
+              Přiřadit lidi →
+            </Link>
+            <button type="button" onClick={() => smazat(z.id)} className="text-xs text-red-500 hover:underline">
               Smazat
             </button>
           </div>
@@ -102,7 +101,7 @@ export function MontazDemontazEditor({
           </div>
           <div>
             <label className="label">Zakázka</label>
-            <input className="field" value={zakazkaRef} onChange={(e) => setZakazkaRef(e.target.value)} placeholder="nepovinné" />
+            <input className="field" value={zakazkaRef} onChange={(e) => setZakazkaRef(e.target.value)} placeholder="označení (nepovinné)" />
           </div>
         </div>
         <div>
@@ -119,6 +118,10 @@ export function MontazDemontazEditor({
             <DateField value={doo} onChange={setDoo} />
           </div>
         </div>
+        <p className="text-xs text-text-muted">
+          Vytvoří se jako zakázka k akci – objeví se na Tabuli i Ganttu a přiřadíš jí lidi jako ostatním zakázkám k akci.
+          Prázdné termíny převezmou rozsah akce.
+        </p>
         <button className="btn-primary" disabled={busy} onClick={pridat}>
           {busy ? "Přidávám…" : "Přidat"}
         </button>

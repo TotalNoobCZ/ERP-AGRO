@@ -1,7 +1,7 @@
 // Validace modulu Zakázky – převzato 1:1 z Planovani/src/lib/validations.ts
 // (jen část Osoba nahrazena validací profilu ve Správě).
 import { z } from "zod";
-import { jeDilna } from "@erp/core";
+import { jeDilna, MILNIK_TYPY } from "@erp/core";
 
 const denRegex = /^\d{4}-\d{2}-\d{2}$/;
 const den = z.string().regex(denRegex, "Zadejte datum ve tvaru RRRR-MM-DD");
@@ -62,7 +62,8 @@ export const prodlouzeniSchema = z.object({
 });
 
 export const milnikSchema = z.object({
-  typ: z.enum(["ZAHAJENI_VYROBY", "PREDANI_LAKOVANI", "UKONCENI_VYROBY", "UKONCENI_LAKOVANI"]),
+  typ: z.enum(MILNIK_TYPY),
+  nazev: z.string().trim().optional(),
   datum: den,
   cas: z
     .string()

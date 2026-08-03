@@ -105,6 +105,7 @@ export type BoardZakazka = {
   mistoPlneni: string;
   popis: string | null;
   parentId: string | null;
+  montazTyp: "MONTAZ" | "DEMONTAZ" | null;
   zacatek: string;
   konecAktualni: string;
   odpovednaOsobaId: string | null;
@@ -128,7 +129,7 @@ export async function queryZakazkyBoard(
     supabase
       .from("zakazky")
       .select(
-        "id, kod, misto_plneni, popis, parent_id, zacatek, konec_aktualni, odpovedna_osoba_id, " +
+        "id, kod, misto_plneni, popis, parent_id, montaz_typ, zacatek, konec_aktualni, odpovedna_osoba_id, " +
           "odpovedna:profiles!zakazky_odpovedna_osoba_id_fkey(id, name, color_index), " +
           "prirazeni:prirazeni_zakazka(id, osoba_id, deleted_at, osoba:profiles(id, name, oddeleni, color_index))",
       )
@@ -151,6 +152,7 @@ export async function queryZakazkyBoard(
     misto_plneni: string;
     popis: string | null;
     parent_id: string | null;
+    montaz_typ: "MONTAZ" | "DEMONTAZ" | null;
     zacatek: string;
     konec_aktualni: string;
     odpovedna_osoba_id: string | null;
@@ -190,6 +192,7 @@ export async function queryZakazkyBoard(
       mistoPlneni: z.misto_plneni,
       popis: z.popis,
       parentId: z.parent_id,
+      montazTyp: z.montaz_typ,
       zacatek: z.zacatek,
       konecAktualni: z.konec_aktualni,
       odpovednaOsobaId: z.odpovedna_osoba_id,

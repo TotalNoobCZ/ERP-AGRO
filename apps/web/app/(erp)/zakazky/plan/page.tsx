@@ -61,12 +61,14 @@ type ZakazkaRowT = {
   id: string;
   kod: string;
   misto_plneni: string;
+  popis: string | null;
   parent_id: string | null;
+  montaz_typ: "MONTAZ" | "DEMONTAZ" | null;
   zacatek: string;
   konec_puvodni: string;
   konec_aktualni: string;
   stav: StavZakazky;
-  milniky: { typ: string; datum: string; deleted_at: string | null }[];
+  milniky: { typ: string; nazev: string | null; datum: string; deleted_at: string | null }[];
   prirazeni: { osoba_id: string; datum_od: string; datum_do: string; deleted_at: string | null; osoba: { name: string } | null }[];
 };
 
@@ -92,8 +94,8 @@ export default async function PlanPage({
     const { data } = await supabase
       .from("zakazky")
       .select(
-        `id, kod, misto_plneni, parent_id, zacatek, konec_puvodni, konec_aktualni, stav,
-         milniky(typ, datum, deleted_at),
+        `id, kod, misto_plneni, popis, parent_id, montaz_typ, zacatek, konec_puvodni, konec_aktualni, stav,
+         milniky(typ, nazev, datum, deleted_at),
          prirazeni:prirazeni_zakazka(osoba_id, datum_od, datum_do, deleted_at, osoba:profiles(name))`,
       )
       .is("deleted_at", null)
@@ -136,9 +138,11 @@ export default async function PlanPage({
         });
       }
 
+      const montazPredpona = z.montaz_typ === "MONTAZ" ? "🔧 Montáž: " : z.montaz_typ === "DEMONTAZ" ? "🔩 Demontáž: " : "";
+      const nazev = z.montaz_typ ? z.popis || (z.montaz_typ === "MONTAZ" ? "Montáž" : "Demontáž") : z.kod;
       return {
         id: z.id,
-        label: z.kod,
+        label: `${montazPredpona}${nazev}`,
         sublabel: z.misto_plneni,
         datum: `${formatCz(parseDay(z.zacatek))} – ${formatCz(parseDay(z.konec_aktualni))}`,
         href: `/zakazky/${z.id}`,
@@ -149,9 +153,9 @@ export default async function PlanPage({
             do: parseDay(z.konec_aktualni),
             lane: 0,
             barva: barvaZakazky(stavova),
-            label: z.kod,
+            label: nazev,
             href: `/zakazky/${z.id}`,
-            titulek: `${z.kod} — ${z.misto_plneni}`,
+            titulek: `${nazev} — ${z.misto_plneni}`,
             // drag & drop: posun termínů tažením (jen pro editory)
             ...(writer ? { dragId: z.id, resizable: true } : {}),
           },
@@ -163,7 +167,7 @@ export default async function PlanPage({
           ...milniky.map((m) => ({
             datum: parseDay(m.datum),
             barva: m.typ.includes("LAKOVANI") ? BARVA.lakovani : BARVA.vyroba,
-            titulek: MILNIK_LABELS[m.typ as TypMilniku] ?? m.typ,
+            titulek: m.nazev?.trim() || MILNIK_LABELS[m.typ as TypMilniku] || m.typ,
           })),
         ],
         podradky: Array.from(podleOsoby.values()),

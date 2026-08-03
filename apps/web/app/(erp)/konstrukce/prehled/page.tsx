@@ -21,6 +21,7 @@ export default async function KonstrukcePrehled() {
     .from("zakazky")
     .select("id, kod, popis, misto_plneni, parent_id, zacatek, konec_aktualni")
     .is("deleted_at", null)
+    .is("montaz_typ", null)
     .in("stav", ["AKTIVNI", "POZASTAVENO"])
     .order("konec_aktualni", { ascending: true });
   const zak = (zData ?? []) as {
