@@ -91,21 +91,54 @@ $$;
 --  e-mail, odpovědná osoba, přijato (RRRR-MM-DD), stav, [termín])
 -- ============================================================================
 
--- >>> POPTÁVKA (příklad – uprav nebo smaž)
+-- #102
 select pg_temp.seed_poptavka(
-  'Předmět poptávky',                 -- subject
-  'Název zákazníka s.r.o.',           -- zákazník
-  'Jan Novák',                        -- kontaktní osoba
-  '777 123 456',                      -- telefon
-  'jan.novak@firma.cz',               -- e-mail
-  'HARANT Kryštof',                   -- odpovědná osoba (přesné jméno z profilů) nebo NULL
-  '2026-08-03',                       -- přijato
-  'NOVA'                              -- stav
-  -- , '2026-09-15'                   -- (nepovinný) termín
+  'Drtič', 'Plasma Chemical Technologies Department',
+  'Jakub Pilař', '266 052 078', 'pilar@ipp.cas.cz',
+  'HARANT Kryštof', '2026-08-03', 'NOVA'
 );
 
--- >>> POPTÁVKA
--- select pg_temp.seed_poptavka('…', '…', '…', '…', '…', '…', '2026-08-03', 'ODESLANA');
+-- #101
+select pg_temp.seed_poptavka(
+  'síto HS 80', 'TITAN',
+  'Ahmed Mansour', '+20 120 090 806 5', 'Ahmed.Mansour@titan.com.eg',
+  'HARANT Kryštof', '2026-08-03', 'NOVA'
+);
+
+-- #100
+select pg_temp.seed_poptavka(
+  'hvězdicový separátor', 'Melkov-WH',
+  null, null, null,
+  'JEDLIČKA Kamil', '2026-08-03', 'ODESLANA'
+);
+
+-- #99
+select pg_temp.seed_poptavka(
+  'drtič -staré popt. č.62', 'Kamiddos',
+  'Kamil Petík', '777 261 519', 'petik@kamiddos.cz',
+  'JELÍNEK Pavel', '2026-04-30', 'ODESLANA'
+);
+
+-- #98
+select pg_temp.seed_poptavka(
+  'hvězdicové síto', 'Qlar Czech s.r.o.',
+  'Petr Rohlena', '775 409 049', 'p.rohlena@qlar.com',
+  'JEDLIČKA Kamil', '2026-07-23', 'ODESLANA'
+);
+
+-- #97
+select pg_temp.seed_poptavka(
+  'hvězdicový separátor', 'Qlar Czech s.r.o.',
+  'Petr Rohlena', '775 409 049', 'p.rohlena@qlar.com',
+  'JEDLIČKA Kamil', '2026-07-23', 'ODESLANA'
+);
+
+-- #96
+select pg_temp.seed_poptavka(
+  'hvězdicový separátor', 'Qlar',
+  null, null, null,
+  'JEDLIČKA Kamil', '2026-07-23', 'ODESLANA'
+);
 
 
 -- Úklid pomocné funkce (dočasná, mizí i tak s koncem session – ponecháno pro jistotu)
