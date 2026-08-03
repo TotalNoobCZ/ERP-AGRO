@@ -543,7 +543,7 @@ export async function upravitZakazku(zakazkaId: string, _prev: ZakazkaStav, fd: 
 
   const { data: z } = await supabase
     .from("zakazky")
-    .select("id, kod, misto_plneni, priorita, konec_aktualni, deleted_at")
+    .select("id, kod, misto_plneni, priorita, konec_aktualni, deleted_at, montaz_typ, popis")
     .eq("id", zakazkaId)
     .maybeSingle();
   if (!z || z.deleted_at) return { obecna: "Akce nenalezena." };
@@ -567,26 +567,37 @@ export async function upravitZakazku(zakazkaId: string, _prev: ZakazkaStav, fd: 
     return { chyby: { odpovednaOsobaId: "Odpovědnou osobou může být jen Projekťák nebo Vedoucí." } };
   }
 
-  const { data: kodExistuje } = await supabase
-    .from("zakazky").select("id").eq("kod", d.kod).is("deleted_at", null).neq("id", zakazkaId).maybeSingle();
-  if (kodExistuje) return { chyby: { kod: "Akce s tímto kódem už existuje." } };
+  // Montáž / Demontáž se identifikuje popisem (název), který se zobrazuje všude.
+  // Interní kód (parent · typ N) je jen jedinečný identifikátor a nemění se –
+  // proto u nich pole „Název" upravuje popis a kontrola jedinečnosti kódu odpadá.
+  const jeMontaz = !!(z as { montaz_typ: string | null }).montaz_typ;
 
-  const { data: smazanaSKodem } = await supabase
-    .from("zakazky").select("id, kod").eq("kod", d.kod).not("deleted_at", "is", null).neq("id", zakazkaId).maybeSingle();
-  if (smazanaSKodem) {
-    await supabase.from("zakazky")
-      .update({ kod: `${smazanaSKodem.kod} (smazáno ${smazanaSKodem.id.slice(0, 6)})` })
-      .eq("id", smazanaSKodem.id);
+  if (!jeMontaz) {
+    const { data: kodExistuje } = await supabase
+      .from("zakazky").select("id").eq("kod", d.kod).is("deleted_at", null).neq("id", zakazkaId).maybeSingle();
+    if (kodExistuje) return { chyby: { kod: "Akce s tímto kódem už existuje." } };
+
+    const { data: smazanaSKodem } = await supabase
+      .from("zakazky").select("id, kod").eq("kod", d.kod).not("deleted_at", "is", null).neq("id", zakazkaId).maybeSingle();
+    if (smazanaSKodem) {
+      await supabase.from("zakazky")
+        .update({ kod: `${smazanaSKodem.kod} (smazáno ${smazanaSKodem.id.slice(0, 6)})` })
+        .eq("id", smazanaSKodem.id);
+    }
   }
 
   if (parseDay(d.zacatek) > parseDay(z.konec_aktualni)) {
     return { chyby: { zacatek: "Začátek nesmí být po konci akce." } };
   }
 
+  const zmenaKodu = jeMontaz
+    ? { popis: d.kod } // u montáže/demontáže je „Název" = popis, kód zůstává
+    : { kod: d.kod };
+
   const { error } = await supabase
     .from("zakazky")
     .update({
-      kod: d.kod,
+      ...zmenaKodu,
       misto_plneni: d.mistoPlneni,
       priorita: d.priorita,
       zacatek: d.zacatek,
@@ -601,7 +612,7 @@ export async function upravitZakazku(zakazkaId: string, _prev: ZakazkaStav, fd: 
 
   // Přejmenování zakázky → přejmenuj i její automatický konstrukční projekt
   // (ten, který nesl původní číslo), aby v Konstrukci nezůstalo staré číslo.
-  if (d.kod !== z.kod) {
+  if (!jeMontaz && d.kod !== z.kod) {
     await supabase.from("projects").update({ name: d.kod }).eq("zakazka_id", zakazkaId).eq("name", z.kod);
   }
 
