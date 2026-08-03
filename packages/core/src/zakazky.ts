@@ -27,8 +27,10 @@ export const MILNIK_TYPY = [
   "PREDANI_LAKOVANI",
   "UKONCENI_VYROBY",
   "UKONCENI_LAKOVANI",
-  "MONTAZ",
-  "DEMONTAZ",
+  "MONTAZ_ZACATEK",
+  "MONTAZ_KONEC",
+  "DEMONTAZ_ZACATEK",
+  "DEMONTAZ_KONEC",
   "EXPEDICE",
 ] as const;
 export type TypMilniku = (typeof MILNIK_TYPY)[number];
@@ -38,8 +40,10 @@ export const MILNIK_LABELS: Record<TypMilniku, string> = {
   PREDANI_LAKOVANI: "Předání do lakování",
   UKONCENI_VYROBY: "Ukončení výroby",
   UKONCENI_LAKOVANI: "Ukončení lakování",
-  MONTAZ: "Montáž",
-  DEMONTAZ: "Demontáž",
+  MONTAZ_ZACATEK: "Montáž – začátek",
+  MONTAZ_KONEC: "Montáž – konec",
+  DEMONTAZ_ZACATEK: "Demontáž – začátek",
+  DEMONTAZ_KONEC: "Demontáž – konec",
   EXPEDICE: "Expedice",
 };
 
