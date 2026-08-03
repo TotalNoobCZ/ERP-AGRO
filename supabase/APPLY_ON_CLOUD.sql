@@ -179,3 +179,34 @@ alter table public.milniky add constraint milniky_typ_check
     'ZAHAJENI_VYROBY','PREDANI_LAKOVANI','UKONCENI_VYROBY','UKONCENI_LAKOVANI',
     'MONTAZ_ZACATEK','MONTAZ_KONEC','DEMONTAZ_ZACATEK','DEMONTAZ_KONEC','EXPEDICE'
   ));
+
+-- ============================================================================
+--  17) Záznamy Montáž / Demontáž u akce (typ, nepovinná zakázka, popis, od–do)
+-- ============================================================================
+create table if not exists public.akce_montaz (
+  id          uuid primary key default gen_random_uuid(),
+  zakazka_id  uuid not null references public.zakazky (id),
+  typ         text not null check (typ in ('MONTAZ', 'DEMONTAZ')),
+  zakazka_ref text,
+  popis       text,
+  datum_od    date,
+  datum_do    date,
+  created_at  timestamptz not null default now(),
+  deleted_at  timestamptz
+);
+create index if not exists akce_montaz_zakazka_idx on public.akce_montaz (zakazka_id);
+
+alter table public.akce_montaz enable row level security;
+
+drop policy if exists akce_montaz_select on public.akce_montaz;
+create policy akce_montaz_select on public.akce_montaz
+  for select to authenticated using ((select has_profile()));
+drop policy if exists akce_montaz_insert on public.akce_montaz;
+create policy akce_montaz_insert on public.akce_montaz
+  for insert to authenticated with check ((select can_write()));
+drop policy if exists akce_montaz_update on public.akce_montaz;
+create policy akce_montaz_update on public.akce_montaz
+  for update to authenticated using ((select can_write())) with check ((select can_write()));
+drop policy if exists akce_montaz_delete on public.akce_montaz;
+create policy akce_montaz_delete on public.akce_montaz
+  for delete to authenticated using ((select can_write()));

@@ -871,6 +871,52 @@ export async function smazatPoznamku(poznamkaId: string): Promise<{ ok: boolean;
   return { ok: true };
 }
 
+// ---- Montáž / Demontáž u akce ---------------------------------------------
+type MontazVstup = { typ: string; zakazkaRef?: string; popis?: string; od?: string; do?: string };
+
+export async function pridatMontaz(
+  zakazkaId: string,
+  vstup: MontazVstup,
+): Promise<{ ok: boolean; chyba?: string }> {
+  const u = await writer();
+  if (!u) return { ok: false, chyba: "Nejste přihlášeni nebo nemáte právo zápisu." };
+  if (vstup.typ !== "MONTAZ" && vstup.typ !== "DEMONTAZ") {
+    return { ok: false, chyba: "Vyberte montáž nebo demontáž." };
+  }
+  const supabase = await createClient();
+  const { data: z } = await supabase.from("zakazky").select("id, deleted_at").eq("id", zakazkaId).maybeSingle();
+  if (!z || z.deleted_at) return { ok: false, chyba: "Akce nenalezena." };
+
+  const DEN = /^\d{4}-\d{2}-\d{2}$/;
+  const od = vstup.od && DEN.test(vstup.od) ? vstup.od : null;
+  const doo = vstup.do && DEN.test(vstup.do) ? vstup.do : null;
+  if (od && doo && od > doo) return { ok: false, chyba: "Termín od nesmí být po termínu do." };
+
+  const { error } = await supabase.from("akce_montaz").insert({
+    zakazka_id: zakazkaId,
+    typ: vstup.typ,
+    zakazka_ref: vstup.zakazkaRef?.trim() || null,
+    popis: vstup.popis?.trim() || null,
+    datum_od: od,
+    datum_do: doo,
+  });
+  if (error) return { ok: false, chyba: "Uložení se nezdařilo." };
+  revalidatePath(`/zakazky/${zakazkaId}`);
+  return { ok: true };
+}
+
+export async function smazatMontaz(id: string): Promise<{ ok: boolean; chyba?: string }> {
+  const u = await writer();
+  if (!u) return { ok: false, chyba: "Nemáte právo zápisu." };
+  const supabase = await createClient();
+  const { data: m } = await supabase
+    .from("akce_montaz").select("id, zakazka_id, deleted_at").eq("id", id).maybeSingle();
+  if (!m || m.deleted_at) return { ok: false, chyba: "Záznam nenalezen." };
+  await supabase.from("akce_montaz").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+  revalidatePath(`/zakazky/${m.zakazka_id}`);
+  return { ok: true };
+}
+
 // ---- Přerušení / obnovení akce -------------------------------------------
 export async function prerusitAkci(zakazkaId: string, _prev: ZakazkaStav, fd: FormData): Promise<ZakazkaStav> {
   const u = await writer();

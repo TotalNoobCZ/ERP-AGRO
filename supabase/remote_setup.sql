@@ -349,6 +349,20 @@ create table akce_poznamky (
 
 create index akce_poznamky_zakazka_idx on akce_poznamky (zakazka_id);
 
+-- Záznamy Montáž / Demontáž u akce (typ + nepovinná zakázka, popis, termín od–do).
+create table akce_montaz (
+  id          uuid primary key default gen_random_uuid(),
+  zakazka_id  uuid not null references zakazky (id),
+  typ         text not null check (typ in ('MONTAZ', 'DEMONTAZ')),
+  zakazka_ref text,
+  popis       text,
+  datum_od    date,
+  datum_do    date,
+  created_at  timestamptz not null default now(),
+  deleted_at  timestamptz
+);
+create index akce_montaz_zakazka_idx on akce_montaz (zakazka_id);
+
 -- Auditní log změn (modul Zakázky).
 create table audit_log (
   id              uuid primary key default gen_random_uuid(),
@@ -551,7 +565,7 @@ declare
     'customers', 'contacts',
     'inquiries', 'comments', 'status_logs',
     'zakazky', 'milniky', 'prirazeni_zakazka', 'prirazeni_milnik',
-    'preruseni', 'prodlouzeni', 'akce_poznamky',
+    'preruseni', 'prodlouzeni', 'akce_poznamky', 'akce_montaz',
     'projects', 'tasks', 'task_notes', 'task_todos',
     'project_notes', 'project_todos', 'absences'
   ];

@@ -50,6 +50,14 @@ export const MILNIK_LABELS: Record<TypMilniku, string> = {
 export const TYP_ZMENY = ["VYTVORENI", "UPRAVA", "SMAZANI", "PRODLOUZENI", "ARCHIVACE"] as const;
 export type TypZmeny = (typeof TYP_ZMENY)[number];
 
+/** Záznam Montáž / Demontáž u akce. */
+export const MONTAZ_TYPY = ["MONTAZ", "DEMONTAZ"] as const;
+export type MontazTyp = (typeof MONTAZ_TYPY)[number];
+export const MONTAZ_LABELS: Record<MontazTyp, string> = {
+  MONTAZ: "Montáž",
+  DEMONTAZ: "Demontáž",
+};
+
 /** Priorita zakázky 1–5 (1 = nejvyšší). */
 export const PRIORITY_MIN = 1;
 export const PRIORITY_MAX = 5;
