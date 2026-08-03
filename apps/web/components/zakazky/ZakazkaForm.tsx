@@ -11,7 +11,7 @@ import { OsobaSelect, type OsobaLite } from "./common";
 import { KolizeDialog } from "./KolizeDialog";
 import { DateField } from "@/components/DateField";
 
-type Radek = { key: number; osobaId: string; vyjimka: boolean; od: string; do: string };
+type Radek = { key: number; osobaId: string; celaAkce: boolean; od: string; do: string };
 
 export type InquiryOrigin = {
   id: string;
@@ -51,7 +51,7 @@ export default function ZakazkaForm({
   const [zacatek, setZacatek] = useState("");
   const [konec, setKonec] = useState("");
   const [odpovedny, setOdpovedny] = useState("");
-  const [radky, setRadky] = useState<Radek[]>([{ key: 1, osobaId: "", vyjimka: false, od: "", do: "" }]);
+  const [radky, setRadky] = useState<Radek[]>([{ key: 1, osobaId: "", celaAkce: false, od: "", do: "" }]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const ch = stav.chyby ?? {};
 
@@ -60,7 +60,7 @@ export default function ZakazkaForm({
   }, [stav]);
 
   function pridat() {
-    setRadky((r) => [...r, { key: Date.now(), osobaId: "", vyjimka: false, od: "", do: "" }]);
+    setRadky((r) => [...r, { key: Date.now(), osobaId: "", celaAkce: false, od: "", do: "" }]);
   }
   function odebrat(key: number) {
     setRadky((r) => (r.length > 1 ? r.filter((x) => x.key !== key) : r));
@@ -162,8 +162,8 @@ export default function ZakazkaForm({
           </div>
           <p className="mb-2 text-xs text-text-muted">
             Nepovinné – pracovníky můžeš přiřadit i později (např. na Tabuli zakázek).
-            Pracovník je automaticky na akci po celou dobu jejího trvání; pokud má být jinak,
-            zaškrtni „Jiné termíny“ a zadej vlastní období.
+            U každého zadej <strong>termín od–do</strong>, nebo zaškrtni <strong>„Na celou akci“</strong>
+            a přiřadí se na celé trvání akce.
           </p>
           {ch.prirazeni && <p className="err">{ch.prirazeni}</p>}
           <div className="space-y-3">
@@ -182,19 +182,26 @@ export default function ZakazkaForm({
                 </div>
 
                 <label className="mt-2 flex items-center gap-2 text-sm text-text-muted">
-                  <input type="checkbox" checked={r.vyjimka} onChange={(e) => zmenit(r.key, { vyjimka: e.target.checked })} />
-                  Jiné termíny (výjimka)
+                  <input type="checkbox" checked={r.celaAkce} onChange={(e) => zmenit(r.key, { celaAkce: e.target.checked })} />
+                  Na celou akci
                 </label>
 
-                {r.vyjimka && (
+                {!r.celaAkce && (
                   <div className="mt-2 grid grid-cols-2 gap-2">
-                    <DateField value={r.od} onChange={(v) => zmenit(r.key, { od: v })} />
-                    <DateField value={r.do} onChange={(v) => zmenit(r.key, { do: v })} />
+                    <div>
+                      <span className="mb-0.5 block text-xs text-text-muted">Od</span>
+                      <DateField value={r.od} onChange={(v) => zmenit(r.key, { od: v })} />
+                    </div>
+                    <div>
+                      <span className="mb-0.5 block text-xs text-text-muted">Do</span>
+                      <DateField value={r.do} onChange={(v) => zmenit(r.key, { do: v })} />
+                    </div>
                   </div>
                 )}
 
-                <input type="hidden" name="prir_od" value={r.vyjimka ? r.od : zacatek} readOnly />
-                <input type="hidden" name="prir_do" value={r.vyjimka ? r.do : konec} readOnly />
+                {/* Když je „Na celou akci“, nebo nejsou vyplněné vlastní termíny, použije se rozsah akce. */}
+                <input type="hidden" name="prir_od" value={r.celaAkce ? zacatek : r.od || zacatek} readOnly />
+                <input type="hidden" name="prir_do" value={r.celaAkce ? konec : r.do || konec} readOnly />
               </div>
             ))}
           </div>
