@@ -9,7 +9,7 @@
 --     už existovat (zakládá se ve Správě). Když jméno nesedí, person_id = NULL.
 --   • „number" (#102 …) se přiděluje automaticky – NEzadává se.
 --   • Seed je idempotentní: stejná poptávka (shodný subject + zákazník
---     + received_at) se podruhé nevloží.
+--     + received_at + kontaktní osoba) se podruhé nevloží.
 --   • Založí i první záznam historie stavu (status_logs).
 --
 --  Stav (status): 'NOVA' | 'V_JEDNANI' | 'ODESLANA' | 'NEREAGUJE'
@@ -59,12 +59,14 @@ begin
     select id into v_person_id from profiles where name = btrim(p_person) limit 1;
   end if;
 
-  -- Duplicitní poptávku nevkládat
+  -- Duplicitní poptávku nevkládat (klíč: předmět + zákazník + datum + kontakt).
+  -- Kontakt je v klíči kvůli dvěma jinak shodným poptávkám téhož zákazníka.
   if exists (
     select 1 from inquiries
     where subject = p_subject
       and customer_id = v_customer_id
       and received_at::date = p_received_at
+      and coalesce(contact_name, '') = coalesce(nullif(btrim(p_contact_name), ''), '')
   ) then
     return;
   end if;
@@ -135,7 +137,7 @@ select pg_temp.seed_poptavka(
 
 -- #96
 select pg_temp.seed_poptavka(
-  'hvězdicový separátor', 'Qlar',
+  'hvězdicový separátor', 'Qlar Czech s.r.o.',
   null, null, null,
   'JEDLIČKA Kamil', '2026-07-23', 'ODESLANA'
 );
