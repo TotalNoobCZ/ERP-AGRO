@@ -77,14 +77,69 @@ async function pridatOsobuNaZakazku(supabase: Db, zakazkaId: string, osobaId: st
 }
 
 /**
- * Propíše konstruktéra k zakázce: dostane-li úkol řešitele, přidá se tato
- * osoba jako pracovník k zakázce, do níž patří projekt úkolu (na celé období
- * zakázky). Pokud už tam přiřazená je, neudělá nic.
+ * Sladí období konstruktéra v zakázce s jeho konstrukčními úkoly: přiřazení na
+ * zakázce dostane rozsah od nejdřívějšího začátku po nejzazší konec jeho
+ * (nearchivovaných) úkolů této zakázky. Když žádný úkol nemá termín, spadne
+ * zpět na celé období akce. Přepíše existující přiřazení, jinak ho založí – aby
+ * se konstruktér v Ganttu/Tabuli zobrazoval jen po dobu své práce, ne přes
+ * celou akci.
  */
-async function propsatKonstrukteraDoZakazky(supabase: Db, taskId: string, osobaId: string): Promise<void> {
+async function synchronizovatKonstruktera(supabase: Db, zakazkaId: string, osobaId: string): Promise<void> {
+  const { data: zak } = await supabase
+    .from("zakazky")
+    .select("id, zacatek, konec_aktualni, deleted_at")
+    .eq("id", zakazkaId)
+    .maybeSingle();
+  if (!zak || zak.deleted_at) return;
+
+  // Úkoly konstruktéra patřící k této zakázce (přímo přes zakazka_id, nebo přes
+  // projekt zakázky), jen nearchivované a s vyplněnými termíny.
+  const { data: projekty } = await supabase.from("projects").select("id").eq("zakazka_id", zakazkaId);
+  const projektIds = new Set((projekty ?? []).map((p) => p.id));
+  const { data: tasksData } = await supabase
+    .from("tasks")
+    .select("start_date, end_date, zakazka_id, project_id, status")
+    .eq("assignee_id", osobaId)
+    .eq("status", "active");
+  const sTerminy = (tasksData ?? []).filter(
+    (t) => (t.zakazka_id === zakazkaId || (!t.zakazka_id && projektIds.has(t.project_id))) && t.start_date && t.end_date,
+  ) as { start_date: string; end_date: string }[];
+
+  let od = zak.zacatek;
+  let doDatum = zak.konec_aktualni;
+  if (sTerminy.length > 0) {
+    od = sTerminy.reduce((m, t) => (t.start_date < m ? t.start_date : m), sTerminy[0]!.start_date);
+    doDatum = sTerminy.reduce((m, t) => (t.end_date > m ? t.end_date : m), sTerminy[0]!.end_date);
+  }
+
+  const { data: existujici } = await supabase
+    .from("prirazeni_zakazka")
+    .select("id")
+    .eq("zakazka_id", zakazkaId)
+    .eq("osoba_id", osobaId)
+    .is("deleted_at", null);
+  if (existujici && existujici.length > 0) {
+    await supabase
+      .from("prirazeni_zakazka")
+      .update({ datum_od: od, datum_do: doDatum })
+      .eq("zakazka_id", zakazkaId)
+      .eq("osoba_id", osobaId)
+      .is("deleted_at", null);
+  } else {
+    await supabase
+      .from("prirazeni_zakazka")
+      .insert({ zakazka_id: zakazkaId, osoba_id: osobaId, datum_od: od, datum_do: doDatum });
+  }
+  revalidatePath("/zakazky/tabule");
+  revalidatePath("/zakazky/plan");
+  revalidatePath(`/zakazky/${zakazkaId}`);
+}
+
+/** Zjistí cílovou zakázku úkolu a sladí v ní období konstruktéra. */
+async function synchronizovatUkolem(supabase: Db, taskId: string, osobaId: string): Promise<void> {
   const { data: task } = await supabase.from("tasks").select("project_id, zakazka_id").eq("id", taskId).maybeSingle();
   if (!task) return;
-  // Podúkol může reprezentovat konkrétní zakázku k akci → propíšeme na ni;
+  // Podúkol může reprezentovat konkrétní zakázku k akci → sladíme na ni;
   // jinak na zakázku projektu (celou akci).
   let cilZakazkaId = task.zakazka_id;
   if (!cilZakazkaId) {
@@ -92,7 +147,7 @@ async function propsatKonstrukteraDoZakazky(supabase: Db, taskId: string, osobaI
     if (!proj) return;
     cilZakazkaId = proj.zakazka_id;
   }
-  if (cilZakazkaId) await pridatOsobuNaZakazku(supabase, cilZakazkaId, osobaId);
+  if (cilZakazkaId) await synchronizovatKonstruktera(supabase, cilZakazkaId, osobaId);
 }
 
 /**
@@ -359,9 +414,16 @@ export async function upravitUkol(id: string, patch: UkolPatch, vynutit = false)
   const { error } = await supabase.from("tasks").update(update).eq("id", id);
   if (error) return { ok: false, chyba: "Uložení se nezdařilo." };
 
-  // Přiřazení řešitele úkolu → propíše konstruktéra k zakázce projektu.
-  if (patch.assigneeId) {
-    await propsatKonstrukteraDoZakazky(supabase, id, patch.assigneeId);
+  // Konstruktér se v zakázce (Tabule/Gantt) zobrazuje po dobu svých úkolů →
+  // po změně řešitele nebo termínů úkolu přepočítat jeho rozsah. Při přehození
+  // řešitele sladit i původního (jeho úkolů ubylo).
+  const dotknutoResitele = patch.assigneeId !== undefined;
+  const dotknutoTerminu = patch.startDate !== undefined || patch.endDate !== undefined;
+  if (dotknutoResitele || dotknutoTerminu) {
+    const osoby = new Set<string>();
+    if (assignee) osoby.add(assignee);
+    if (dotknutoResitele && t.assignee_id && t.assignee_id !== assignee) osoby.add(t.assignee_id);
+    for (const oid of osoby) await synchronizovatUkolem(supabase, id, oid);
   }
 
   refreshKonstrukce();
