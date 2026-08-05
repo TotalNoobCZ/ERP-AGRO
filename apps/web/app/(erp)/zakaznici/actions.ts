@@ -93,17 +93,26 @@ export async function deleteCustomer(id: string): Promise<ActionResult> {
       error: `Zákazníka nelze smazat – má ${count} poptávek. Nejdřív je přeřaďte nebo smažte.`,
     };
   }
-  // Zákazníka blokuje i navázaná zakázka (FK zakazky.customer_id).
+  // Zákazníka blokují jen AKTIVNÍ zakázky (ne ty v koši). FK ale drží i
+  // smazané zakázky, proto jim níže před smazáním uvolníme vazbu.
   const { count: pocetZakazek } = await supabase
     .from("zakazky")
     .select("id", { count: "exact", head: true })
-    .eq("customer_id", id);
+    .eq("customer_id", id)
+    .is("deleted_at", null);
   if (pocetZakazek && pocetZakazek > 0) {
     return {
       ok: false,
       error: `Zákazníka nelze smazat – je navázán na ${pocetZakazek} zakázek. Nejdřív je přeřaďte nebo smažte.`,
     };
   }
+  // Uvolnit vazbu ze smazaných (v koši) zakázek, aby FK nebránil smazání.
+  await supabase
+    .from("zakazky")
+    .update({ customer_id: null })
+    .eq("customer_id", id)
+    .not("deleted_at", "is", null);
+
   const { error } = await supabase.from("customers").delete().eq("id", id);
   if (error) return { ok: false, error: "Smazání se nezdařilo." };
   revalidatePath("/zakaznici");
