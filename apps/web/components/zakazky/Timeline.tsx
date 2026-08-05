@@ -199,7 +199,7 @@ export default function Timeline({
                 {/* Název se lepí k levému okraji osy → je vidět po celou dobu pruhu, ne jen na začátku. */}
                 {b.label && (
                   <span
-                    className="pointer-events-none sticky z-[1] block max-w-full truncate whitespace-nowrap px-2 text-[11px] font-medium leading-[20px]"
+                    className="pointer-events-none sticky z-[1] inline-block max-w-full truncate whitespace-nowrap px-2 text-[11px] font-medium leading-[20px]"
                     style={{ left: LABEL_W + 4, color: barTxt }}
                   >
                     {b.label}
