@@ -8,6 +8,7 @@ import { okno, baleniDoRad } from "@/lib/zakazky/timeline";
 import Timeline, { type TRadek } from "@/components/zakazky/Timeline";
 import PlanGantt from "@/components/zakazky/PlanGantt";
 import { canWrite, MILNIK_LABELS, ODDELENI_LABELS, ODDELENI_KAPITOLA, type Oddeleni, type Role, type StavZakazky, type TypMilniku } from "@erp/core";
+import { userColor } from "@erp/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -20,8 +21,6 @@ const BARVA = {
   lakovani: "#6d28d9",
   puvodni: "#94a3b8",
 };
-
-const PALETA_PRAC = ["#2f5d78", "#b45309", "#0f766e", "#be185d", "#4d7c0f", "#6d28d9", "#0369a1", "#a16207"];
 
 // Paleta pro rozlišení jednotlivých akcí (zobrazení „podle zaměstnance"), ať
 // sousední akce nesplývají. Barva je stabilní podle id akce.
@@ -69,7 +68,7 @@ type ZakazkaRowT = {
   konec_aktualni: string;
   stav: StavZakazky;
   milniky: { typ: string; nazev: string | null; datum: string; deleted_at: string | null }[];
-  prirazeni: { osoba_id: string; datum_od: string; datum_do: string; deleted_at: string | null; osoba: { name: string } | null }[];
+  prirazeni: { osoba_id: string; datum_od: string; datum_do: string; deleted_at: string | null; osoba: { name: string; color_index: number | null } | null }[];
 };
 
 export default async function PlanPage({
@@ -96,7 +95,7 @@ export default async function PlanPage({
       .select(
         `id, kod, misto_plneni, popis, parent_id, montaz_typ, zacatek, konec_puvodni, konec_aktualni, stav,
          milniky(typ, nazev, datum, deleted_at),
-         prirazeni:prirazeni_zakazka(osoba_id, datum_od, datum_do, deleted_at, osoba:profiles(name))`,
+         prirazeni:prirazeni_zakazka(osoba_id, datum_od, datum_do, deleted_at, osoba:profiles(name, color_index))`,
       )
       .is("deleted_at", null)
       .in("stav", ["AKTIVNI", "POZASTAVENO", "FAKTURACE"])
@@ -115,9 +114,7 @@ export default async function PlanPage({
         .sort((a, b) => a.datum_od.localeCompare(b.datum_od));
       const milniky = z.milniky.filter((m) => !m.deleted_at);
 
-      // pracovníci jako rozbalitelné podřádky – každý svou barvou
-      const poradiP: string[] = [];
-      for (const p of prirazeni) if (!poradiP.includes(p.osoba_id)) poradiP.push(p.osoba_id);
+      // pracovníci jako rozbalitelné podřádky – barvou podle jejich karty (color_index)
       const podleOsoby = new Map<string, TRadek>();
       for (const p of prirazeni) {
         if (!podleOsoby.has(p.osoba_id)) {
@@ -133,7 +130,7 @@ export default async function PlanPage({
           od: parseDay(p.datum_od),
           do: parseDay(p.datum_do),
           lane: 0,
-          barva: PALETA_PRAC[poradiP.indexOf(p.osoba_id) % PALETA_PRAC.length]!,
+          barva: userColor(p.osoba?.color_index ?? null),
           titulek: `${p.osoba?.name ?? "?"}: ${formatCz(parseDay(p.datum_od))} – ${formatCz(parseDay(p.datum_do))}`,
         });
       }
