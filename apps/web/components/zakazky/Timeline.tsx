@@ -34,6 +34,18 @@ export type DragMode = "move" | "resize";
 const LANE_H = 26;
 const LABEL_W = 200;
 
+/** Čitelná barva textu na daném pozadí pruhu (tmavý text na světlých pastelech). */
+function textNaBarve(hex: string): string {
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex.trim());
+  if (!m) return "#ffffff";
+  const n = parseInt(m[1]!, 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 150 ? "#16181b" : "#ffffff";
+}
+
 type DragState = {
   dragId: string;
   mode: DragMode;
@@ -166,21 +178,33 @@ export default function Timeline({
             const isDragged = Boolean(drag && b.dragId && b.dragId === drag.dragId);
             const posunPx = isDragged && drag!.mode === "move" ? snapPx(drag!.dx) : 0;
             const extraSirka = isDragged && drag!.mode === "resize" ? snapPx(drag!.dx) : 0;
+            const barTxt = textNaBarve(b.barva);
 
             const bar = (
-              <div
-                className={`relative mx-px flex h-[20px] items-center overflow-hidden whitespace-nowrap rounded border border-white/25 px-2 text-[11px] font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_0_0_1px_rgba(0,0,0,0.25)] ${draggable ? "cursor-grab active:cursor-grabbing" : ""} ${isDragged ? "opacity-80 ring-2 ring-link" : ""}`}
-                style={{ backgroundColor: b.barva }}
-                title={b.titulek}
-                onPointerDown={draggable ? (e) => startDrag(e, b.dragId!, "move") : undefined}
-              >
-                {b.label}
-                {draggable && b.resizable && (
+              <div className={`relative h-[20px] ${draggable ? "cursor-grab active:cursor-grabbing" : ""} ${isDragged ? "opacity-80" : ""}`}>
+                {/* Barevný podklad pruhu (drží tažení i změnu konce). */}
+                <div
+                  className={`absolute inset-y-0 left-px right-px overflow-hidden rounded border border-white/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_0_0_1px_rgba(0,0,0,0.25)] ${isDragged ? "ring-2 ring-link" : ""}`}
+                  style={{ backgroundColor: b.barva }}
+                  title={b.titulek}
+                  onPointerDown={draggable ? (e) => startDrag(e, b.dragId!, "move") : undefined}
+                >
+                  {draggable && b.resizable && (
+                    <span
+                      className="absolute right-0 top-0 h-full w-2 cursor-ew-resize bg-black/25"
+                      title="Táhnutím změníš konec"
+                      onPointerDown={(e) => startDrag(e, b.dragId!, "resize")}
+                    />
+                  )}
+                </div>
+                {/* Název se lepí k levému okraji osy → je vidět po celou dobu pruhu, ne jen na začátku. */}
+                {b.label && (
                   <span
-                    className="absolute right-0 top-0 h-full w-2 cursor-ew-resize bg-black/25"
-                    title="Táhnutím změníš konec"
-                    onPointerDown={(e) => startDrag(e, b.dragId!, "resize")}
-                  />
+                    className="pointer-events-none sticky z-[1] block max-w-full truncate whitespace-nowrap px-2 text-[11px] font-medium leading-[20px]"
+                    style={{ left: LABEL_W + 4, color: barTxt }}
+                  >
+                    {b.label}
+                  </span>
                 )}
               </div>
             );
