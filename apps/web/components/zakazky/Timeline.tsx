@@ -173,7 +173,6 @@ export default function Timeline({
         <div className="relative" style={{ width: sirka, height: vyska }}>
           <Mrizka />
           {r.bary.map((b, i) => {
-            const minTextW = (b.label?.length ?? 0) * 7 + 16;
             const draggable = Boolean(b.dragId && onBarDrag);
             const isDragged = Boolean(drag && b.dragId && b.dragId === drag.dragId);
             const posunPx = isDragged && drag!.mode === "move" ? snapPx(drag!.dx) : 0;
@@ -213,9 +212,11 @@ export default function Timeline({
                 key={i}
                 className="absolute"
                 style={{
+                  // Skutečná šířka dle termínu (bez roztahování na délku textu),
+                  // aby se sousední pruhy nepřekrývaly. Název se ořízne na šířku
+                  // pruhu a „lepí" se jen v jeho rámci (nepřeteče na sousedy).
                   left: offsetPx(b.od, start) + posunPx,
                   width: Math.max(PX_ZA_DEN, sirkaPx(b.od, b.do) + extraSirka),
-                  minWidth: isDragged ? undefined : minTextW,
                   top: b.lane * LANE_H + 4,
                   zIndex: isDragged ? 20 : undefined,
                 }}
