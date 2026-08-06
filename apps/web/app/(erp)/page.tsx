@@ -14,11 +14,12 @@ import { poTerminu } from "@/lib/zakazky/orders";
 import { isAdmin, type Role, type Modul, type StavZakazky } from "@erp/core";
 
 const KARTY = [
-  { href: "/poptavky/dashboard", label: "Poptávky", emoji: "📥", popis: "Poptávky, nabídky a zákazníci", adminOnly: false, modul: "poptavky" as Modul },
-  { href: "/zakazky/dashboard", label: "Zakázky", emoji: "📋", popis: "Výrobní zakázky, plán a tabule", adminOnly: false, modul: "zakazky" as Modul },
-  { href: "/konstrukce/prehled", label: "Konstrukce", emoji: "📐", popis: "Konstrukční plánování a Gantt", adminOnly: false, modul: "konstrukce" as Modul },
-  { href: "/dilna/tabule", label: "Dílna", emoji: "🔧", popis: "Výroba – lidé, fáze a Gantt", adminOnly: false, modul: "dilna" as Modul },
-  { href: "/sprava", label: "Správa", emoji: "⚙️", popis: "Uživatelé a nastavení", adminOnly: true, modul: null },
+  { href: "/poptavky/dashboard", label: "Poptávky", emoji: "📥", popis: "Poptávky, nabídky a zákazníci", adminOnly: false, vedeniOnly: false, modul: "poptavky" as Modul },
+  { href: "/zakazky/dashboard", label: "Zakázky", emoji: "📋", popis: "Výrobní zakázky, plán a tabule", adminOnly: false, vedeniOnly: false, modul: "zakazky" as Modul },
+  { href: "/konstrukce/prehled", label: "Konstrukce", emoji: "📐", popis: "Konstrukční plánování a Gantt", adminOnly: false, vedeniOnly: false, modul: "konstrukce" as Modul },
+  { href: "/dilna/tabule", label: "Dílna", emoji: "🔧", popis: "Výroba – lidé, fáze a Gantt", adminOnly: false, vedeniOnly: false, modul: "dilna" as Modul },
+  { href: "/report", label: "Report", emoji: "📊", popis: "Měsíční přehled pro vedení", adminOnly: false, vedeniOnly: true, modul: null },
+  { href: "/sprava", label: "Správa", emoji: "⚙️", popis: "Uživatelé a nastavení", adminOnly: true, modul: null, vedeniOnly: false },
 ] as const;
 
 export const dynamic = "force-dynamic";
@@ -27,7 +28,10 @@ export default async function HomePage() {
   const profile = await getCurrentProfile();
   const admin = profile ? isAdmin(profile.role as Role) : false;
   const moduly = await povoleneModulyProProfil(profile);
-  const karty = KARTY.filter((k) => (k.adminOnly ? admin : k.modul != null && moduly.includes(k.modul)));
+  const vedeni = admin || profile?.role === "vedouci";
+  const karty = KARTY.filter((k) =>
+    k.adminOnly ? admin : k.vedeniOnly ? vedeni : k.modul != null && moduly.includes(k.modul),
+  );
 
   const supabase = await createClient();
   const uid = profile?.id;

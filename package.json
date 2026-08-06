@@ -12,6 +12,7 @@
     "start": "npm run start -w @erp/web",
     "lint": "npm run lint -w @erp/web",
     "typecheck": "npm run typecheck -w @erp/web",
+    "test": "node --experimental-strip-types scripts/test-report.ts",
     "db:start": "supabase start",
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",

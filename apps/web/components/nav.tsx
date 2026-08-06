@@ -12,11 +12,12 @@ import { pinKey } from "@/components/PinButton";
 // Hlavní karty vždy otevřou záložku Přehled; `match` řídí zvýraznění pro
 // celý modul (i ostatní jeho podstránky). Správa jen pro administrátory.
 const MODULES = [
-  { href: "/poptavky/dashboard", match: "/poptavky", label: "Poptávky", adminOnly: false, modul: "poptavky" as Modul },
-  { href: "/zakazky/dashboard", match: "/zakazky", label: "Zakázky", adminOnly: false, modul: "zakazky" as Modul },
-  { href: "/konstrukce/prehled", match: "/konstrukce", label: "Konstrukce", adminOnly: false, modul: "konstrukce" as Modul },
-  { href: "/dilna/tabule", match: "/dilna", label: "Dílna", adminOnly: false, modul: "dilna" as Modul },
-  { href: "/sprava", match: "/sprava", label: "Správa", adminOnly: true, modul: null },
+  { href: "/poptavky/dashboard", match: "/poptavky", label: "Poptávky", adminOnly: false, vedeniOnly: false, modul: "poptavky" as Modul },
+  { href: "/zakazky/dashboard", match: "/zakazky", label: "Zakázky", adminOnly: false, vedeniOnly: false, modul: "zakazky" as Modul },
+  { href: "/konstrukce/prehled", match: "/konstrukce", label: "Konstrukce", adminOnly: false, vedeniOnly: false, modul: "konstrukce" as Modul },
+  { href: "/dilna/tabule", match: "/dilna", label: "Dílna", adminOnly: false, vedeniOnly: false, modul: "dilna" as Modul },
+  { href: "/report", match: "/report", label: "Report", adminOnly: false, vedeniOnly: true, modul: null },
+  { href: "/sprava", match: "/sprava", label: "Správa", adminOnly: true, vedeniOnly: false, modul: null },
 ] as const;
 
 export interface NavProps {
@@ -47,7 +48,11 @@ export function Nav({ name, role, colorIndex, moduly }: NavProps) {
 
       <nav className="flex flex-1 gap-2">
         {MODULES.filter((m) =>
-          m.adminOnly ? isAdmin(role) : m.modul != null && moduly.includes(m.modul),
+          m.adminOnly
+            ? isAdmin(role)
+            : m.vedeniOnly
+              ? isAdmin(role) || role === "vedouci"
+              : m.modul != null && moduly.includes(m.modul),
         ).map((m) => {
           const active = pathname.startsWith(m.match);
           return (

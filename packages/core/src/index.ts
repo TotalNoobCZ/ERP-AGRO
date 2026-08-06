@@ -5,3 +5,4 @@ export * from "./zakazky";
 export * from "./konstrukce";
 export * from "./dilna";
 export * from "./workdays";
+export * from "./report";
