@@ -17,6 +17,18 @@ export function mesicniOkno(ref: string | undefined, dnes: string): Obdobi {
   return { od: `${zdroj}-01`, do: `${zdroj}-${String(posledni).padStart(2, "0")}` };
 }
 
+/** Rozsah reportu: kalendářní měsíc („YYYY-MM") nebo celý rok („YYYY"). */
+export type ReportRozsah = { typ: "mesic" | "rok"; ref: string; obdobi: Obdobi };
+
+/** Rozparsuje ref reportu: „YYYY" → rok, „YYYY-MM" → měsíc, jinak měsíc z `dnes`. */
+export function reportOkno(ref: string | undefined, dnes: string): ReportRozsah {
+  if (ref && /^\d{4}$/.test(ref)) {
+    return { typ: "rok", ref, obdobi: { od: `${ref}-01-01`, do: `${ref}-12-31` } };
+  }
+  const obdobi = mesicniOkno(ref, dnes);
+  return { typ: "mesic", ref: obdobi.od.slice(0, 7), obdobi };
+}
+
 /** Posledních `n` měsíců končících měsícem `ref` („YYYY-MM"), vzestupně. */
 export function radaMesicu(ref: string, n: number): string[] {
   const [y, m] = ref.split("-").map(Number);

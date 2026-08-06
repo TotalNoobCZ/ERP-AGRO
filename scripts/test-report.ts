@@ -3,6 +3,7 @@
 import { strict as assert } from "node:assert";
 import {
   mesicniOkno,
+  reportOkno,
   radaMesicu,
   pracovniDny,
   pokrytePracovniDny,
@@ -30,6 +31,24 @@ test("mesicniOkno: únor přestupného roku", () => {
 test("mesicniOkno: neplatný ref → měsíc z dneška", () => {
   assert.deepEqual(mesicniOkno(undefined, "2026-08-06"), { od: "2026-08-01", do: "2026-08-31" });
   assert.deepEqual(mesicniOkno("blbost", "2026-02-10"), { od: "2026-02-01", do: "2026-02-28" });
+});
+
+test("reportOkno: rok → leden až prosinec", () => {
+  assert.deepEqual(reportOkno("2026", "2026-08-06"), {
+    typ: "rok",
+    ref: "2026",
+    obdobi: { od: "2026-01-01", do: "2026-12-31" },
+  });
+});
+
+test("reportOkno: měsíc a fallback na dnešek", () => {
+  assert.deepEqual(reportOkno("2026-03", "2026-08-06"), {
+    typ: "mesic",
+    ref: "2026-03",
+    obdobi: { od: "2026-03-01", do: "2026-03-31" },
+  });
+  assert.deepEqual(reportOkno(undefined, "2026-08-06").ref, "2026-08");
+  assert.deepEqual(reportOkno("nesmysl", "2026-08-06").typ, "mesic");
 });
 
 test("radaMesicu: 6 měsíců přes přelom roku", () => {
