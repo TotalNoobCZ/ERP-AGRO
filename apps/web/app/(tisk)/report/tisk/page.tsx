@@ -1,7 +1,8 @@
 // Tiskový export reportu pro vedení (PDF přes tisk prohlížeče).
+import { Fragment } from "react";
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/supabase/server";
-import { nactiReport, smiVidetReport } from "@/lib/report";
+import { nactiReport, smiVidetReport, vytizeniPodleOddeleni } from "@/lib/report";
 import { PrintButton } from "@/components/PrintButton";
 import { parseDay, formatCz } from "@/lib/zakazky/dates";
 import { formatDate } from "@/lib/format";
@@ -112,18 +113,27 @@ export default async function ReportTiskPage({
       <Sekce nazev="Vytížení lidí (podíl pracovních dní s přiřazením na akci)">
         <table className="w-full border-collapse">
           <tbody>
-            {r.vytizeni.map((v) => (
-              <tr key={v.id} className="[&>td]:border-b [&>td]:border-gray-200 [&>td]:py-1">
-                <td className="w-48">{v.jmeno}</td>
-                <td>
-                  <div className="h-2.5 w-full max-w-64 rounded bg-gray-200">
-                    <div className="h-2.5 rounded bg-gray-600" style={{ width: `${Math.min(100, Math.round(v.podil * 100))}%` }} />
-                  </div>
-                </td>
-                <td className="w-32 text-right text-gray-600">
-                  {pct(v.podil)}{v.absenceDny > 0 ? ` · abs ${v.absenceDny}d` : ""}
-                </td>
-              </tr>
+            {vytizeniPodleOddeleni(r.vytizeni).map((sk) => (
+              <Fragment key={sk.nazev}>
+                <tr>
+                  <td colSpan={3} className="pb-1 pt-2 font-semibold">
+                    {sk.nazev} ({sk.lide.length}) · průměr {pct(sk.prumer)}
+                  </td>
+                </tr>
+                {sk.lide.map((v) => (
+                  <tr key={v.id} className="[&>td]:border-b [&>td]:border-gray-200 [&>td]:py-1">
+                    <td className="w-48">{v.jmeno}</td>
+                    <td>
+                      <div className="h-2.5 w-full max-w-64 rounded bg-gray-200">
+                        <div className="h-2.5 rounded bg-gray-600" style={{ width: `${Math.min(100, Math.round(v.podil * 100))}%` }} />
+                      </div>
+                    </td>
+                    <td className="w-32 text-right text-gray-600">
+                      {pct(v.podil)}{v.absenceDny > 0 ? ` · abs ${v.absenceDny}d` : ""}
+                    </td>
+                  </tr>
+                ))}
+              </Fragment>
             ))}
           </tbody>
         </table>
