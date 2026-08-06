@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/supabase/server";
 import { nactiReport, smiVidetReport } from "@/lib/report";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
-import { LinkSpinner } from "@/components/LinkSpinner";
+import { ReportOvladani } from "@/components/report/ReportOvladani";
 import { parseDay, formatCz } from "@/lib/zakazky/dates";
 import { ODDELENI_LABELS, type Oddeleni } from "@erp/core";
 
@@ -18,14 +18,6 @@ function obdobiCz(ref: string): string {
   if (/^\d{4}$/.test(ref)) return `rok ${ref}`;
   const [y, m] = ref.split("-").map(Number);
   return `${MESICE_CZ[(m ?? 1) - 1]} ${y}`;
-}
-
-/** Posun ref o `o` období: měsíc o měsíce, rok o roky. */
-function posunRef(ref: string, o: number): string {
-  if (/^\d{4}$/.test(ref)) return String(Number(ref) + o);
-  const [y, m] = ref.split("-").map(Number);
-  const d = new Date(Date.UTC(y!, m! - 1 + o, 1));
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
 const pct = (x: number) => `${Math.round(x * 100)} %`;
@@ -48,26 +40,7 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
             Období: {formatCz(parseDay(r.obdobi.od))} – {formatCz(parseDay(r.obdobi.do))} · sestaveno {formatCz(parseDay(r.dnes))}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex gap-1">
-            <Link
-              href={`/report?ref=${r.typ === "mesic" ? r.ref : r.ref === r.dnes.slice(0, 4) ? r.dnes.slice(0, 7) : `${r.ref}-01`}`}
-              className={`btn-ghost ${r.typ === "mesic" ? "border-link text-link" : "border-transparent"}`}
-            >
-              Měsíc<LinkSpinner />
-            </Link>
-            <Link
-              href={`/report?ref=${r.ref.slice(0, 4)}`}
-              className={`btn-ghost ${r.typ === "rok" ? "border-link text-link" : "border-transparent"}`}
-            >
-              Rok<LinkSpinner />
-            </Link>
-          </div>
-          <Link href={`/report/tisk?ref=${r.ref}&print=1`} className="btn-ghost">🖨 Export do PDF<LinkSpinner /></Link>
-          <Link href={`/report?ref=${posunRef(r.ref, -1)}`} className="btn-ghost">◀<LinkSpinner /></Link>
-          <span className="min-w-28 text-center text-sm font-medium capitalize">{obdobiCz(r.ref)}</span>
-          <Link href={`/report?ref=${posunRef(r.ref, 1)}`} className="btn-ghost">▶<LinkSpinner /></Link>
-        </div>
+        <ReportOvladani refObdobi={r.ref} typ={r.typ} dnes={r.dnes} />
       </div>
 
       {/* Souhrn */}
