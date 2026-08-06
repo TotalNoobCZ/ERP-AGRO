@@ -19,8 +19,10 @@ import {
   ODDELENI,
   ODDELENI_LABELS,
   ODDELENI_KAPITOLA,
+  ROLE_LABELS,
   type InquiryStatus,
   type Oddeleni,
+  type Role,
   type StavZakazky,
 } from "@erp/core";
 
@@ -37,6 +39,21 @@ export type ReportVytizeni = {
   podil: number;
   absenceDny: number;
 };
+export type ReportManazer = {
+  id: string;
+  jmeno: string;
+  /** popisek pozice (oddělení, u vedení role) */
+  pozice: string;
+  /** akce (hlavní), kde je osoba odpovědná a akce zasahuje do období */
+  akce: number;
+  /** poptávky přijaté v období, kde je osoba odpovědná */
+  poptavky: number;
+  objednano: number;
+  zamitnuto: number;
+  /** objednáno / (objednáno + zamítnuto) z poptávek osoby v období */
+  uspesnost: number | null;
+};
+
 export type ReportTrendMesic = {
   mesic: string; // YYYY-MM
   poptavkyPrijate: number;
@@ -69,6 +86,10 @@ export type ReportData = {
   };
   fakturace: { polozky: ReportFakturace[]; proplacenoCelkem: number };
   vytizeni: ReportVytizeni[];
+  /** Projekťáci: akce na starost + jejich poptávky. */
+  projektaci: ReportManazer[];
+  /** Obchodní manažeři a vedení: poptávky na starost + úspěšnost objednání. */
+  obchodnici: ReportManazer[];
   konstrukce: { aktivniProjekty: number; dokonceneUkoly: number; poTerminuUkoly: number };
   trend: ReportTrendMesic[];
 };
@@ -86,7 +107,7 @@ export async function nactiReport(ref?: string): Promise<ReportData> {
 
   const [inqRes, logyRes, zakRes, prodlRes, prirRes, absRes, projRes, taskRes] = await Promise.all([
     // Poptávky: přijaté v trendovém okně + aktuálně otevřené (rozpad stavů).
-    supabase.from("inquiries").select("id, status, received_at").gte("received_at", `${trendOd}T00:00:00Z`),
+    supabase.from("inquiries").select("id, status, received_at, person_id").gte("received_at", `${trendOd}T00:00:00Z`),
     // Uzavření poptávek (objednáno/zamítnuto) podle stavových logů.
     supabase
       .from("status_logs")
@@ -96,7 +117,7 @@ export async function nactiReport(ref?: string): Promise<ReportData> {
     // Akce (hlavní i podzakázky; počty vedeme za hlavní akce).
     supabase
       .from("zakazky")
-      .select("id, kod, misto_plneni, popis, parent_id, zacatek, konec_aktualni, stav, fakturace_od")
+      .select("id, kod, misto_plneni, popis, parent_id, zacatek, konec_aktualni, stav, fakturace_od, odpovedna_osoba_id")
       .is("deleted_at", null),
     // Prodloužení termínů v období.
     supabase
@@ -121,7 +142,7 @@ export async function nactiReport(ref?: string): Promise<ReportData> {
   ]);
 
   // ---- Poptávky --------------------------------------------------------------
-  type Inq = { id: string; status: InquiryStatus; received_at: string };
+  type Inq = { id: string; status: InquiryStatus; received_at: string; person_id: string | null };
   const inquiries = (inqRes.data ?? []) as Inq[];
   const logy = (logyRes.data ?? []) as { to_status: "OBJEDNANO" | "ZAMITNUTO"; created_at: string }[];
 
@@ -142,6 +163,7 @@ export async function nactiReport(ref?: string): Promise<ReportData> {
   type Zak = {
     id: string; kod: string; misto_plneni: string; popis: string | null; parent_id: string | null;
     zacatek: string; konec_aktualni: string; stav: StavZakazky; fakturace_od: string | null;
+    odpovedna_osoba_id: string | null;
   };
   const zakazky = (zakRes.data ?? []) as Zak[];
   const hlavni = zakazky.filter((z) => !z.parent_id);
@@ -196,6 +218,57 @@ export async function nactiReport(ref?: string): Promise<ReportData> {
     })
     .sort((a, b) => b.podil - a.podil || a.jmeno.localeCompare(b.jmeno, "cs"));
 
+  // ---- Manažeři (projekťáci, obchodní manažeři a vedení) ---------------------
+  const { data: profilyData } = await supabase.from("profiles").select("id, name, oddeleni, role").eq("active", true);
+  const profily = (profilyData ?? []) as { id: string; name: string; oddeleni: string | null; role: string }[];
+
+  // Poptávky osoby přijaté v období + kolik z nich je dnes objednáno/zamítnuto.
+  const poptavkyVObdobi = inquiries.filter((i) => vObdobi(i.received_at, obdobi));
+  const poptavkyOsoby = (osobaId: string) => {
+    const moje = poptavkyVObdobi.filter((i) => i.person_id === osobaId);
+    const obj = moje.filter((i) => i.status === "OBJEDNANO").length;
+    const zam = moje.filter((i) => i.status === "ZAMITNUTO").length;
+    return { poptavky: moje.length, objednano: obj, zamitnuto: zam, uspesnost: uspesnostPoptavek(obj, zam) };
+  };
+
+  // Akce (hlavní) zasahující do období podle odpovědné osoby.
+  const akceOsoby = new Map<string, number>();
+  for (const z of hlavni) {
+    if (!z.odpovedna_osoba_id) continue;
+    if (z.zacatek > obdobi.do || z.konec_aktualni < obdobi.od) continue;
+    akceOsoby.set(z.odpovedna_osoba_id, (akceOsoby.get(z.odpovedna_osoba_id) ?? 0) + 1);
+  }
+
+  const pozice = (p: { oddeleni: string | null; role: string }) =>
+    p.oddeleni
+      ? (ODDELENI_LABELS[p.oddeleni as Oddeleni] ?? p.oddeleni)
+      : (ROLE_LABELS[p.role as Role] ?? p.role);
+
+  // Projekťáci: všichni z oddělení Projekťák + kdokoli další, kdo má v období
+  // akci na starost (odpovědná osoba akce).
+  const projektaci: ReportManazer[] = profily
+    .filter((p) => p.oddeleni === "projektak" || akceOsoby.has(p.id))
+    .map((p) => ({
+      id: p.id,
+      jmeno: p.name,
+      pozice: pozice(p),
+      akce: akceOsoby.get(p.id) ?? 0,
+      ...poptavkyOsoby(p.id),
+    }))
+    .sort((a, b) => b.akce - a.akce || b.poptavky - a.poptavky || a.jmeno.localeCompare(b.jmeno, "cs"));
+
+  // Obchodní manažeři vždy; vedení (vedoucí/admin) jen když v období nějakou
+  // poptávku na starost mělo. Projekťáky tu neduplikujeme.
+  const obchodnici: ReportManazer[] = profily
+    .filter((p) => p.oddeleni !== "projektak")
+    .filter(
+      (p) =>
+        p.oddeleni === "obchodni_manazer" ||
+        ((p.role === "vedouci" || p.role === "admin") && poptavkyVObdobi.some((i) => i.person_id === p.id)),
+    )
+    .map((p) => ({ id: p.id, jmeno: p.name, pozice: pozice(p), akce: akceOsoby.get(p.id) ?? 0, ...poptavkyOsoby(p.id) }))
+    .sort((a, b) => b.poptavky - a.poptavky || a.jmeno.localeCompare(b.jmeno, "cs"));
+
   // ---- Konstrukce ------------------------------------------------------------
   const tasks = (taskRes.data ?? []) as { id: string; completed: boolean; completed_at: string | null; end_date: string | null }[];
   const konstrukce = {
@@ -242,6 +315,8 @@ export async function nactiReport(ref?: string): Promise<ReportData> {
       proplacenoCelkem: hlavni.filter((z) => z.stav === "PROPLACENO").length,
     },
     vytizeni,
+    projektaci,
+    obchodnici,
     konstrukce,
     trend,
   };
