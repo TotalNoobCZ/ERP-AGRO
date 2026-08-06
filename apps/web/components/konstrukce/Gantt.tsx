@@ -197,7 +197,7 @@ export default function Gantt({
           </div>
 
           {clenove.map((clen) => {
-            const barva = userColor(clen.colorIndex);
+            const barva = userColor(clen.colorIndex, clen.colorHex);
             const absClena = absence.filter((a) => a.profileId === clen.id);
             const radky = ukolyClena(clen.id);
 

@@ -192,7 +192,7 @@ export async function queryResponsibles(
 
 // ---------- Tabule poptávek (drag & drop přiřazení) ----------
 
-export type BoardOsoba = { id: string; name: string; colorIndex: number | null };
+export type BoardOsoba = { id: string; name: string; colorIndex: number | null; colorHex: string | null };
 export type BoardPoptavka = {
   id: string;
   number: number;
@@ -214,7 +214,7 @@ export async function queryPoptavkyBoard(
   const [osobyRes, poptRes] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, name, color_index")
+      .select("id, name, color_index, color_hex")
       .eq("active", true)
       .or("role.eq.vedouci,oddeleni.eq.projektak,oddeleni.eq.obchodni_manazer")
       .order("name", { ascending: true }),
@@ -230,6 +230,7 @@ export async function queryPoptavkyBoard(
     id: o.id,
     name: o.name,
     colorIndex: o.color_index,
+    colorHex: o.color_hex,
   }));
 
   const poptavky: BoardPoptavka[] = (poptRes.data ?? []).map((p) => {

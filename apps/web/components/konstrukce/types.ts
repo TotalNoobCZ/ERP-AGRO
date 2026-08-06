@@ -4,6 +4,8 @@ export type Clen = {
   id: string;
   name: string;
   colorIndex: number | null;
+  /** vlastní barva (má přednost před colorIndex) */
+  colorHex: string | null;
   tileOrder: number | null;
 };
 

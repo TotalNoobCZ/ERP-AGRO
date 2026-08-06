@@ -39,8 +39,12 @@ export const USER_PALETTE_NAMES = [
   "Modrofialová",
 ] as const;
 
-/** Barva člena podle color_index; mimo rozsah / null → neutrální. */
-export function userColor(colorIndex: number | null | undefined): string {
+/**
+ * Barva člena: vlastní hex (profiles.color_hex) má přednost, jinak paleta
+ * podle color_index; mimo rozsah / null → neutrální.
+ */
+export function userColor(colorIndex: number | null | undefined, colorHex?: string | null): string {
+  if (colorHex && /^#[0-9a-fA-F]{6}$/.test(colorHex)) return colorHex;
   if (colorIndex == null) return COLOR_TOKENS.neutral;
   return USER_PALETTE[colorIndex] ?? COLOR_TOKENS.neutral;
 }

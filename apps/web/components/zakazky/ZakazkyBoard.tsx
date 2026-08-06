@@ -397,7 +397,7 @@ export default function ZakazkyBoard({
         {dragged && (
           <div
             className="rounded-md px-3 py-1.5 text-sm font-semibold shadow-lg"
-            style={{ backgroundColor: userColor(dragged.colorIndex), color: "#16181b" }}
+            style={{ backgroundColor: userColor(dragged.colorIndex, dragged.colorHex), color: "#16181b" }}
           >
             {dragged.name}
           </div>
@@ -453,7 +453,7 @@ function OsobaChip({ osoba, editable, onOpen }: { osoba: BoardOsobaZ; editable: 
       {...listeners}
       onDoubleClick={onOpen}
       className={`rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition ${isDragging ? "opacity-40" : ""} ${editable ? "cursor-grab hover:brightness-110" : ""}`}
-      style={{ backgroundColor: userColor(osoba.colorIndex), color: "#16181b" }}
+      style={{ backgroundColor: userColor(osoba.colorIndex, osoba.colorHex), color: "#16181b" }}
       title={editable ? "Přetáhni na zakázku · dvojklik = karta zaměstnance" : "Dvojklik = karta zaměstnance"}
     >
       {osoba.name}
@@ -522,7 +522,7 @@ function ZakazkaTile({
               onDoubleClick={() => onOpenOsoba(zdedenaOdpovedna.id)}
               data-tip="Odpovědná osoba akce · dvojklik = karta zaměstnance"
               className="inline-flex cursor-pointer items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold opacity-80 ring-1 ring-black/10"
-              style={{ backgroundColor: userColor(zdedenaOdpovedna.colorIndex), color: "#16181b" }}
+              style={{ backgroundColor: userColor(zdedenaOdpovedna.colorIndex, zdedenaOdpovedna.colorHex), color: "#16181b" }}
             >
               ⭐ {zdedenaOdpovedna.name}
             </span>
@@ -534,7 +534,7 @@ function ZakazkaTile({
             onDoubleClick={() => onOpenOsoba(odp.id)}
             data-tip="Dvojklik = karta zaměstnance"
             className="inline-flex cursor-pointer items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold ring-1 ring-black/10"
-            style={{ backgroundColor: userColor(odp.colorIndex), color: "#16181b" }}
+            style={{ backgroundColor: userColor(odp.colorIndex, odp.colorHex), color: "#16181b" }}
           >
             ⭐ {odp.name}
             {editable && (
@@ -564,7 +564,7 @@ function ZakazkaTile({
             onDoubleClick={() => onOpenOsoba(p.osobaId)}
             title="Dvojklik = karta zaměstnance"
             className="inline-flex cursor-pointer items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium"
-            style={{ backgroundColor: userColor(p.colorIndex), color: "#16181b" }}
+            style={{ backgroundColor: userColor(p.colorIndex, p.colorHex), color: "#16181b" }}
           >
             {p.name}
             {editable &&

@@ -393,7 +393,7 @@ export function ProjectDialog({
           <label className="label">{KONSTRUKCE_LABELS.owner}</label>
           <div className="flex items-center gap-2">
             {vlastnik && (
-              <span className="inline-block h-4 w-4 shrink-0 rounded-full" style={{ backgroundColor: userColor(vlastnik.colorIndex) }} />
+              <span className="inline-block h-4 w-4 shrink-0 rounded-full" style={{ backgroundColor: userColor(vlastnik.colorIndex, vlastnik.colorHex) }} />
             )}
             <select className="field" value={owner} onChange={(e) => setOwner(e.target.value)}>
               <option value="" disabled={!!projekt.ownerId && !muzeOdebratKonstruktera}>— nikdo —</option>

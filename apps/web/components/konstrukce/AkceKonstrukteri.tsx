@@ -26,7 +26,7 @@ function Chips({ lide }: { lide: Osoba[] }) {
         <span
           key={o.id}
           className="rounded-md px-2 py-0.5 text-xs font-medium"
-          style={{ backgroundColor: userColor(o.colorIndex), color: "#16181b" }}
+          style={{ backgroundColor: userColor(o.colorIndex, o.colorHex), color: "#16181b" }}
         >
           {o.name}
         </span>

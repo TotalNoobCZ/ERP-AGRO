@@ -15,7 +15,7 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
     // Dlaždice = všichni aktivní z oddělení Konstrukce (bez ohledu na „lze přiřazovat").
     supabase
       .from("profiles")
-      .select("id, name, color_index, tile_order")
+      .select("id, name, color_index, color_hex, tile_order")
       .eq("active", true)
       .eq("oddeleni", "konstrukce")
       .order("tile_order", { ascending: true, nullsFirst: false })
@@ -23,7 +23,7 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
     // Zodpovědný za konstrukční projekt = vždy konstruktér (oddělení Konstrukce).
     supabase
       .from("profiles")
-      .select("id, name, color_index, tile_order")
+      .select("id, name, color_index, color_hex, tile_order")
       .eq("active", true)
       .eq("oddeleni", "konstrukce")
       .order("name", { ascending: true }),
@@ -54,10 +54,11 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
     supabase.from("absences").select("id, profile_id, type, start_date, end_date"),
   ]);
 
-  const mapClen = (c: { id: string; name: string; color_index: number | null; tile_order: number | null }): Clen => ({
+  const mapClen = (c: { id: string; name: string; color_index: number | null; color_hex: string | null; tile_order: number | null }): Clen => ({
     id: c.id,
     name: c.name,
     colorIndex: c.color_index,
+    colorHex: c.color_hex,
     tileOrder: c.tile_order,
   });
   const clenove: Clen[] = (clenoveRes.data ?? []).map(mapClen);

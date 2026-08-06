@@ -68,7 +68,7 @@ type ZakazkaRowT = {
   konec_aktualni: string;
   stav: StavZakazky;
   milniky: { typ: string; nazev: string | null; datum: string; deleted_at: string | null }[];
-  prirazeni: { osoba_id: string; datum_od: string; datum_do: string; deleted_at: string | null; osoba: { name: string; color_index: number | null } | null }[];
+  prirazeni: { osoba_id: string; datum_od: string; datum_do: string; deleted_at: string | null; osoba: { name: string; color_index: number | null; color_hex: string | null } | null }[];
 };
 
 export default async function PlanPage({
@@ -95,7 +95,7 @@ export default async function PlanPage({
       .select(
         `id, kod, misto_plneni, popis, parent_id, montaz_typ, zacatek, konec_puvodni, konec_aktualni, stav,
          milniky(typ, nazev, datum, deleted_at),
-         prirazeni:prirazeni_zakazka(osoba_id, datum_od, datum_do, deleted_at, osoba:profiles(name, color_index))`,
+         prirazeni:prirazeni_zakazka(osoba_id, datum_od, datum_do, deleted_at, osoba:profiles(name, color_index, color_hex))`,
       )
       .is("deleted_at", null)
       .in("stav", ["AKTIVNI", "POZASTAVENO", "FAKTURACE"])
@@ -130,7 +130,7 @@ export default async function PlanPage({
           od: parseDay(p.datum_od),
           do: parseDay(p.datum_do),
           lane: 0,
-          barva: userColor(p.osoba?.color_index ?? null),
+          barva: userColor(p.osoba?.color_index ?? null, p.osoba?.color_hex ?? null),
           titulek: `${p.osoba?.name ?? "?"}: ${formatCz(parseDay(p.datum_od))} – ${formatCz(parseDay(p.datum_do))}`,
         });
       }

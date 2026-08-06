@@ -494,7 +494,7 @@ function Lide({ lide }: { lide: Osoba[] }) {
     <span className="flex flex-wrap items-center gap-1">
       {lide.map((o) => (
         <span key={o.id} className="inline-flex items-center gap-1 rounded-full bg-accent py-0.5 pl-1 pr-2 text-[11px]" title={o.name}>
-          <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: userColor(o.colorIndex) }} />
+          <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: userColor(o.colorIndex, o.colorHex) }} />
           {o.name}
         </span>
       ))}

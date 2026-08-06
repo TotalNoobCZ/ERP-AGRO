@@ -58,6 +58,8 @@ export type ProfileRow = {
   /** vlastní přístup k modulům (null = zdědit dle oddělení) */
   access_modules: string[] | null;
   color_index: number | null;
+  /** vlastní barva „#rrggbb" – má přednost před color_index */
+  color_hex: string | null;
   tile_order: number | null;
   active: boolean;
   pozice: string | null;

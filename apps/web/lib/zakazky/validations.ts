@@ -87,6 +87,12 @@ export const profilSchema = z
     assignable: z.boolean(),
     sefkonstrukter: z.boolean(),
     colorIndex: z.coerce.number().int().min(0).max(9).optional(),
+    colorHex: z
+      .string()
+      .trim()
+      .regex(/^#[0-9a-fA-F]{6}$/, "Neplatná barva")
+      .optional()
+      .or(z.literal("")),
     active: z.boolean(),
     pozice: z.string().trim().optional(),
     osobniCislo: z.string().trim().optional(),
