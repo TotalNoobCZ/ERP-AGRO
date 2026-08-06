@@ -40,6 +40,25 @@ export const USER_PALETTE_NAMES = [
 ] as const;
 
 /**
+ * Výchozí barva podle oddělení (karta zaměstnance „Dle oddělení"): každé
+ * oddělení má svou barvu z palety. Klíč = profiles.oddeleni.
+ */
+export const ODDELENI_BARVA: Record<string, string> = {
+  // Dílna
+  vyroba: USER_PALETTE[0],             // modrá
+  montaz: USER_PALETTE[1],             // zelená
+  elektro: USER_PALETTE[2],            // broskvová
+  // Kancelář
+  kancelar: USER_PALETTE[3],           // růžová
+  obchod: USER_PALETTE[4],             // levandulová
+  obchodni_manazer: USER_PALETTE[5],   // tyrkysová
+  konstrukce: USER_PALETTE[6],         // žlutá
+  projektak: USER_PALETTE[7],          // korálová
+  elektro_projektant: USER_PALETTE[8], // mátová
+  programator: USER_PALETTE[9],        // modrofialová
+};
+
+/**
  * Barva člena: vlastní hex (profiles.color_hex) má přednost, jinak paleta
  * podle color_index; mimo rozsah / null → neutrální.
  */
