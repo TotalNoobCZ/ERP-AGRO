@@ -6,7 +6,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { ROLES, ROLE_LABELS, ODDELENI, ODDELENI_LABELS, KAPITOLY, KAPITOLA_LABELS, ODDELENI_KAPITOLA, jeDilna, MODULY, MODUL_LABELS } from "@erp/core";
-import { USER_PALETTE, USER_PALETTE_NAMES } from "@erp/ui";
+import { USER_PALETTE, USER_PALETTE_NAMES, ODDELENI_BARVA } from "@erp/ui";
+
+/** Odpovídá uložená barva výchozí barvě oddělení? (→ režim „dle oddělení") */
+function jeBarvaOddeleni(oddeleni: string | null | undefined, colorHex: string | null | undefined): boolean {
+  if (!oddeleni || !colorHex) return false;
+  const auto = ODDELENI_BARVA[oddeleni];
+  return !!auto && auto.toLowerCase() === colorHex.toLowerCase();
+}
 import type { ProfilStav } from "@/app/(erp)/sprava/actions";
 
 type Init = {
@@ -65,14 +72,20 @@ export function ProfilForm({
   const [role, setRole] = useState(initial?.role ?? "viewer");
   const [oddeleni, setOddeleni] = useState(initial?.oddeleni ?? "");
   const [colorIndex, setColorIndex] = useState(String(initial?.colorIndex ?? 0));
-  // Barva: vlastní hex má přednost; bez něj barva palety dle colorIndex.
-  const [colorHex, setColorHex] = useState(
-    initial?.colorHex ?? USER_PALETTE[initial?.colorIndex ?? 0] ?? USER_PALETTE[0]!,
+  // Barva: režim „dle oddělení" (výchozí u nové karty) barvu odvozuje z mapy
+  // ODDELENI_BARVA a při změně oddělení se živě mění; ruční volba ho vypne.
+  // U editace se pozná auto režim tak, že uložená barva odpovídá oddělení.
+  const initHex = initial?.colorHex ?? USER_PALETTE[initial?.colorIndex ?? 0] ?? USER_PALETTE[0]!;
+  const [barvaAuto, setBarvaAuto] = useState(
+    !isEdit || jeBarvaOddeleni(initial?.oddeleni, initial?.colorHex),
   );
-  const vlastniBarva = !USER_PALETTE.some((h) => h.toLowerCase() === colorHex.toLowerCase());
-  // Klik na předvolbu drží v sync i colorIndex (kompatibilita se starými daty).
+  const [rucniHex, setRucniHex] = useState(initHex);
+  const colorHex = barvaAuto ? (ODDELENI_BARVA[oddeleni] ?? rucniHex) : rucniHex;
+  const vlastniBarva = !barvaAuto && !USER_PALETTE.some((h) => h.toLowerCase() === colorHex.toLowerCase());
+  // Klik na předvolbu vypne auto režim a drží v sync i colorIndex (kompatibilita).
   const vybratBarvu = (hex: string, idx: number) => {
-    setColorHex(hex.toLowerCase());
+    setBarvaAuto(false);
+    setRucniHex(hex.toLowerCase());
     if (idx >= 0) setColorIndex(String(idx));
   };
   const [active, setActive] = useState(initial?.active ?? true);
@@ -155,6 +168,21 @@ export function ProfilForm({
         <div>
           <label className="label">Barva (dlaždice)</label>
           <div className="flex flex-wrap items-center gap-1.5">
+            {/* Výchozí režim: barva se řídí oddělením (při jeho změně se sama přebarví). */}
+            <button
+              type="button"
+              onClick={() => setBarvaAuto(true)}
+              title="Barva se nastaví automaticky podle oddělení"
+              className={`inline-flex h-7 items-center gap-1.5 rounded-full border px-2 text-xs ${
+                barvaAuto ? "border-text ring-2 ring-link" : "border-line hover:border-text"
+              }`}
+            >
+              <span
+                className="inline-block h-4 w-4 rounded-full border border-line"
+                style={{ backgroundColor: ODDELENI_BARVA[oddeleni] ?? "#8A8F98" }}
+              />
+              Dle oddělení
+            </button>
             {USER_PALETTE.map((hex, i) => (
               <button
                 key={hex}
@@ -163,7 +191,7 @@ export function ProfilForm({
                 title={USER_PALETTE_NAMES[i]}
                 aria-label={USER_PALETTE_NAMES[i]}
                 className={`h-7 w-7 rounded-full border transition ${
-                  colorHex.toLowerCase() === hex.toLowerCase()
+                  !barvaAuto && colorHex.toLowerCase() === hex.toLowerCase()
                     ? "border-text ring-2 ring-link"
                     : "border-line hover:border-text"
                 }`}
