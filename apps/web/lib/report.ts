@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { formatDay, today } from "@/lib/zakazky/dates";
 import {
   mesicniOkno,
+  reportOkno,
   radaMesicu,
   vytizeniOsoby,
   pokrytePracovniDny,
@@ -43,7 +44,9 @@ export type ReportTrendMesic = {
 };
 
 export type ReportData = {
-  refMesic: string;
+  /** „YYYY-MM" (měsíc) nebo „YYYY" (rok) */
+  ref: string;
+  typ: "mesic" | "rok";
   obdobi: Obdobi;
   dnes: string;
   poptavky: {
@@ -73,9 +76,10 @@ const TREND_MESICU = 6;
 export async function nactiReport(ref?: string): Promise<ReportData> {
   const supabase = await createClient();
   const dnes = formatDay(today());
-  const obdobi = mesicniOkno(ref, dnes);
-  const refMesic = obdobi.od.slice(0, 7);
-  const mesice = radaMesicu(refMesic, TREND_MESICU);
+  const rozsah = reportOkno(ref, dnes);
+  const { obdobi, typ } = rozsah;
+  // Trend: u měsíce posledních 6 měsíců, u roku všech 12 měsíců daného roku.
+  const mesice = typ === "rok" ? radaMesicu(`${rozsah.ref}-12`, 12) : radaMesicu(rozsah.ref, TREND_MESICU);
   const trendOd = `${mesice[0]}-01`; // spodní mez dotazů pro trend
 
   const [inqRes, logyRes, zakRes, prodlRes, prirRes, absRes, projRes, taskRes] = await Promise.all([
@@ -211,7 +215,8 @@ export async function nactiReport(ref?: string): Promise<ReportData> {
   });
 
   return {
-    refMesic,
+    ref: rozsah.ref,
+    typ,
     obdobi,
     dnes,
     poptavky: {

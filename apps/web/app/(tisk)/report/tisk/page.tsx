@@ -21,13 +21,16 @@ export default async function ReportTiskPage({
 
   const sp = await searchParams;
   const r = await nactiReport(sp.ref);
-  const [y, m] = r.refMesic.split("-").map(Number);
+  const obdobiNazev =
+    r.typ === "rok"
+      ? `rok ${r.ref}`
+      : `${MESICE_CZ[(Number(r.ref.slice(5)) || 1) - 1]} ${r.ref.slice(0, 4)}`;
 
   return (
     <div className="mx-auto max-w-4xl bg-white p-8 text-black">
       <PrintButton auto={sp?.print === "1"} />
       <div className="mb-4 border-b border-gray-300 pb-3">
-        <h1 className="text-2xl font-bold">Report pro vedení — {MESICE_CZ[(m ?? 1) - 1]} {y}</h1>
+        <h1 className="text-2xl font-bold">Report pro vedení — {obdobiNazev}</h1>
         <p className="text-sm text-gray-500">
           Období {formatCz(parseDay(r.obdobi.od))} – {formatCz(parseDay(r.obdobi.do))} · vytištěno {formatDate(new Date())}
         </p>
@@ -133,7 +136,7 @@ export default async function ReportTiskPage({
         </p>
       </Sekce>
 
-      <Sekce nazev="Trend – posledních 6 měsíců">
+      <Sekce nazev={r.typ === "rok" ? `Trend – měsíce roku ${r.ref}` : "Trend – posledních 6 měsíců"}>
         <table className="w-full border-collapse text-center">
           <thead>
             <tr className="[&>th]:border [&>th]:border-gray-300 [&>th]:p-1.5 [&>th]:font-medium">

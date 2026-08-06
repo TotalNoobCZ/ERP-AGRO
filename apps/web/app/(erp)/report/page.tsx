@@ -12,12 +12,16 @@ export const dynamic = "force-dynamic";
 
 const MESICE_CZ = ["leden", "únor", "březen", "duben", "květen", "červen", "červenec", "srpen", "září", "říjen", "listopad", "prosinec"];
 
-function mesicCz(ref: string): string {
+/** „YYYY-MM" → „srpen 2026", „YYYY" → „rok 2026" */
+function obdobiCz(ref: string): string {
+  if (/^\d{4}$/.test(ref)) return `rok ${ref}`;
   const [y, m] = ref.split("-").map(Number);
   return `${MESICE_CZ[(m ?? 1) - 1]} ${y}`;
 }
 
+/** Posun ref o `o` období: měsíc o měsíce, rok o roky. */
 function posunRef(ref: string, o: number): string {
+  if (/^\d{4}$/.test(ref)) return String(Number(ref) + o);
   const [y, m] = ref.split("-").map(Number);
   const d = new Date(Date.UTC(y!, m! - 1 + o, 1));
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
@@ -43,11 +47,25 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
             Období: {formatCz(parseDay(r.obdobi.od))} – {formatCz(parseDay(r.obdobi.do))} · sestaveno {formatCz(parseDay(r.dnes))}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Link href={`/report/tisk?ref=${r.refMesic}&print=1`} className="btn-ghost">🖨 Export do PDF</Link>
-          <Link href={`/report?ref=${posunRef(r.refMesic, -1)}`} className="btn-ghost">◀</Link>
-          <span className="min-w-28 text-center text-sm font-medium capitalize">{mesicCz(r.refMesic)}</span>
-          <Link href={`/report?ref=${posunRef(r.refMesic, 1)}`} className="btn-ghost">▶</Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex gap-1">
+            <Link
+              href={`/report?ref=${r.typ === "mesic" ? r.ref : r.ref === r.dnes.slice(0, 4) ? r.dnes.slice(0, 7) : `${r.ref}-01`}`}
+              className={`btn-ghost ${r.typ === "mesic" ? "border-link text-link" : "border-transparent"}`}
+            >
+              Měsíc
+            </Link>
+            <Link
+              href={`/report?ref=${r.ref.slice(0, 4)}`}
+              className={`btn-ghost ${r.typ === "rok" ? "border-link text-link" : "border-transparent"}`}
+            >
+              Rok
+            </Link>
+          </div>
+          <Link href={`/report/tisk?ref=${r.ref}&print=1`} className="btn-ghost">🖨 Export do PDF</Link>
+          <Link href={`/report?ref=${posunRef(r.ref, -1)}`} className="btn-ghost">◀</Link>
+          <span className="min-w-28 text-center text-sm font-medium capitalize">{obdobiCz(r.ref)}</span>
+          <Link href={`/report?ref=${posunRef(r.ref, 1)}`} className="btn-ghost">▶</Link>
         </div>
       </div>
 
@@ -64,7 +82,7 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Poptávky za období */}
         <Card>
-          <CardHeader><CardTitle>📥 Poptávky — {mesicCz(r.refMesic)}</CardTitle></CardHeader>
+          <CardHeader><CardTitle>📥 Poptávky — {obdobiCz(r.ref)}</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div className="grid grid-cols-3 gap-2 text-center">
               <MiniStat label="Přijaté" value={r.poptavky.prijate} />
@@ -91,7 +109,7 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
 
         {/* Zakázky za období */}
         <Card>
-          <CardHeader><CardTitle>📋 Akce — {mesicCz(r.refMesic)}</CardTitle></CardHeader>
+          <CardHeader><CardTitle>📋 Akce — {obdobiCz(r.ref)}</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div className="grid grid-cols-3 gap-2 text-center">
               <MiniStat label="Zahájené" value={r.zakazky.zahajene} />
@@ -167,7 +185,7 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
 
       {/* Vytížení lidí */}
       <Card>
-        <CardHeader><CardTitle>👥 Vytížení lidí — {mesicCz(r.refMesic)}</CardTitle></CardHeader>
+        <CardHeader><CardTitle>👥 Vytížení lidí — {obdobiCz(r.ref)}</CardTitle></CardHeader>
         <CardContent>
           {r.vytizeni.length === 0 ? (
             <p className="text-sm text-text-muted">Žádní přiřaditelní lidé.</p>
@@ -199,7 +217,7 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
 
       {/* Konstrukce */}
       <Card>
-        <CardHeader><CardTitle>📐 Konstrukce — {mesicCz(r.refMesic)}</CardTitle></CardHeader>
+        <CardHeader><CardTitle>📐 Konstrukce — {obdobiCz(r.ref)}</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-3 gap-2 text-center">
           <MiniStat label="Aktivní projekty" value={r.konstrukce.aktivniProjekty} />
           <MiniStat label="Dokončené úkoly" value={r.konstrukce.dokonceneUkoly} />
@@ -207,14 +225,16 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
         </CardContent>
       </Card>
 
-      {/* Trend 6 měsíců */}
+      {/* Trend po měsících: u měsíce posledních 6, u roku všech 12 daného roku */}
       <Card>
-        <CardHeader><CardTitle>📈 Trend — posledních 6 měsíců</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>📈 Trend — {r.typ === "rok" ? `měsíce roku ${r.ref}` : "posledních 6 měsíců"}</CardTitle>
+        </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-6 gap-2">
+          <div className={`grid gap-2 ${r.typ === "rok" ? "grid-cols-6 sm:grid-cols-12" : "grid-cols-6"}`}>
             {r.trend.map((t) => (
               <div key={t.mesic} className="space-y-1 text-center">
-                <div className="flex h-28 items-end justify-center gap-1">
+                <div className={`flex h-28 items-end justify-center ${r.typ === "rok" ? "gap-px" : "gap-1"}`}>
                   <TrendSloupec hodnota={t.poptavkyPrijate} max={maxTrend} trida="bg-sky-400/70" titulek={`Přijaté poptávky: ${t.poptavkyPrijate}`} />
                   <TrendSloupec hodnota={t.poptavkyObjednane} max={maxTrend} trida="bg-emerald-500/70" titulek={`Objednáno: ${t.poptavkyObjednane}`} />
                   <TrendSloupec hodnota={t.akceZahajene} max={maxTrend} trida="bg-link/70" titulek={`Zahájené akce: ${t.akceZahajene}`} />
