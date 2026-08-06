@@ -39,13 +39,19 @@ export type ReportVytizeni = {
   podil: number;
   absenceDny: number;
 };
-export type ReportManazer = {
+export type ReportOsobaAkce = {
   id: string;
   jmeno: string;
   /** popisek pozice (oddělení, u vedení role) */
   pozice: string;
-  /** akce (hlavní), kde je osoba odpovědná a akce zasahuje do období */
+  /** hlavní akce zasahující do období, kde je osoba odpovědná */
   akce: number;
+};
+
+export type ReportOsobaPoptavky = {
+  id: string;
+  jmeno: string;
+  pozice: string;
   /** poptávky přijaté v období, kde je osoba odpovědná */
   poptavky: number;
   objednano: number;
@@ -86,10 +92,10 @@ export type ReportData = {
   };
   fakturace: { polozky: ReportFakturace[]; proplacenoCelkem: number };
   vytizeni: ReportVytizeni[];
-  /** Projekťáci: akce na starost + jejich poptávky. */
-  projektaci: ReportManazer[];
-  /** Obchodní manažeři a vedení: poptávky na starost + úspěšnost objednání. */
-  obchodnici: ReportManazer[];
+  /** Akce v období podle odpovědných osob (projekťáci a další). */
+  akcePodleOsob: ReportOsobaAkce[];
+  /** Poptávky v období podle odpovědných osob (obchodní manažeři, vedení…). */
+  poptavkyPodleOsob: ReportOsobaPoptavky[];
   konstrukce: { aktivniProjekty: number; dokonceneUkoly: number; poTerminuUkoly: number };
   trend: ReportTrendMesic[];
 };
@@ -244,29 +250,17 @@ export async function nactiReport(ref?: string): Promise<ReportData> {
       ? (ODDELENI_LABELS[p.oddeleni as Oddeleni] ?? p.oddeleni)
       : (ROLE_LABELS[p.role as Role] ?? p.role);
 
-  // Projekťáci: všichni z oddělení Projekťák + kdokoli další, kdo má v období
-  // akci na starost (odpovědná osoba akce).
-  const projektaci: ReportManazer[] = profily
-    .filter((p) => p.oddeleni === "projektak" || akceOsoby.has(p.id))
-    .map((p) => ({
-      id: p.id,
-      jmeno: p.name,
-      pozice: pozice(p),
-      akce: akceOsoby.get(p.id) ?? 0,
-      ...poptavkyOsoby(p.id),
-    }))
-    .sort((a, b) => b.akce - a.akce || b.poptavky - a.poptavky || a.jmeno.localeCompare(b.jmeno, "cs"));
+  // Akce podle odpovědných: každý, kdo má v období aspoň jednu akci na starost.
+  const akcePodleOsob: ReportOsobaAkce[] = profily
+    .filter((p) => akceOsoby.has(p.id))
+    .map((p) => ({ id: p.id, jmeno: p.name, pozice: pozice(p), akce: akceOsoby.get(p.id)! }))
+    .sort((a, b) => b.akce - a.akce || a.jmeno.localeCompare(b.jmeno, "cs"));
 
-  // Obchodní manažeři vždy; vedení (vedoucí/admin) jen když v období nějakou
-  // poptávku na starost mělo. Projekťáky tu neduplikujeme.
-  const obchodnici: ReportManazer[] = profily
-    .filter((p) => p.oddeleni !== "projektak")
-    .filter(
-      (p) =>
-        p.oddeleni === "obchodni_manazer" ||
-        ((p.role === "vedouci" || p.role === "admin") && poptavkyVObdobi.some((i) => i.person_id === p.id)),
-    )
-    .map((p) => ({ id: p.id, jmeno: p.name, pozice: pozice(p), akce: akceOsoby.get(p.id) ?? 0, ...poptavkyOsoby(p.id) }))
+  // Poptávky podle odpovědných: každý, kdo má v období aspoň jednu poptávku
+  // na starost (obchodní manažeři, vedení, projekťáci…).
+  const poptavkyPodleOsob: ReportOsobaPoptavky[] = profily
+    .filter((p) => poptavkyVObdobi.some((i) => i.person_id === p.id))
+    .map((p) => ({ id: p.id, jmeno: p.name, pozice: pozice(p), ...poptavkyOsoby(p.id) }))
     .sort((a, b) => b.poptavky - a.poptavky || a.jmeno.localeCompare(b.jmeno, "cs"));
 
   // ---- Konstrukce ------------------------------------------------------------
@@ -315,8 +309,8 @@ export async function nactiReport(ref?: string): Promise<ReportData> {
       proplacenoCelkem: hlavni.filter((z) => z.stav === "PROPLACENO").length,
     },
     vytizeni,
-    projektaci,
-    obchodnici,
+    akcePodleOsob,
+    poptavkyPodleOsob,
     konstrukce,
     trend,
   };
