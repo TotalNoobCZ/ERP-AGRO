@@ -30,7 +30,7 @@ export default async function SpravaPage({
   const supabase = createAdminClient();
   let dotaz = supabase
     .from("profiles")
-    .select("id, name, email, role, oddeleni, assignable, color_index, active, auth_user_id")
+    .select("id, name, email, role, oddeleni, assignable, color_index, color_hex, active, auth_user_id")
     .order("active", { ascending: false })
     .order("name", { ascending: true });
   if (aktivniOdd) dotaz = dotaz.eq("oddeleni", aktivniOdd);
@@ -109,7 +109,7 @@ export default async function SpravaPage({
                 <TableCell>
                   <span
                     className="inline-block h-4 w-4 rounded-full"
-                    style={{ backgroundColor: userColor(p.color_index) }}
+                    style={{ backgroundColor: userColor(p.color_index, p.color_hex) }}
                     title={`Barva ${p.color_index ?? "—"}`}
                   />
                 </TableCell>

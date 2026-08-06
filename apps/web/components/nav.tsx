@@ -24,12 +24,13 @@ export interface NavProps {
   name: string;
   role: Role;
   colorIndex: number | null;
+  colorHex: string | null;
   /** Moduly, na které má uživatel přístup (Správa se řídí adminOnly). */
   moduly: Modul[];
 }
 
 /** Sdílená navigace – přepínání modulů, jedno přihlášení, jedna session. */
-export function Nav({ name, role, colorIndex, moduly }: NavProps) {
+export function Nav({ name, role, colorIndex, colorHex, moduly }: NavProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -98,7 +99,7 @@ export function Nav({ name, role, colorIndex, moduly }: NavProps) {
         </Link>
         <span
           className="inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-on-accent"
-          style={{ backgroundColor: userColor(colorIndex) }}
+          style={{ backgroundColor: userColor(colorIndex, colorHex) }}
           data-tip={`${name} · ${ROLE_LABELS[role]}`}
           data-tip-pos="bottom"
         >

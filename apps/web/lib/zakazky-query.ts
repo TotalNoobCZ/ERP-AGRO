@@ -93,12 +93,12 @@ export async function queryZakazky(
 
 // ---------- Tabule zakázek (obrácené drag & drop: osoba → zakázka) ----------
 
-export type BoardOsobaZ = { id: string; name: string; oddeleni: string | null; role: string | null; colorIndex: number | null };
+export type BoardOsobaZ = { id: string; name: string; oddeleni: string | null; role: string | null; colorIndex: number | null; colorHex: string | null };
 // Jeden pracovník = jedna položka na kartě, i když má víc přiřazení (např. po
 // dočasné výměně a návratu). prirazeniIds drží všechna jeho živá přiřazení,
 // aby křížek odebral pracovníka z akce úplně.
-export type BoardPrirazeni = { prirazeniIds: string[]; osobaId: string; name: string; oddeleni: string | null; colorIndex: number | null };
-export type BoardOdpovedna = { id: string; name: string; colorIndex: number | null };
+export type BoardPrirazeni = { prirazeniIds: string[]; osobaId: string; name: string; oddeleni: string | null; colorIndex: number | null; colorHex: string | null };
+export type BoardOdpovedna = { id: string; name: string; colorIndex: number | null; colorHex: string | null };
 export type BoardZakazka = {
   id: string;
   kod: string;
@@ -122,7 +122,7 @@ export async function queryZakazkyBoard(
   const [osobyRes, zakRes] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, name, oddeleni, role, color_index")
+      .select("id, name, oddeleni, role, color_index, color_hex")
       .eq("active", true)
       .eq("assignable", true)
       .order("name", { ascending: true }),
@@ -130,8 +130,8 @@ export async function queryZakazkyBoard(
       .from("zakazky")
       .select(
         "id, kod, misto_plneni, popis, parent_id, montaz_typ, zacatek, konec_aktualni, odpovedna_osoba_id, " +
-          "odpovedna:profiles!zakazky_odpovedna_osoba_id_fkey(id, name, color_index), " +
-          "prirazeni:prirazeni_zakazka(id, osoba_id, deleted_at, osoba:profiles(id, name, oddeleni, color_index))",
+          "odpovedna:profiles!zakazky_odpovedna_osoba_id_fkey(id, name, color_index, color_hex), " +
+          "prirazeni:prirazeni_zakazka(id, osoba_id, deleted_at, osoba:profiles(id, name, oddeleni, color_index, color_hex))",
       )
       .is("deleted_at", null)
       .in("stav", ["AKTIVNI", "POZASTAVENO"])
@@ -144,6 +144,7 @@ export async function queryZakazkyBoard(
     oddeleni: o.oddeleni,
     role: o.role,
     colorIndex: o.color_index,
+    colorHex: o.color_hex,
   }));
 
   type RawZ = {
@@ -156,12 +157,12 @@ export async function queryZakazkyBoard(
     zacatek: string;
     konec_aktualni: string;
     odpovedna_osoba_id: string | null;
-    odpovedna: { id: string; name: string; color_index: number | null } | null;
+    odpovedna: { id: string; name: string; color_index: number | null; color_hex: string | null } | null;
     prirazeni: Array<{
       id: string;
       osoba_id: string;
       deleted_at: string | null;
-      osoba: { id: string; name: string; oddeleni: string | null; color_index: number | null } | null;
+      osoba: { id: string; name: string; oddeleni: string | null; color_index: number | null; color_hex: string | null } | null;
     }> | null;
   };
   const rawZ = (zakRes.data ?? []) as unknown as RawZ[];
@@ -182,6 +183,7 @@ export async function queryZakazkyBoard(
           name: p.osoba?.name ?? "?",
           oddeleni: p.osoba?.oddeleni ?? null,
           colorIndex: p.osoba?.color_index ?? null,
+          colorHex: p.osoba?.color_hex ?? null,
         });
       }
     }
@@ -197,7 +199,7 @@ export async function queryZakazkyBoard(
       konecAktualni: z.konec_aktualni,
       odpovednaOsobaId: z.odpovedna_osoba_id,
       odpovednaOsoba: z.odpovedna
-        ? { id: z.odpovedna.id, name: z.odpovedna.name, colorIndex: z.odpovedna.color_index }
+        ? { id: z.odpovedna.id, name: z.odpovedna.name, colorIndex: z.odpovedna.color_index, colorHex: z.odpovedna.color_hex }
         : null,
       pracovnici,
     };

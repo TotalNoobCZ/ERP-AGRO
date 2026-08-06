@@ -19,6 +19,7 @@ type Init = {
   sefkonstrukter?: boolean;
   accessModules?: string[] | null;
   colorIndex?: number | null;
+  colorHex?: string | null;
   active?: boolean;
   pozice?: string | null;
   osobniCislo?: string | null;
@@ -64,6 +65,16 @@ export function ProfilForm({
   const [role, setRole] = useState(initial?.role ?? "viewer");
   const [oddeleni, setOddeleni] = useState(initial?.oddeleni ?? "");
   const [colorIndex, setColorIndex] = useState(String(initial?.colorIndex ?? 0));
+  // Barva: vlastní hex má přednost; bez něj barva palety dle colorIndex.
+  const [colorHex, setColorHex] = useState(
+    initial?.colorHex ?? USER_PALETTE[initial?.colorIndex ?? 0] ?? USER_PALETTE[0]!,
+  );
+  const vlastniBarva = !USER_PALETTE.some((h) => h.toLowerCase() === colorHex.toLowerCase());
+  // Klik na předvolbu drží v sync i colorIndex (kompatibilita se starými daty).
+  const vybratBarvu = (hex: string, idx: number) => {
+    setColorHex(hex.toLowerCase());
+    if (idx >= 0) setColorIndex(String(idx));
+  };
   const [active, setActive] = useState(initial?.active ?? true);
   const [sefkonstrukter, setSefkonstrukter] = useState(initial?.sefkonstrukter ?? false);
   const [pozice, setPozice] = useState(initial?.pozice ?? "");
@@ -143,11 +154,41 @@ export function ProfilForm({
         </div>
         <div>
           <label className="label">Barva (dlaždice)</label>
-          <select name="colorIndex" className="field" value={colorIndex} onChange={(e) => setColorIndex(e.target.value)}>
+          <div className="flex flex-wrap items-center gap-1.5">
             {USER_PALETTE.map((hex, i) => (
-              <option key={hex} value={i}>{USER_PALETTE_NAMES[i]}</option>
+              <button
+                key={hex}
+                type="button"
+                onClick={() => vybratBarvu(hex, i)}
+                title={USER_PALETTE_NAMES[i]}
+                aria-label={USER_PALETTE_NAMES[i]}
+                className={`h-7 w-7 rounded-full border transition ${
+                  colorHex.toLowerCase() === hex.toLowerCase()
+                    ? "border-text ring-2 ring-link"
+                    : "border-line hover:border-text"
+                }`}
+                style={{ backgroundColor: hex }}
+              />
             ))}
-          </select>
+            {/* Vlastní RGB barva – nativní color picker */}
+            <label
+              className={`relative inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full border px-2 text-xs ${
+                vlastniBarva ? "border-text ring-2 ring-link" : "border-line hover:border-text"
+              }`}
+              title="Vlastní barva (RGB)"
+            >
+              <span className="inline-block h-4 w-4 rounded-full border border-line" style={{ backgroundColor: colorHex }} />
+              Vlastní
+              <input
+                type="color"
+                value={colorHex}
+                onChange={(e) => vybratBarvu(e.target.value, USER_PALETTE.findIndex((h) => h.toLowerCase() === e.target.value.toLowerCase()))}
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              />
+            </label>
+          </div>
+          <input type="hidden" name="colorIndex" value={colorIndex} />
+          <input type="hidden" name="colorHex" value={colorHex} />
         </div>
       </div>
 

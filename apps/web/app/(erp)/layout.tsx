@@ -23,6 +23,7 @@ export default async function ErpLayout({ children }: { children: React.ReactNod
         name={profile.name}
         role={profile.role as Role}
         colorIndex={profile.color_index}
+        colorHex={profile.color_hex}
         moduly={moduly}
       />
       <main className="flex-1 p-6">{children}</main>

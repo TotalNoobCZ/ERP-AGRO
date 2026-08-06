@@ -28,7 +28,7 @@ export default async function KartaZamestnancePage({ params }: { params: Promise
   // je bez nich; adminovi je doplníme přes service-role klienta.
   const { data: p } = await supabase
     .from("profiles")
-    .select("id, name, role, oddeleni, sefkonstrukter, color_index, active, pozice, osobni_cislo")
+    .select("id, name, role, oddeleni, sefkonstrukter, color_index, color_hex, active, pozice, osobni_cislo")
     .eq("id", id)
     .maybeSingle();
   if (!p) notFound();
@@ -58,7 +58,7 @@ export default async function KartaZamestnancePage({ params }: { params: Promise
         <div className="mb-3 flex items-center gap-3">
           <span
             className="inline-flex h-10 w-10 items-center justify-center rounded-full text-base font-bold"
-            style={{ backgroundColor: userColor(p.color_index), color: "#16181b" }}
+            style={{ backgroundColor: userColor(p.color_index, p.color_hex), color: "#16181b" }}
           >
             {p.name.trim().charAt(0).toUpperCase()}
           </span>

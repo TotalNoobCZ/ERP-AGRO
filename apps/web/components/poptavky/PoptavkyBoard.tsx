@@ -51,15 +51,13 @@ export default function PoptavkyBoard({
     String(p.number).includes(q);
 
   const barvaOsoby = useMemo(() => {
-    const m = new Map<string, number | null>();
-    for (const o of osoby) m.set(o.id, o.colorIndex);
+    const m = new Map<string, string>();
+    for (const o of osoby) m.set(o.id, userColor(o.colorIndex, o.colorHex));
     return m;
   }, [osoby]);
 
   const cardColor = (p: BoardPoptavka): string =>
-    p.personId && barvaOsoby.has(p.personId)
-      ? userColor(barvaOsoby.get(p.personId) ?? null)
-      : COLOR_TOKENS.neutral;
+    (p.personId && barvaOsoby.get(p.personId)) || COLOR_TOKENS.neutral;
 
   const poptavkyOsoby = useMemo(() => {
     const map = new Map<string, BoardPoptavka[]>();
@@ -232,7 +230,7 @@ function PersonTile({
   onOpen: (id: string) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `person:${osoba.id}` });
-  const barva = userColor(osoba.colorIndex);
+  const barva = userColor(osoba.colorIndex, osoba.colorHex);
   return (
     <div
       ref={setNodeRef}

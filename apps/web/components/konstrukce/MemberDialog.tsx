@@ -64,7 +64,7 @@ export function MemberDialog({
       <div className="card max-h-[90vh] w-full max-w-4xl space-y-4 overflow-y-auto p-6">
         <div className="flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-lg font-semibold">
-            <span className="inline-block h-4 w-4 rounded-full" style={{ backgroundColor: userColor(clen.colorIndex) }} />
+            <span className="inline-block h-4 w-4 rounded-full" style={{ backgroundColor: userColor(clen.colorIndex, clen.colorHex) }} />
             {clen.name}
           </h2>
           <button className="text-text-muted hover:text-text" onClick={onClose} aria-label="Zavřít">✕</button>

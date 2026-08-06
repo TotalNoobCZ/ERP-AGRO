@@ -508,7 +508,7 @@ function MemberTile({
   onTaskClick: (id: string) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `member:${clen.id}` });
-  const barva = userColor(clen.colorIndex);
+  const barva = userColor(clen.colorIndex, clen.colorHex);
   return (
     <div
       ref={setNodeRef}
@@ -583,7 +583,7 @@ function ProjectTile({
   // Vedoucí projektu je Projekťák (ne člen konstrukčního týmu).
   const owner = projektaci.find((c) => c.id === projekt.ownerId);
   // Dlaždice projektu má barvu vedoucího; bez něj neutrální (kap. 7).
-  const tileColor = owner ? userColor(owner.colorIndex) : COLOR_TOKENS.neutral;
+  const tileColor = owner ? userColor(owner.colorIndex, owner.colorHex) : COLOR_TOKENS.neutral;
 
   async function addTask() {
     if (!name.trim()) return;
@@ -641,7 +641,7 @@ function ProjectTile({
           const barva = u.completed
             ? COLOR_TOKENS.neutral
             : resitel
-              ? userColor(resitel.colorIndex)
+              ? userColor(resitel.colorIndex, resitel.colorHex)
               : COLOR_TOKENS.neutral;
           return (
             <DraggableTask

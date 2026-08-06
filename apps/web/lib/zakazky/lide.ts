@@ -3,7 +3,7 @@
 // na akci (akce = ona sama + všechny její zakázky k akci).
 import type { createClient } from "@/lib/supabase/server";
 
-export type Osoba = { id: string; name: string; oddeleni: string | null; colorIndex: number | null };
+export type Osoba = { id: string; name: string; oddeleni: string | null; colorIndex: number | null; colorHex: string | null };
 
 type Db = Awaited<ReturnType<typeof createClient>>;
 
@@ -22,18 +22,18 @@ export async function nacistLidiZakazek(supabase: Db, ids: string[]): Promise<Ma
   const [prirRes, zakRes] = await Promise.all([
     supabase
       .from("prirazeni_zakazka")
-      .select("zakazka_id, deleted_at, osoba:profiles(id, name, oddeleni, color_index)")
+      .select("zakazka_id, deleted_at, osoba:profiles(id, name, oddeleni, color_index, color_hex)")
       .in("zakazka_id", ids)
       .is("deleted_at", null),
     supabase
       .from("zakazky")
-      .select("id, odpovedna:profiles!zakazky_odpovedna_osoba_id_fkey(id, name, oddeleni, color_index)")
+      .select("id, odpovedna:profiles!zakazky_odpovedna_osoba_id_fkey(id, name, oddeleni, color_index, color_hex)")
       .in("id", ids),
   ]);
 
-  type RawOsoba = { id: string; name: string; oddeleni: string | null; color_index: number | null } | null;
+  type RawOsoba = { id: string; name: string; oddeleni: string | null; color_index: number | null; color_hex: string | null } | null;
   const norm = (o: RawOsoba): Osoba | null =>
-    o ? { id: o.id, name: o.name, oddeleni: o.oddeleni, colorIndex: o.color_index } : null;
+    o ? { id: o.id, name: o.name, oddeleni: o.oddeleni, colorIndex: o.color_index, colorHex: o.color_hex } : null;
 
   for (const p of (prirRes.data ?? []) as unknown as { zakazka_id: string; osoba: RawOsoba }[]) {
     add(p.zakazka_id, norm(p.osoba));

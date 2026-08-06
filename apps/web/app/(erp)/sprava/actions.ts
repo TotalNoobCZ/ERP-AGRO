@@ -30,6 +30,7 @@ function ziskat(fd: FormData) {
     assignable: true, // automaticky u všech (pole ve formuláři zrušeno)
     sefkonstrukter: fd.get("sefkonstrukter") === "on",
     colorIndex: Number(fd.get("colorIndex") ?? 0),
+    colorHex: String(fd.get("colorHex") ?? ""),
     active: fd.get("active") !== null ? fd.get("active") === "on" : true,
     pozice: String(fd.get("pozice") ?? ""),
     osobniCislo: String(fd.get("osobniCislo") ?? ""),
@@ -58,6 +59,7 @@ export async function vytvoritProfil(_prev: ProfilStav, fd: FormData): Promise<P
     assignable: d.assignable,
     access_modules: ziskatAccessModules(fd),
     color_index: d.colorIndex ?? null,
+    color_hex: d.colorHex ? d.colorHex.toLowerCase() : null,
     active: d.active,
     pozice: d.pozice || null,
     osobni_cislo: d.osobniCislo || null,
@@ -121,6 +123,7 @@ export async function upravitProfil(id: string, _prev: ProfilStav, fd: FormData)
       sefkonstrukter: d.sefkonstrukter,
       access_modules: ziskatAccessModules(fd),
       color_index: d.colorIndex ?? null,
+      color_hex: d.colorHex ? d.colorHex.toLowerCase() : null,
       active: d.active,
       pozice: d.pozice || null,
       osobni_cislo: d.osobniCislo || null,
