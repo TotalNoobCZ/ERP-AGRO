@@ -113,31 +113,71 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
         </Card>
       </div>
 
-      {/* Manažeři: projekťáci (akce + poptávky), obchodní manažeři a vedení (poptávky) */}
+      {/* Odpovědnosti podle agendy: akce a poptávky */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader><CardTitle>🗂 Projektoví manažeři — {obdobiCz(r.ref)}</CardTitle></CardHeader>
+          <CardHeader><CardTitle>🗂 Akce podle odpovědných — {obdobiCz(r.ref)}</CardTitle></CardHeader>
           <CardContent>
-            {r.projektaci.length === 0 ? (
-              <p className="text-sm text-text-muted">Žádní projekťáci s akcemi v období.</p>
+            {r.akcePodleOsob.length === 0 ? (
+              <p className="text-sm text-text-muted">Žádné akce s odpovědnou osobou v období.</p>
             ) : (
-              <ManazerTabulka lide={r.projektaci} sloupecAkce />
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-text-muted">
+                    <th className="py-1.5 font-medium">Jméno</th>
+                    <th className="py-1.5 text-right font-medium">Akce na starost</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {r.akcePodleOsob.map((m) => (
+                    <tr key={m.id} className="border-b border-line last:border-0">
+                      <td className="py-1.5">
+                        {m.jmeno} <span className="text-xs text-text-muted">· {m.pozice}</span>
+                      </td>
+                      <td className="py-1.5 text-right font-medium">{m.akce}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             )}
             <p className="mt-3 text-xs text-text-muted">
-              Akce = hlavní akce v období, kde je osoba odpovědná. Poptávky = přijaté v období, úspěšnost z jejich uzavření.
+              Hlavní akce zasahující do období, počítané podle odpovědné osoby akce.
             </p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle>💼 Obchodní manažeři a vedení — {obdobiCz(r.ref)}</CardTitle></CardHeader>
+          <CardHeader><CardTitle>📥 Poptávky podle odpovědných — {obdobiCz(r.ref)}</CardTitle></CardHeader>
           <CardContent>
-            {r.obchodnici.length === 0 ? (
-              <p className="text-sm text-text-muted">Žádné poptávky na starost v období.</p>
+            {r.poptavkyPodleOsob.length === 0 ? (
+              <p className="text-sm text-text-muted">Žádné poptávky s odpovědnou osobou v období.</p>
             ) : (
-              <ManazerTabulka lide={r.obchodnici} />
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-text-muted">
+                    <th className="py-1.5 font-medium">Jméno</th>
+                    <th className="py-1.5 text-right font-medium">Poptávky</th>
+                    <th className="py-1.5 text-right font-medium">Objednáno</th>
+                    <th className="py-1.5 text-right font-medium">Úspěšnost</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {r.poptavkyPodleOsob.map((m) => (
+                    <tr key={m.id} className="border-b border-line last:border-0">
+                      <td className="py-1.5">
+                        {m.jmeno} <span className="text-xs text-text-muted">· {m.pozice}</span>
+                      </td>
+                      <td className="py-1.5 text-right">{m.poptavky}</td>
+                      <td className="py-1.5 text-right">{m.objednano}</td>
+                      <td className="py-1.5 text-right">
+                        {m.uspesnost == null ? <span className="text-text-muted">—</span> : pct(m.uspesnost)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             )}
             <p className="mt-3 text-xs text-text-muted">
-              Poptávky přijaté v období, kde je osoba odpovědná; úspěšnost = objednáno / uzavřené.
+              Poptávky přijaté v období podle odpovědné osoby (obchod i vedení); úspěšnost = objednáno / uzavřené.
             </p>
           </CardContent>
         </Card>
@@ -285,37 +325,6 @@ function MiniStat({ label, value, warn }: { label: string; value: number; warn?:
 function TrendSloupec({ hodnota, max, trida, titulek }: { hodnota: number; max: number; trida: string; titulek: string }) {
   const vyska = hodnota === 0 ? 2 : Math.max(6, Math.round((hodnota / max) * 100));
   return <span className={`w-3 rounded-t ${trida}`} style={{ height: `${vyska}%` }} title={titulek} />;
-}
-
-function ManazerTabulka({ lide, sloupecAkce }: { lide: import("@/lib/report").ReportManazer[]; sloupecAkce?: boolean }) {
-  return (
-    <table className="w-full text-sm">
-      <thead>
-        <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-text-muted">
-          <th className="py-1.5 font-medium">Jméno</th>
-          {sloupecAkce && <th className="py-1.5 text-right font-medium">Akce</th>}
-          <th className="py-1.5 text-right font-medium">Poptávky</th>
-          <th className="py-1.5 text-right font-medium">Objednáno</th>
-          <th className="py-1.5 text-right font-medium">Úspěšnost</th>
-        </tr>
-      </thead>
-      <tbody>
-        {lide.map((m) => (
-          <tr key={m.id} className="border-b border-line last:border-0">
-            <td className="py-1.5">
-              {m.jmeno} <span className="text-xs text-text-muted">· {m.pozice}</span>
-            </td>
-            {sloupecAkce && <td className="py-1.5 text-right font-medium">{m.akce}</td>}
-            <td className="py-1.5 text-right">{m.poptavky}</td>
-            <td className="py-1.5 text-right">{m.objednano}</td>
-            <td className="py-1.5 text-right">
-              {m.uspesnost == null ? <span className="text-text-muted">—</span> : pct(m.uspesnost)}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
 }
 
 function LegendaBod({ trida, text }: { trida: string; text: string }) {

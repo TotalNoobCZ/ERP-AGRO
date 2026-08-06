@@ -110,19 +110,53 @@ export default async function ReportTiskPage({
         <p className="mt-1 text-gray-600">Proplaceno celkem: {r.fakturace.proplacenoCelkem}</p>
       </Sekce>
 
-      <Sekce nazev="Projektoví manažeři (akce na starost + poptávky v období)">
-        {r.projektaci.length === 0 ? (
-          <p className="text-gray-600">Žádní projekťáci s akcemi v období.</p>
+      <Sekce nazev="Akce podle odpovědných osob">
+        {r.akcePodleOsob.length === 0 ? (
+          <p className="text-gray-600">Žádné akce s odpovědnou osobou v období.</p>
         ) : (
-          <ManazerTabulkaTisk lide={r.projektaci} sloupecAkce />
+          <table className="w-full border-collapse">
+            <tbody>
+              {r.akcePodleOsob.map((m) => (
+                <tr key={m.id} className="[&>td]:border-b [&>td]:border-gray-200 [&>td]:py-1">
+                  <td>
+                    {m.jmeno} <span className="text-gray-500">({m.pozice})</span>
+                  </td>
+                  <td className="text-right font-medium">{m.akce} akcí</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </Sekce>
 
-      <Sekce nazev="Obchodní manažeři a vedení (poptávky na starost)">
-        {r.obchodnici.length === 0 ? (
-          <p className="text-gray-600">Žádné poptávky na starost v období.</p>
+      <Sekce nazev="Poptávky podle odpovědných osob (vč. úspěšnosti objednání)">
+        {r.poptavkyPodleOsob.length === 0 ? (
+          <p className="text-gray-600">Žádné poptávky s odpovědnou osobou v období.</p>
         ) : (
-          <ManazerTabulkaTisk lide={r.obchodnici} />
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="[&>th]:border-b [&>th]:border-gray-300 [&>th]:py-1 [&>th]:text-left [&>th]:font-medium">
+                <th>Jméno</th>
+                <th className="!text-right">Poptávky</th>
+                <th className="!text-right">Objednáno</th>
+                <th className="!text-right">Zamítnuto</th>
+                <th className="!text-right">Úspěšnost</th>
+              </tr>
+            </thead>
+            <tbody>
+              {r.poptavkyPodleOsob.map((m) => (
+                <tr key={m.id} className="[&>td]:border-b [&>td]:border-gray-200 [&>td]:py-1">
+                  <td>
+                    {m.jmeno} <span className="text-gray-500">({m.pozice})</span>
+                  </td>
+                  <td className="text-right">{m.poptavky}</td>
+                  <td className="text-right">{m.objednano}</td>
+                  <td className="text-right">{m.zamitnuto}</td>
+                  <td className="text-right">{m.uspesnost == null ? "—" : pct(m.uspesnost)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </Sekce>
 
@@ -179,38 +213,6 @@ export default async function ReportTiskPage({
         </table>
       </Sekce>
     </div>
-  );
-}
-
-function ManazerTabulkaTisk({ lide, sloupecAkce }: { lide: import("@/lib/report").ReportManazer[]; sloupecAkce?: boolean }) {
-  const pctT = (x: number) => `${Math.round(x * 100)} %`;
-  return (
-    <table className="w-full border-collapse">
-      <thead>
-        <tr className="[&>th]:border-b [&>th]:border-gray-300 [&>th]:py-1 [&>th]:text-left [&>th]:font-medium">
-          <th>Jméno</th>
-          {sloupecAkce && <th className="!text-right">Akce</th>}
-          <th className="!text-right">Poptávky</th>
-          <th className="!text-right">Objednáno</th>
-          <th className="!text-right">Zamítnuto</th>
-          <th className="!text-right">Úspěšnost</th>
-        </tr>
-      </thead>
-      <tbody>
-        {lide.map((m) => (
-          <tr key={m.id} className="[&>td]:border-b [&>td]:border-gray-200 [&>td]:py-1">
-            <td>
-              {m.jmeno} <span className="text-gray-500">({m.pozice})</span>
-            </td>
-            {sloupecAkce && <td className="text-right font-medium">{m.akce}</td>}
-            <td className="text-right">{m.poptavky}</td>
-            <td className="text-right">{m.objednano}</td>
-            <td className="text-right">{m.zamitnuto}</td>
-            <td className="text-right">{m.uspesnost == null ? "—" : pctT(m.uspesnost)}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
   );
 }
 
