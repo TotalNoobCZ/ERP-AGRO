@@ -4,6 +4,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { Nacitani } from "@/components/Nacitani";
 
 const MESICE_CZ = ["leden", "únor", "březen", "duben", "květen", "červen", "červenec", "srpen", "září", "říjen", "listopad", "prosinec"];
 
@@ -61,14 +62,7 @@ export function ReportOvladani({ refObdobi, typ, dnes }: { refObdobi: string; ty
         </button>
       </div>
 
-      {nacita && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="flex items-center gap-3 rounded-xl border border-line bg-surface px-6 py-4 text-text-muted shadow-lg">
-            <span className="h-6 w-6 animate-spin rounded-full border-2 border-line border-t-link" />
-            Načítám…
-          </div>
-        </div>
-      )}
+      {nacita && <Nacitani />}
     </>
   );
 }
