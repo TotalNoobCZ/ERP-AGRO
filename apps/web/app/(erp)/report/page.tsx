@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/supabase/server";
 import { nactiReport, smiVidetReport } from "@/lib/report";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
+import { LinkSpinner } from "@/components/LinkSpinner";
 import { parseDay, formatCz } from "@/lib/zakazky/dates";
 import { ODDELENI_LABELS, type Oddeleni } from "@erp/core";
 
@@ -53,19 +54,19 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
               href={`/report?ref=${r.typ === "mesic" ? r.ref : r.ref === r.dnes.slice(0, 4) ? r.dnes.slice(0, 7) : `${r.ref}-01`}`}
               className={`btn-ghost ${r.typ === "mesic" ? "border-link text-link" : "border-transparent"}`}
             >
-              Měsíc
+              Měsíc<LinkSpinner />
             </Link>
             <Link
               href={`/report?ref=${r.ref.slice(0, 4)}`}
               className={`btn-ghost ${r.typ === "rok" ? "border-link text-link" : "border-transparent"}`}
             >
-              Rok
+              Rok<LinkSpinner />
             </Link>
           </div>
-          <Link href={`/report/tisk?ref=${r.ref}&print=1`} className="btn-ghost">🖨 Export do PDF</Link>
-          <Link href={`/report?ref=${posunRef(r.ref, -1)}`} className="btn-ghost">◀</Link>
+          <Link href={`/report/tisk?ref=${r.ref}&print=1`} className="btn-ghost">🖨 Export do PDF<LinkSpinner /></Link>
+          <Link href={`/report?ref=${posunRef(r.ref, -1)}`} className="btn-ghost">◀<LinkSpinner /></Link>
           <span className="min-w-28 text-center text-sm font-medium capitalize">{obdobiCz(r.ref)}</span>
-          <Link href={`/report?ref=${posunRef(r.ref, 1)}`} className="btn-ghost">▶</Link>
+          <Link href={`/report?ref=${posunRef(r.ref, 1)}`} className="btn-ghost">▶<LinkSpinner /></Link>
         </div>
       </div>
 
