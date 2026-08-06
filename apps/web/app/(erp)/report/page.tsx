@@ -3,11 +3,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/supabase/server";
-import { nactiReport, smiVidetReport } from "@/lib/report";
+import { nactiReport, smiVidetReport, vytizeniPodleOddeleni } from "@/lib/report";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { ReportOvladani } from "@/components/report/ReportOvladani";
 import { parseDay, formatCz } from "@/lib/zakazky/dates";
-import { ODDELENI_LABELS, type Oddeleni } from "@erp/core";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +29,7 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
   const r = await nactiReport(sp.ref);
 
   const maxTrend = Math.max(1, ...r.trend.flatMap((t) => [t.poptavkyPrijate, t.poptavkyObjednane, t.akceZahajene, t.akceKoncici]));
+  const vytizeniSkupiny = vytizeniPodleOddeleni(r.vytizeni);
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -157,33 +157,35 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
         </CardContent>
       </Card>
 
-      {/* Vytížení lidí */}
+      {/* Vytížení lidí – seskupené podle oddělení */}
       <Card>
         <CardHeader><CardTitle>👥 Vytížení lidí — {obdobiCz(r.ref)}</CardTitle></CardHeader>
-        <CardContent>
-          {r.vytizeni.length === 0 ? (
-            <p className="text-sm text-text-muted">Žádní přiřaditelní lidé.</p>
-          ) : (
-            <div className="grid gap-x-8 gap-y-1 md:grid-cols-2">
-              {r.vytizeni.map((v) => (
-                <div key={v.id} className="flex items-center gap-2 text-sm">
-                  <span className="w-40 min-w-0 truncate" title={v.oddeleni ? ODDELENI_LABELS[v.oddeleni as Oddeleni] : undefined}>
-                    {v.jmeno}
-                  </span>
-                  <span className="relative h-3 flex-1 overflow-hidden rounded bg-overlay">
-                    <span
-                      className={`absolute inset-y-0 left-0 rounded ${v.podil >= 0.85 ? "bg-red-500/80" : v.podil >= 0.5 ? "bg-link/70" : "bg-emerald-500/60"}`}
-                      style={{ width: `${Math.min(100, Math.round(v.podil * 100))}%` }}
-                    />
-                  </span>
-                  <span className="w-24 shrink-0 text-right text-text-muted">
-                    {pct(v.podil)}{v.absenceDny > 0 ? ` · abs ${v.absenceDny}d` : ""}
-                  </span>
-                </div>
-              ))}
+        <CardContent className="space-y-4">
+          {vytizeniSkupiny.length === 0 && <p className="text-sm text-text-muted">Žádní přiřaditelní lidé.</p>}
+          {vytizeniSkupiny.map((sk) => (
+            <div key={sk.nazev}>
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">
+                {sk.nazev} ({sk.lide.length}) · ø {pct(sk.prumer)}
+              </p>
+              <div className="grid gap-x-8 gap-y-1 md:grid-cols-2">
+                {sk.lide.map((v) => (
+                  <div key={v.id} className="flex items-center gap-2 text-sm">
+                    <span className="w-40 min-w-0 truncate">{v.jmeno}</span>
+                    <span className="relative h-3 flex-1 overflow-hidden rounded bg-overlay">
+                      <span
+                        className={`absolute inset-y-0 left-0 rounded ${v.podil >= 0.85 ? "bg-red-500/80" : v.podil >= 0.5 ? "bg-link/70" : "bg-emerald-500/60"}`}
+                        style={{ width: `${Math.min(100, Math.round(v.podil * 100))}%` }}
+                      />
+                    </span>
+                    <span className="w-24 shrink-0 text-right text-text-muted">
+                      {pct(v.podil)}{v.absenceDny > 0 ? ` · abs ${v.absenceDny}d` : ""}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-          )}
-          <p className="mt-3 text-xs text-text-muted">
+          ))}
+          <p className="text-xs text-text-muted">
             Podíl pracovních dní měsíce pokrytých přiřazením na akci; „abs" = pracovní dny absence.
           </p>
         </CardContent>

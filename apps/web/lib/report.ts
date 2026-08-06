@@ -16,6 +16,8 @@ import {
   dniMezi,
   type Obdobi,
   INQUIRY_STATUS_LABELS,
+  ODDELENI,
+  ODDELENI_LABELS,
   ODDELENI_KAPITOLA,
   type InquiryStatus,
   type Oddeleni,
@@ -248,4 +250,24 @@ export async function nactiReport(ref?: string): Promise<ReportData> {
 /** Smí uživatel vidět report? (admin nebo vedoucí) */
 export function smiVidetReport(role: string | undefined): boolean {
   return role === "admin" || role === "vedouci";
+}
+
+export type VytizeniSkupina = { nazev: string; lide: ReportVytizeni[]; prumer: number };
+
+/**
+ * Seskupí vytížení podle oddělení v pořadí číselníku (Výroba, Montáž, Elektro,
+ * Kancelář…); lidé bez oddělení jdou na konec. Prázdné skupiny se vynechají.
+ */
+export function vytizeniPodleOddeleni(vytizeni: ReportVytizeni[]): VytizeniSkupina[] {
+  const skupiny: VytizeniSkupina[] = [];
+  for (const odd of [...ODDELENI, null]) {
+    const lide = vytizeni.filter((v) => (odd === null ? !v.oddeleni : v.oddeleni === odd));
+    if (lide.length === 0) continue;
+    skupiny.push({
+      nazev: odd === null ? "Bez oddělení" : ODDELENI_LABELS[odd],
+      lide,
+      prumer: lide.reduce((s, v) => s + v.podil, 0) / lide.length,
+    });
+  }
+  return skupiny;
 }
