@@ -6,12 +6,22 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { ROLES, ROLE_LABELS, ODDELENI, ODDELENI_LABELS, KAPITOLY, KAPITOLA_LABELS, ODDELENI_KAPITOLA, jeDilna, MODULY, MODUL_LABELS } from "@erp/core";
-import { USER_PALETTE, USER_PALETTE_NAMES, ODDELENI_BARVA } from "@erp/ui";
+import { USER_PALETTE, USER_PALETTE_NAMES, ODDELENI_BARVA, VEDENI_BARVA } from "@erp/ui";
 
-/** Odpovídá uložená barva výchozí barvě oddělení? (→ režim „dle oddělení") */
-function jeBarvaOddeleni(oddeleni: string | null | undefined, colorHex: string | null | undefined): boolean {
-  if (!oddeleni || !colorHex) return false;
-  const auto = ODDELENI_BARVA[oddeleni];
+/** Automatická barva karty: vedení (role Vedoucí) mátová, jinak dle oddělení. */
+function autoBarva(role: string | null | undefined, oddeleni: string | null | undefined): string | undefined {
+  if (role === "vedouci") return VEDENI_BARVA;
+  return oddeleni ? ODDELENI_BARVA[oddeleni] : undefined;
+}
+
+/** Odpovídá uložená barva automatické barvě? (→ režim „dle oddělení") */
+function jeBarvaOddeleni(
+  role: string | null | undefined,
+  oddeleni: string | null | undefined,
+  colorHex: string | null | undefined,
+): boolean {
+  if (!colorHex) return false;
+  const auto = autoBarva(role, oddeleni);
   return !!auto && auto.toLowerCase() === colorHex.toLowerCase();
 }
 import type { ProfilStav } from "@/app/(erp)/sprava/actions";
@@ -77,10 +87,10 @@ export function ProfilForm({
   // U editace se pozná auto režim tak, že uložená barva odpovídá oddělení.
   const initHex = initial?.colorHex ?? USER_PALETTE[initial?.colorIndex ?? 0] ?? USER_PALETTE[0]!;
   const [barvaAuto, setBarvaAuto] = useState(
-    !isEdit || jeBarvaOddeleni(initial?.oddeleni, initial?.colorHex),
+    !isEdit || jeBarvaOddeleni(initial?.role, initial?.oddeleni, initial?.colorHex),
   );
   const [rucniHex, setRucniHex] = useState(initHex);
-  const colorHex = barvaAuto ? (ODDELENI_BARVA[oddeleni] ?? rucniHex) : rucniHex;
+  const colorHex = barvaAuto ? (autoBarva(role, oddeleni) ?? rucniHex) : rucniHex;
   const vlastniBarva = !barvaAuto && !USER_PALETTE.some((h) => h.toLowerCase() === colorHex.toLowerCase());
   // Klik na předvolbu vypne auto režim a drží v sync i colorIndex (kompatibilita).
   const vybratBarvu = (hex: string, idx: number) => {
@@ -179,7 +189,7 @@ export function ProfilForm({
             >
               <span
                 className="inline-block h-4 w-4 rounded-full border border-line"
-                style={{ backgroundColor: ODDELENI_BARVA[oddeleni] ?? "#8A8F98" }}
+                style={{ backgroundColor: autoBarva(role, oddeleni) ?? "#8A8F98" }}
               />
               Dle oddělení
             </button>
