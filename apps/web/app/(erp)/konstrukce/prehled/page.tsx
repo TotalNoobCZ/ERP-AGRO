@@ -1,25 +1,29 @@
 // Přehled modulu Konstrukce: počty (projekty, úkoly, nepřiřazené, bez termínů,
 // splněné čekající), nejbližší konce úkolů, nepřiřazené úkoly.
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCurrentProfile } from "@/lib/supabase/server";
 import { nactiKonstrukci } from "@/lib/konstrukce-query";
 import { nacistLidiZakazek, sjednotitOsoby, type Osoba } from "@/lib/zakazky/lide";
 import { AkceKonstrukteri, type AkceSkupina, type AkceZak } from "@/components/konstrukce/AkceKonstrukteri";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { formatDen } from "@/lib/format";
+import { muzeVyraditZKonstrukce } from "@erp/core";
 
 export const dynamic = "force-dynamic";
 
 export default async function KonstrukcePrehled() {
   const supabase = await createClient();
-  const { projekty, ukoly, clenove } = await nactiKonstrukci(supabase);
+  const [{ projekty, ukoly, clenove }, profile] = await Promise.all([nactiKonstrukci(supabase), getCurrentProfile()]);
   const clenById = new Map(clenove.map((c) => [c.id, c.name]));
   const dnes = new Date().toISOString().slice(0, 10);
+  const smiVyradit = profile
+    ? muzeVyraditZKonstrukce({ role: profile.role, sefkonstrukter: profile.sefkonstrukter })
+    : false;
 
   // Akce a jejich zakázky s konstruktéry (jen lidé z oddělení Konstrukce).
   const { data: zData } = await supabase
     .from("zakazky")
-    .select("id, kod, popis, misto_plneni, parent_id, zacatek, konec_aktualni")
+    .select("id, kod, popis, misto_plneni, parent_id, zacatek, konec_aktualni, konstrukce_netreba_at")
     .is("deleted_at", null)
     .is("montaz_typ", null)
     .in("stav", ["AKTIVNI", "POZASTAVENO"])
@@ -32,6 +36,7 @@ export default async function KonstrukcePrehled() {
     parent_id: string | null;
     zacatek: string;
     konec_aktualni: string;
+    konstrukce_netreba_at: string | null;
   }[];
   const lidiMap = await nacistLidiZakazek(supabase, zak.map((z) => z.id));
   const konstr = (id: string): Osoba[] => (lidiMap.get(id) ?? []).filter((o) => o.oddeleni === "konstrukce");
@@ -52,13 +57,18 @@ export default async function KonstrukcePrehled() {
       detiBy.get(z.parent_id)!.push(z);
     }
   }
-  const akceSkupiny: AkceSkupina[] = zak
-    .filter((z) => !z.parent_id || !idset.has(z.parent_id))
+  // Hlavní akce: bez označení „konstrukce není třeba" do přehledu, označené
+  // do vlastní sekce (jdou vrátit). Zakázky k akci sdílí osud rodiče.
+  const rodice = zak.filter((z) => !z.parent_id || !idset.has(z.parent_id));
+  const akceSkupiny: AkceSkupina[] = rodice
+    .filter((a) => !a.konstrukce_netreba_at)
     .map((a) => {
       const deti = (detiBy.get(a.id) ?? []).map(toZak);
       const konstrukteriAkce = sjednotitOsoby([konstr(a.id), ...deti.map((d) => d.konstrukteri)]);
       return { akce: toZak(a), konstrukteriAkce, deti };
     });
+  const vyrazene: AkceZak[] = rodice.filter((a) => a.konstrukce_netreba_at).map(toZak);
+  const bezKonstruktera = akceSkupiny.filter((g) => g.konstrukteriAkce.length === 0);
 
   const aktivni = ukoly.filter((u) => !u.completed);
   const nepriazene = aktivni.filter((u) => !u.assigneeId);
@@ -73,16 +83,17 @@ export default async function KonstrukcePrehled() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Přehled konstrukce</h1>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
         <Stat label="Aktivní projekty" value={projekty.length} />
         <Stat label="Rozpracované úkoly" value={aktivni.length} />
-        <Stat label="Nepřiřazené" value={nepriazene.length} warn={nepriazene.length > 0} />
+        <Stat label="Nepřiřazené úkoly" value={nepriazene.length} warn={nepriazene.length > 0} />
+        <Stat label="Akce bez konstruktéra" value={bezKonstruktera.length} warn={bezKonstruktera.length > 0} />
         <Stat label="Splněné k archivaci" value={splneneCekajici.length} />
       </div>
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-text-muted">Akce a konstruktéři</h2>
-        <AkceKonstrukteri skupiny={akceSkupiny} />
+        <AkceKonstrukteri skupiny={akceSkupiny} vyrazene={vyrazene} smiVyradit={smiVyradit} />
       </section>
 
       <Card>

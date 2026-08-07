@@ -182,6 +182,9 @@ export type ZakazkaRow = {
   montaz_typ: MontazTypDb | null;
   popis: string | null;
   ulozeni: string | null;
+  /** akce označená „konstrukce není třeba" – skrytá v modulu Konstrukce */
+  konstrukce_netreba_at: string | null;
+  konstrukce_netreba_by: string | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
