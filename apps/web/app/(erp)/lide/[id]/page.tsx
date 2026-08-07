@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient, getCurrentProfile } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ODDELENI_LABELS, ROLE_LABELS, type Oddeleni, type Role } from "@erp/core";
+import { ODDELENI_LABELS, ROLE_LABELS, canWrite, type Oddeleni, type Role, type AbsenceType } from "@erp/core";
+import { AbsenceZamestnance } from "@/components/lide/AbsenceZamestnance";
 import { userColor } from "@erp/ui";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +23,7 @@ export default async function KartaZamestnancePage({ params }: { params: Promise
   const me = await getCurrentProfile();
   if (!me) notFound();
   const jsemAdmin = me.role === "admin";
+  const jsemEditor = canWrite(me.role as Role);
 
   const supabase = await createClient();
   // E-mail a poznámka jsou citlivé (odebrané roli authenticated) – běžný náhled
@@ -32,6 +34,18 @@ export default async function KartaZamestnancePage({ params }: { params: Promise
     .eq("id", id)
     .maybeSingle();
   if (!p) notFound();
+
+  const { data: absData } = await supabase
+    .from("absences")
+    .select("id, type, start_date, end_date")
+    .eq("profile_id", id)
+    .order("start_date", { ascending: false });
+  const absence = (absData ?? []).map((a) => ({
+    id: a.id,
+    type: a.type as AbsenceType,
+    startDate: a.start_date,
+    endDate: a.end_date,
+  }));
 
   let citlive: { email: string | null; poznamka: string | null } = { email: null, poznamka: null };
   if (jsemAdmin) {
@@ -80,6 +94,8 @@ export default async function KartaZamestnancePage({ params }: { params: Promise
           {jsemAdmin && <Radek popisek="Poznámka" hodnota={citlive.poznamka} />}
         </dl>
       </div>
+
+      <AbsenceZamestnance profileId={p.id} absence={absence} editable={jsemEditor} />
 
       {!jsemAdmin && (
         <p className="text-xs text-text-muted">Náhled. Úpravu profilu provádí administrátor.</p>

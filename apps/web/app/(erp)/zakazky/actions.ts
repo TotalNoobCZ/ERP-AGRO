@@ -206,6 +206,15 @@ export async function vytvoritZakazku(_prev: ZakazkaStav, fd: FormData): Promise
   const osobaIds = [...new Set(d.prirazeni.map((p) => p.osobaId))];
   const existujici = await nactiExistujiciPrirazeni(supabase, osobaIds);
 
+  // Dovolená blokuje natvrdo už při zakládání akce.
+  for (const p of d.prirazeni) {
+    const dov = await dovolenaVObdobi(supabase, p.osobaId, parseDay(p.datumOd), parseDay(p.datumDo));
+    if (dov) {
+      const { data: os } = await supabase.from("profiles").select("name").eq("id", p.osobaId).maybeSingle();
+      return { obecna: `${os?.name ?? "Pracovník"} ${dov} – v tomto období ho nelze přiřadit k akci.` };
+    }
+  }
+
   const kolize: KolizeInfo[] = [];
   for (const p of d.prirazeni) {
     const novy = { datumOd: parseDay(p.datumOd), datumDo: parseDay(p.datumDo) };
@@ -1121,6 +1130,21 @@ export async function obnovitAkci(zakazkaId: string, _prev: ZakazkaStav, fd: For
 export type PracVysledek = { ok: boolean; chyba?: string; potrebaPotvrzeni?: string };
 const DEN_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+/** Má osoba v období schválenou dovolenou? Vrátí popis, jinak null. */
+async function dovolenaVObdobi(supabase: Db, osobaId: string, od: Date, doD: Date): Promise<string | null> {
+  const { data } = await supabase
+    .from("absences")
+    .select("start_date, end_date")
+    .eq("profile_id", osobaId)
+    .eq("type", "dovolena")
+    .lte("start_date", formatDay(doD))
+    .gte("end_date", formatDay(od))
+    .limit(1);
+  const a = (data ?? [])[0];
+  if (!a) return null;
+  return `má dovolenou ${formatCz(parseDay(a.start_date))} – ${formatCz(parseDay(a.end_date))}`;
+}
+
 async function konfliktPracovnika(
   supabase: Db,
   osobaId: string,
@@ -1165,6 +1189,10 @@ export async function pridatPracovnika(
   if (!z || z.deleted_at) return { ok: false, chyba: "Akce nenalezena." };
   const { data: osoba } = await supabase.from("profiles").select("name").eq("id", osobaId).maybeSingle();
   const jmeno = osoba?.name ?? "pracovník";
+
+  // Dovolená blokuje natvrdo (nejde vynutit) – pracovník na dovolené se nepřiřazuje.
+  const dovolena = await dovolenaVObdobi(supabase, osobaId, odD, doD);
+  if (dovolena) return { ok: false, chyba: `${jmeno} ${dovolena} – v tomto období ho nelze přiřadit k akci.` };
 
   const konflikt = await konfliktPracovnika(supabase, osobaId, odD, doD);
   if (konflikt && !vynutit) {
@@ -1339,8 +1367,11 @@ export async function zmenitTerminPracovnika(
     .maybeSingle();
   if (!p || p.deleted_at) return { ok: false, chyba: "Přiřazení nenalezeno." };
 
-  const konflikt = await konfliktPracovnika(supabase, p.osoba_id, odD, doD, p.id);
   const jmeno = (p.osoba as unknown as { name: string } | null)?.name ?? "?";
+  const dovolenaT = await dovolenaVObdobi(supabase, p.osoba_id, odD, doD);
+  if (dovolenaT) return { ok: false, chyba: `${jmeno} ${dovolenaT} – termín do dovolené nastavit nejde.` };
+
+  const konflikt = await konfliktPracovnika(supabase, p.osoba_id, odD, doD, p.id);
   if (konflikt && !vynutit) {
     return { ok: false, potrebaPotvrzeni: `${jmeno} je ${konflikt}. Změnit termín i tak? Zapíše se do historie.` };
   }
@@ -1374,6 +1405,9 @@ export async function nahraditPracovnika(
   const { data: nova } = await supabase.from("profiles").select("name").eq("id", novaOsobaId).maybeSingle();
   const novaJmeno = nova?.name ?? "náhrada";
   const puvodniJmeno = (p.osoba as unknown as { name: string } | null)?.name ?? "?";
+
+  const dovolenaN = await dovolenaVObdobi(supabase, novaOsobaId, parseDay(p.datum_od), parseDay(p.datum_do));
+  if (dovolenaN) return { ok: false, chyba: `${novaJmeno} ${dovolenaN} – nelze nasadit jako náhradu.` };
 
   const konflikt = await konfliktPracovnika(supabase, novaOsobaId, parseDay(p.datum_od), parseDay(p.datum_do), p.id);
   if (konflikt && !vynutit) {
@@ -1637,6 +1671,8 @@ export async function obnovaAkce(
     if (!p || p.deleted_at) continue;
     if (p.osoba_id === n.novaOsobaId) continue;
     const { data: nova } = await supabase.from("profiles").select("name").eq("id", n.novaOsobaId).maybeSingle();
+    const dovN = await dovolenaVObdobi(supabase, n.novaOsobaId, parseDay(p.datum_od), parseDay(p.datum_do));
+    if (dovN) return { ok: false, chyba: `${nova?.name ?? "Náhradník"} ${dovN} – nelze nasadit jako náhradu.` };
     const puvodniJmeno = (p.osoba as unknown as { name: string } | null)?.name ?? "?";
     await supabase.from("prirazeni_zakazka").update({ osoba_id: n.novaOsobaId }).eq("id", p.id);
     await zapisAudit(supabase, {
