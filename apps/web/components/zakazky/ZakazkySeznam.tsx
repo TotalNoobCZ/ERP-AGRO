@@ -5,6 +5,7 @@ import Link from "next/link";
 import { parseDay, formatCz } from "@/lib/zakazky/dates";
 import { usePersistentSet } from "@/lib/usePersistentSet";
 import { StavBadge } from "@/components/zakazky/common";
+import { PauzaTlacitko } from "@/components/zakazky/PauzaTlacitko";
 import { userColor } from "@erp/ui";
 import type { ZakazkaListRow } from "@/lib/zakazky-query";
 import type { Osoba } from "@/lib/zakazky/lide";
@@ -52,7 +53,7 @@ function Zahlavi({ z }: { z: ZakazkaListRow }) {
   );
 }
 
-export function ZakazkySeznam({ uzly }: { uzly: Uzel[] }) {
+export function ZakazkySeznam({ uzly, editable = false }: { uzly: Uzel[]; editable?: boolean }) {
   const { has: jeOtevreno, toggle } = usePersistentSet("erp_zakazky_seznam_open");
 
   return (
@@ -74,13 +75,16 @@ export function ZakazkySeznam({ uzly }: { uzly: Uzel[] }) {
               ) : (
                 <span className="w-7 shrink-0" />
               )}
-              <div className="flex-1 py-3 pr-4">
-                <Link href={`/zakazky/${row.id}`} className="flex items-center gap-4">
-                  <Zahlavi z={row} />
-                  {deti.length > 0 && (
-                    <span className="rounded-md bg-accent px-1.5 py-0.5 text-[11px] text-text-muted">{deti.length} k akci</span>
-                  )}
-                </Link>
+              <div className={`flex-1 py-3 pr-4 ${row.stav === "POZASTAVENO" ? "opacity-55 grayscale" : ""}`}>
+                <div className="flex items-center gap-2">
+                  <Link href={`/zakazky/${row.id}`} className="flex min-w-0 flex-1 items-center gap-4">
+                    <Zahlavi z={row} />
+                    {deti.length > 0 && (
+                      <span className="rounded-md bg-accent px-1.5 py-0.5 text-[11px] text-text-muted">{deti.length} k akci</span>
+                    )}
+                  </Link>
+                  <PauzaTlacitko zakazkaId={row.id} kod={row.kod} stav={row.stav} editable={editable} />
+                </div>
                 <div className="mt-1.5 pl-8">
                   <Lide lide={lideAkce} />
                 </div>
@@ -89,7 +93,7 @@ export function ZakazkySeznam({ uzly }: { uzly: Uzel[] }) {
 
             {otevreno &&
               deti.map((d) => (
-                <div key={d.row.id} className="ml-7 border-l-2 border-link/40 py-2 pl-5 pr-4 hover:bg-accent">
+                <div key={d.row.id} className={`ml-7 border-l-2 border-link/40 py-2 pl-5 pr-4 hover:bg-accent ${d.row.stav === "POZASTAVENO" ? "opacity-55 grayscale" : ""}`}>
                   <Link href={`/zakazky/${d.row.id}`} className="flex items-center gap-4">
                     <Zahlavi z={d.row} />
                   </Link>

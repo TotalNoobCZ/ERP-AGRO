@@ -6,6 +6,7 @@ import { createClient, getCurrentProfile } from "@/lib/supabase/server";
 import { parseDay, formatDay, formatCz, today } from "@/lib/zakazky/dates";
 import { formatDateTime } from "@/lib/format";
 import { StavBadge, SmazatButton } from "@/components/zakazky/common";
+import { PauzaTlacitko } from "@/components/zakazky/PauzaTlacitko";
 import {
   prodlouzit,
   zmenitStav,
@@ -148,6 +149,7 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
   const profile = await getCurrentProfile();
   const uid = profile?.id;
   const jeAdmin = profile?.role === "admin";
+  const jeEditor = profile?.role === "admin" || profile?.role === "editor";
 
   const poznamky = z.poznamky
     .filter((p) => !p.deleted_at)
@@ -243,6 +245,7 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <h1 className="font-mono text-2xl font-bold">{z.kod}</h1>
           <StavBadge z={stavovaZakazka} />
+          {!z.parent_id && <PauzaTlacitko zakazkaId={z.id} kod={z.kod} stav={z.stav} editable={jeEditor} />}
           <span title="1 = nejvyšší, 5 = nejnižší" className="badge bg-slate-100 text-slate-500">Priorita {z.priorita}</span>
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <AkceStavAkce id={z.id} stav={z.stav} />

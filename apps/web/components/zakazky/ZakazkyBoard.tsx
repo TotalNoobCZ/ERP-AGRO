@@ -23,6 +23,7 @@ import { usePersistentSet } from "@/lib/usePersistentSet";
 import { pridatPracovnika, odebratPracovnika, nastavitOdpovednouOsobu, zjistitKoliziPridani, type KolizeInfo } from "@/app/(erp)/zakazky/actions";
 import { KolizeDialog } from "./KolizeDialog";
 import type { OsobaLite } from "./common";
+import { PauzaTlacitko } from "@/components/zakazky/PauzaTlacitko";
 import type { BoardOsobaZ, BoardZakazka } from "@/lib/zakazky-query";
 
 /** Odpovědná osoba zakázky = Projekťák (oddělení) nebo role Vedoucí. */
@@ -489,6 +490,8 @@ function ZakazkaTile({
     <div
       ref={setNodeRef}
       className={`rounded-xl border p-3 transition ${isOver ? "ring-2 ring-link" : ""} ${
+        zakazka.stav === "POZASTAVENO" ? "opacity-55 grayscale" : ""
+      } ${
         zakazka.montazTyp === "MONTAZ"
           ? "border-sky-300 bg-sky-50"
           : zakazka.montazTyp === "DEMONTAZ"
@@ -509,9 +512,15 @@ function ZakazkaTile({
         <p className="font-bold">{zakazka.montazTyp ? zakazka.popis || zakazka.mistoPlneni : zakazka.kod}</p>
         <p className="text-xs text-text-muted">{zakazka.montazTyp ? zakazka.mistoPlneni : zakazka.popis || zakazka.mistoPlneni}</p>
       </button>
-      <p className="mb-2 text-[11px] text-text-muted">
-        {formatDen(zakazka.zacatek)} – {formatDen(zakazka.konecAktualni)}
-      </p>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <p className="text-[11px] text-text-muted">
+          {formatDen(zakazka.zacatek)} – {formatDen(zakazka.konecAktualni)}
+          {zakazka.stav === "POZASTAVENO" && <span className="ml-1 font-semibold text-amber-600">· pozastaveno</span>}
+        </p>
+        {!jePodzakazka && (
+          <PauzaTlacitko zakazkaId={zakazka.id} kod={zakazka.kod} stav={zakazka.stav} editable={editable} />
+        )}
+      </div>
 
       {/* Odpovědná osoba – u akce editovatelná (drag), u podzakázky jen zděděná. */}
       <div className="mb-2">

@@ -113,12 +113,14 @@ async function jeOdpovednaPovolena(supabase: Db, osobaId: string | null | undefi
 
 /** Všechna živá přiřazení daných osob (join na kód zakázky a jméno osoby). */
 async function nactiExistujiciPrirazeni(supabase: Db, osobaIds: string[]) {
+  // Přiřazení na POZASTAVENÝCH akcích se do kolizí nepočítají (lidé jsou volní).
   const { data } = await supabase
     .from("prirazeni_zakazka")
-    .select("id, zakazka_id, osoba_id, datum_od, datum_do, zakazka:zakazky!inner(kod, deleted_at), osoba:profiles(name)")
+    .select("id, zakazka_id, osoba_id, datum_od, datum_do, zakazka:zakazky!inner(kod, deleted_at, stav), osoba:profiles(name)")
     .in("osoba_id", osobaIds)
     .is("deleted_at", null)
-    .is("zakazka.deleted_at", null);
+    .is("zakazka.deleted_at", null)
+    .neq("zakazka.stav", "POZASTAVENO");
   return (data ?? []) as unknown as {
     id: string;
     zakazka_id: string;
@@ -992,12 +994,80 @@ export async function smazatMontaz(id: string): Promise<{ ok: boolean; chyba?: s
 }
 
 // ---- Přerušení / obnovení akce -------------------------------------------
+/**
+ * Přeruší jednu zakázku (bez kaskády): záznam do `preruseni` se zbývajícími
+ * dny, stav POZASTAVENO, audit. Už přerušenou tiše přeskočí (kaskáda).
+ */
+async function prerusitJadro(supabase: Db, uid: string, zakazkaId: string, datumStr: string, duvod: string): Promise<void> {
+  const { data: z } = await supabase
+    .from("zakazky").select("id, konec_aktualni, deleted_at").eq("id", zakazkaId).maybeSingle();
+  if (!z || z.deleted_at) return;
+  const { data: otevrene } = await supabase
+    .from("preruseni").select("id").eq("zakazka_id", zakazkaId).is("datum_do", null).maybeSingle();
+  if (otevrene) return;
+
+  const zbyvajiciDny = Math.max(
+    0,
+    Math.round((parseDay(z.konec_aktualni).getTime() - parseDay(datumStr).getTime()) / 86400000),
+  );
+  await supabase.from("preruseni").insert({
+    zakazka_id: zakazkaId, datum_od: datumStr, zbyvajici_dny: zbyvajiciDny, duvod, prerusil_id: uid,
+  });
+  await supabase.from("zakazky").update({ stav: "POZASTAVENO" }).eq("id", zakazkaId);
+  await zapisAudit(supabase, {
+    entita: "zakazka", entitaId: zakazkaId, typZmeny: "UPRAVA", uzivatelId: uid,
+    nova: { preruseno: datumStr, duvod, zbyvajiciDny },
+  });
+  revalidatePath(`/zakazky/${zakazkaId}`);
+}
+
+/**
+ * Obnoví jednu zakázku (bez kaskády): uzavře přerušení, posune konec o
+ * zbývající dny, „celodélková" přiřazení protáhne na nový konec, audit.
+ */
+async function obnovitJadro(supabase: Db, uid: string, zakazkaId: string, datumStr: string): Promise<void> {
+  const { data: z } = await supabase
+    .from("zakazky").select("id, konec_aktualni, deleted_at").eq("id", zakazkaId).maybeSingle();
+  if (!z || z.deleted_at) return;
+  const { data: preruseni } = await supabase
+    .from("preruseni").select("id, zbyvajici_dny")
+    .eq("zakazka_id", zakazkaId).is("datum_do", null)
+    .order("created_at", { ascending: false }).limit(1).maybeSingle();
+  if (!preruseni) return;
+
+  const novyKonec = addDays(parseDay(datumStr), preruseni.zbyvajici_dny);
+  const staryKonec = z.konec_aktualni;
+
+  await supabase.from("preruseni")
+    .update({ datum_do: datumStr, obnovil_id: uid }).eq("id", preruseni.id);
+  await supabase.from("zakazky")
+    .update({ stav: "AKTIVNI", konec_aktualni: formatDay(novyKonec) }).eq("id", zakazkaId);
+  const { data: celodelkova } = await supabase
+    .from("prirazeni_zakazka").select("id")
+    .eq("zakazka_id", zakazkaId).is("deleted_at", null).eq("datum_do", staryKonec);
+  for (const pr of celodelkova ?? []) {
+    await supabase.from("prirazeni_zakazka").update({ datum_do: formatDay(novyKonec) }).eq("id", pr.id);
+  }
+  await zapisAudit(supabase, {
+    entita: "zakazka", entitaId: zakazkaId, typZmeny: "UPRAVA", uzivatelId: uid,
+    nova: { obnoveno: datumStr, novyKonec: formatDay(novyKonec) },
+  });
+  revalidatePath(`/zakazky/${zakazkaId}`);
+}
+
+/** Aktivní podzakázky akce (pro kaskádu přerušení/obnovení). */
+async function idsPodzakazek(supabase: Db, zakazkaId: string, stav: "AKTIVNI" | "POZASTAVENO"): Promise<string[]> {
+  const { data } = await supabase
+    .from("zakazky").select("id").eq("parent_id", zakazkaId).eq("stav", stav).is("deleted_at", null);
+  return (data ?? []).map((r) => r.id);
+}
+
 export async function prerusitAkci(zakazkaId: string, _prev: ZakazkaStav, fd: FormData): Promise<ZakazkaStav> {
   const u = await writer();
   if (!u) return { obecna: "Nejste přihlášeni nebo nemáte právo zápisu." };
   const supabase = await createClient();
   const { data: z } = await supabase
-    .from("zakazky").select("id, konec_aktualni, deleted_at").eq("id", zakazkaId).maybeSingle();
+    .from("zakazky").select("id, deleted_at").eq("id", zakazkaId).maybeSingle();
   if (!z || z.deleted_at) return { obecna: "Akce nenalezena." };
 
   const datumStr = String(fd.get("datumOd") ?? "");
@@ -1009,21 +1079,13 @@ export async function prerusitAkci(zakazkaId: string, _prev: ZakazkaStav, fd: Fo
     .from("preruseni").select("id").eq("zakazka_id", zakazkaId).is("datum_do", null).maybeSingle();
   if (otevrene) return { obecna: "Akce už je přerušená." };
 
-  const datumOd = parseDay(datumStr);
-  const zbyvajiciDny = Math.max(
-    0,
-    Math.round((parseDay(z.konec_aktualni).getTime() - datumOd.getTime()) / 86400000),
-  );
-
-  await supabase.from("preruseni").insert({
-    zakazka_id: zakazkaId, datum_od: datumStr, zbyvajici_dny: zbyvajiciDny, duvod, prerusil_id: u.id,
-  });
-  await supabase.from("zakazky").update({ stav: "POZASTAVENO" }).eq("id", zakazkaId);
-  await zapisAudit(supabase, {
-    entita: "zakazka", entitaId: zakazkaId, typZmeny: "UPRAVA", uzivatelId: u.id,
-    nova: { preruseno: datumStr, duvod, zbyvajiciDny },
-  });
-  revalidatePath(`/zakazky/${zakazkaId}`);
+  await prerusitJadro(supabase, u.id, zakazkaId, datumStr, duvod);
+  // Kaskáda: s akcí se pozastaví i všechny její aktivní zakázky k akci.
+  for (const id of await idsPodzakazek(supabase, zakazkaId, "AKTIVNI")) {
+    await prerusitJadro(supabase, u.id, id, datumStr, `S hlavní akcí: ${duvod}`);
+  }
+  revalidatePath("/zakazky");
+  revalidatePath("/zakazky/tabule");
   revalidatePath("/zakazky/plan");
   return {};
 }
@@ -1033,38 +1095,24 @@ export async function obnovitAkci(zakazkaId: string, _prev: ZakazkaStav, fd: For
   if (!u) return { obecna: "Nejste přihlášeni nebo nemáte právo zápisu." };
   const supabase = await createClient();
   const { data: z } = await supabase
-    .from("zakazky").select("id, konec_aktualni, deleted_at").eq("id", zakazkaId).maybeSingle();
+    .from("zakazky").select("id, deleted_at").eq("id", zakazkaId).maybeSingle();
   if (!z || z.deleted_at) return { obecna: "Akce nenalezena." };
 
   const datumStr = String(fd.get("datumObnoveni") ?? "");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(datumStr)) return { chyby: { datumObnoveni: "Zadejte datum obnovení." } };
 
   const { data: preruseni } = await supabase
-    .from("preruseni").select("id, zbyvajici_dny")
-    .eq("zakazka_id", zakazkaId).is("datum_do", null)
-    .order("created_at", { ascending: false }).limit(1).maybeSingle();
+    .from("preruseni").select("id")
+    .eq("zakazka_id", zakazkaId).is("datum_do", null).maybeSingle();
   if (!preruseni) return { obecna: "Akce není přerušená." };
 
-  const datumObnoveni = parseDay(datumStr);
-  const novyKonec = addDays(datumObnoveni, preruseni.zbyvajici_dny);
-  const staryKonec = z.konec_aktualni;
-
-  await supabase.from("preruseni")
-    .update({ datum_do: datumStr, obnovil_id: u.id }).eq("id", preruseni.id);
-  await supabase.from("zakazky")
-    .update({ stav: "AKTIVNI", konec_aktualni: formatDay(novyKonec) }).eq("id", zakazkaId);
-  // „celodélková" přiřazení posunout na nový konec
-  const { data: celodelkova } = await supabase
-    .from("prirazeni_zakazka").select("id")
-    .eq("zakazka_id", zakazkaId).is("deleted_at", null).eq("datum_do", staryKonec);
-  for (const pr of celodelkova ?? []) {
-    await supabase.from("prirazeni_zakazka").update({ datum_do: formatDay(novyKonec) }).eq("id", pr.id);
+  await obnovitJadro(supabase, u.id, zakazkaId, datumStr);
+  // Kaskáda: obnoví se i pozastavené zakázky k akci (mají-li otevřené přerušení).
+  for (const id of await idsPodzakazek(supabase, zakazkaId, "POZASTAVENO")) {
+    await obnovitJadro(supabase, u.id, id, datumStr);
   }
-  await zapisAudit(supabase, {
-    entita: "zakazka", entitaId: zakazkaId, typZmeny: "UPRAVA", uzivatelId: u.id,
-    nova: { obnoveno: datumStr, novyKonec: formatDay(novyKonec) },
-  });
-  revalidatePath(`/zakazky/${zakazkaId}`);
+  revalidatePath("/zakazky");
+  revalidatePath("/zakazky/tabule");
   revalidatePath("/zakazky/plan");
   return {};
 }
@@ -1080,12 +1128,15 @@ async function konfliktPracovnika(
   doD: Date,
   excludeId?: string,
 ): Promise<string | null> {
+  // Přiřazení na POZASTAVENÝCH akcích neblokují – lidé z pozastavené akce
+  // jdou použít jinde (u akce ale zůstávají napsaní pro pozdější obnovení).
   let q = supabase
     .from("prirazeni_zakazka")
-    .select("id, datum_od, datum_do, zakazka:zakazky!inner(kod, deleted_at)")
+    .select("id, datum_od, datum_do, zakazka:zakazky!inner(kod, deleted_at, stav)")
     .eq("osoba_id", osobaId)
     .is("deleted_at", null)
     .is("zakazka.deleted_at", null)
+    .neq("zakazka.stav", "POZASTAVENO")
     .lte("datum_od", formatDay(doD))
     .gte("datum_do", formatDay(od))
     .limit(1);
@@ -1459,6 +1510,159 @@ export async function posunoutAkci(
 
   revalidatePath("/zakazky");
   revalidatePath(`/zakazky/${z.id}`);
+  revalidatePath("/zakazky/plan");
+  return { ok: true };
+}
+
+// ---- Tlačítko pauza/obnovení (⏸/▶) -----------------------------------------
+
+export type ObnovaKonflikt = {
+  prirazeniId: string;
+  osobaId: string;
+  jmeno: string;
+  /** kde je na obnovované akci napsán (kod akce / zakázky k akci) */
+  zakazkaKod: string;
+  od: string;
+  do: string;
+  /** popis obsazení jinde („obsazen(a) u akce …") */
+  konflikt: string;
+};
+
+/** Pozastaví akci tlačítkem ⏸ (datum + důvod z dialogu, kaskáda na podzakázky). */
+export async function pauzaAkce(zakazkaId: string, datumOd: string, duvod: string): Promise<PracVysledek> {
+  const u = await writer();
+  if (!u) return { ok: false, chyba: "Nejste přihlášeni nebo nemáte právo zápisu." };
+  if (!DEN_RE.test(datumOd)) return { ok: false, chyba: "Zadejte datum pozastavení." };
+  if (duvod.trim().length < 3) return { ok: false, chyba: "Uveďte důvod pozastavení." };
+  const supabase = await createClient();
+  const { data: z } = await supabase
+    .from("zakazky").select("id, stav, deleted_at").eq("id", zakazkaId).maybeSingle();
+  if (!z || z.deleted_at) return { ok: false, chyba: "Akce nenalezena." };
+  if (z.stav !== "AKTIVNI") return { ok: false, chyba: "Pozastavit jde jen aktivní akci." };
+
+  await prerusitJadro(supabase, u.id, zakazkaId, datumOd, duvod.trim());
+  for (const id of await idsPodzakazek(supabase, zakazkaId, "AKTIVNI")) {
+    await prerusitJadro(supabase, u.id, id, datumOd, `S hlavní akcí: ${duvod.trim()}`);
+  }
+  revalidatePath("/zakazky");
+  revalidatePath("/zakazky/tabule");
+  revalidatePath("/zakazky/plan");
+  return { ok: true };
+}
+
+/**
+ * Před obnovením: lidé napsaní na akci (i podzakázkách), kteří jsou mezitím
+ * obsazení na jiné aktivní akci v překrývajícím se období. Pro dialog náhrad.
+ */
+export async function zjistitKonfliktyObnoveni(
+  zakazkaId: string,
+): Promise<{ ok: boolean; chyba?: string; konflikty?: ObnovaKonflikt[] }> {
+  const u = await writer();
+  if (!u) return { ok: false, chyba: "Nejste přihlášeni nebo nemáte právo zápisu." };
+  const supabase = await createClient();
+  const { data: rodinaData } = await supabase
+    .from("zakazky").select("id").or(`id.eq.${zakazkaId},parent_id.eq.${zakazkaId}`).is("deleted_at", null);
+  const rodina = (rodinaData ?? []).map((r) => r.id);
+  if (!rodina.includes(zakazkaId)) return { ok: false, chyba: "Akce nenalezena." };
+
+  const { data: prirData } = await supabase
+    .from("prirazeni_zakazka")
+    .select("id, osoba_id, datum_od, datum_do, osoba:profiles(name), zakazka:zakazky!inner(kod)")
+    .in("zakazka_id", rodina)
+    .is("deleted_at", null);
+  const prirazeni = (prirData ?? []) as unknown as {
+    id: string; osoba_id: string; datum_od: string; datum_do: string;
+    osoba: { name: string } | null; zakazka: { kod: string };
+  }[];
+
+  const konflikty: ObnovaKonflikt[] = [];
+  for (const p of prirazeni) {
+    const konflikt = await konfliktPracovnika(supabase, p.osoba_id, parseDay(p.datum_od), parseDay(p.datum_do), p.id);
+    if (konflikt) {
+      konflikty.push({
+        prirazeniId: p.id,
+        osobaId: p.osoba_id,
+        jmeno: p.osoba?.name ?? "?",
+        zakazkaKod: p.zakazka.kod,
+        od: p.datum_od,
+        do: p.datum_do,
+        konflikt,
+      });
+    }
+  }
+  return { ok: true, konflikty };
+}
+
+/** Přiřaditelné aktivní osoby pro výběr náhradníka v dialogu obnovení. */
+export async function seznamNahradniku(): Promise<{ id: string; name: string; oddeleni: string | null }[]> {
+  const u = await writer();
+  if (!u) return [];
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, name, oddeleni")
+    .eq("active", true)
+    .eq("assignable", true)
+    .order("name");
+  return (data ?? []) as { id: string; name: string; oddeleni: string | null }[];
+}
+
+/**
+ * Obnoví akci tlačítkem ▶ (kaskáda na podzakázky). `nahrady` z dialogu:
+ * u konfliktních lidí vymění osobu na přiřazení za vybraného náhradníka
+ * (období zůstává), zbytek se jen obnoví.
+ */
+export async function obnovaAkce(
+  zakazkaId: string,
+  datumObnoveni: string,
+  nahrady: { prirazeniId: string; novaOsobaId: string }[],
+): Promise<PracVysledek> {
+  const u = await writer();
+  if (!u) return { ok: false, chyba: "Nejste přihlášeni nebo nemáte právo zápisu." };
+  if (!DEN_RE.test(datumObnoveni)) return { ok: false, chyba: "Zadejte datum obnovení." };
+  const supabase = await createClient();
+  const { data: z } = await supabase
+    .from("zakazky").select("id, stav, deleted_at").eq("id", zakazkaId).maybeSingle();
+  if (!z || z.deleted_at) return { ok: false, chyba: "Akce nenalezena." };
+  if (z.stav !== "POZASTAVENO") return { ok: false, chyba: "Obnovit jde jen pozastavenou akci." };
+
+  // Náhrady před obnovením (rozhodnuté v dialogu – bez další kolizní kontroly).
+  for (const n of nahrady) {
+    if (!n.novaOsobaId) continue;
+    const { data: p } = await supabase
+      .from("prirazeni_zakazka")
+      .select("id, zakazka_id, osoba_id, datum_od, datum_do, deleted_at, osoba:profiles(name)")
+      .eq("id", n.prirazeniId)
+      .maybeSingle();
+    if (!p || p.deleted_at) continue;
+    if (p.osoba_id === n.novaOsobaId) continue;
+    const { data: nova } = await supabase.from("profiles").select("name").eq("id", n.novaOsobaId).maybeSingle();
+    const puvodniJmeno = (p.osoba as unknown as { name: string } | null)?.name ?? "?";
+    await supabase.from("prirazeni_zakazka").update({ osoba_id: n.novaOsobaId }).eq("id", p.id);
+    await zapisAudit(supabase, {
+      entita: "zakazka", entitaId: p.zakazka_id, typZmeny: "UPRAVA", uzivatelId: u.id,
+      nova: { popis: `Náhrada při obnovení akce: ${puvodniJmeno} → ${nova?.name ?? "?"} (${formatCz(parseDay(p.datum_od))} – ${formatCz(parseDay(p.datum_do))})` },
+    });
+  }
+
+  const { data: preruseni } = await supabase
+    .from("preruseni").select("id").eq("zakazka_id", zakazkaId).is("datum_do", null).maybeSingle();
+  if (preruseni) {
+    await obnovitJadro(supabase, u.id, zakazkaId, datumObnoveni);
+  } else {
+    // Pozastaveno bez záznamu přerušení (změna stavu) → jen vrátit stav.
+    await supabase.from("zakazky").update({ stav: "AKTIVNI" }).eq("id", zakazkaId);
+    await zapisAudit(supabase, {
+      entita: "zakazka", entitaId: zakazkaId, typZmeny: "UPRAVA", uzivatelId: u.id,
+      nova: { popis: `Akce obnovena (bez záznamu přerušení)` },
+    });
+  }
+  for (const id of await idsPodzakazek(supabase, zakazkaId, "POZASTAVENO")) {
+    await obnovitJadro(supabase, u.id, id, datumObnoveni);
+  }
+  revalidatePath(`/zakazky/${zakazkaId}`);
+  revalidatePath("/zakazky");
+  revalidatePath("/zakazky/tabule");
   revalidatePath("/zakazky/plan");
   return { ok: true };
 }

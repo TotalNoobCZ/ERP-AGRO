@@ -2,6 +2,7 @@
 import { Suspense } from "react";
 import { createClient, getCurrentProfile } from "@/lib/supabase/server";
 import { jenPrirazeneProProfil } from "@/lib/pristup";
+import { canWrite, type Role } from "@erp/core";
 import { queryZakazky, type ZakazkaListParams, type ZakazkaListRow } from "@/lib/zakazky-query";
 import { nacistLidiZakazek, sjednotitOsoby } from "@/lib/zakazky/lide";
 import { ZakazkyFilters, ZakazkyFilterRestore } from "@/components/zakazky/filters";
@@ -18,6 +19,7 @@ export default async function ZakazkyPage({
   const supabase = await createClient();
   const profile = await getCurrentProfile();
   const omezeni = jenPrirazeneProProfil(profile) ? profile!.id : null;
+  const editable = profile ? canWrite(profile.role as Role) : false;
   const zakazky = await queryZakazky(supabase, params, omezeni);
 
   // Podzakázky vnořené pod hlavní akci (rozbalovací seznam).
@@ -55,7 +57,7 @@ export default async function ZakazkyPage({
       {zakazky.length === 0 ? (
         <p className="text-sm text-text-muted">Žádné akce neodpovídají filtru.</p>
       ) : (
-        <ZakazkySeznam uzly={uzly} />
+        <ZakazkySeznam uzly={uzly} editable={editable} />
       )}
     </div>
   );
