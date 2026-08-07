@@ -2,7 +2,7 @@
 // při změnách funkcí aktualizuj tuto stránku i datum níže.
 import type { ReactNode } from "react";
 
-const AKTUALIZOVANO = "3. 8. 2026 (Montáž/Demontáž s vlastními milníky, bez konstrukčních projektů)";
+const AKTUALIZOVANO = "7. 8. 2026 (pauza/obnovení akce ⏸/▶, Report pro vedení, vyřazení akce z konstrukce)";
 
 export const dynamic = "force-dynamic";
 
@@ -139,6 +139,7 @@ export default function NapovedaPage() {
         <li><strong>Odpovědné osoby</strong> (projekťák / vedoucí) mají vlevo <strong>vlastní skupinu</strong> a na dlaždici zakázky se zobrazují <strong>zvlášť nad pracovníky</strong>. Přetažením projekťáka/vedoucího na zakázku se zaeviduje jako <strong>odpovědná osoba</strong> (ne pracovník); křížkem u ní ji zrušíš.</li>
         <li><strong>Odebrání konstruktéra ze zakázky</strong> smí provést jen <strong>šéfkonstruktér</strong> nebo <strong>administrátor</strong> (u ostatních je místo křížku zámek 🔒). Běžné pracovníky odebírá kdokoli s právem zápisu. Šéfkonstruktéra nastaví admin ve Správě u profilu z oddělení Konstrukce.</li>
         <li><strong>Lidé na akci:</strong> u akce se všude zobrazují <strong>všichni lidé</strong> (dělníci, elektrikáři, konstruktéři i odpovědná osoba) sečtení přes akci a její zakázky k akci; u každé zakázky k akci vidíš její lidi zvlášť (seznam Akce – rozbalovací, detail i Tabule).</li>
+        <li><strong>⏸ Pozastavení a ▶ obnovení akce:</strong> tlačítko <Code>❚❚</Code> u akce (Tabule, seznam Akce i detail; jen s právem zápisu) akci <strong>pozastaví</strong> – zadáš datum a povinný důvod. Pozastaví se <strong>i všechny zakázky k akci</strong>. Pozastavená akce je všude <strong>zašedlá/vybledlá</strong> (Tabule, seznam, Gantt). <strong>Lidé se uvolní</strong> pro jiné akce (kolize je nehlásí), ale u akce zůstávají napsaní. Tlačítko <Code>▶</Code> akci <strong>obnoví</strong>: konec se posune o zbývající dny a lidé se přiřadí zpět — pokud jsou mezitím <strong>obsazení jinde</strong>, okno ukáže konflikty a u každého vybereš <strong>náhradníka</strong> (převezme stejné období), nebo necháš člověka na obou akcích. Vše se zapisuje do historie.</li>
         <li><strong>Detail:</strong> pracovníci, milníky, prodloužení/přerušení, stav, <strong>konstruktéři z podúkolů</strong>, historie, poznámky, Export do PDF. Tlačítka <strong>životního cyklu</strong> (Hotovo / Proplaceno / …) jsou nahoře v hlavičce vedle Exportu.</li>
         <li><strong>Sbalitelné sekce:</strong> sekce detailu (Termíny, Přiřazení pracovníci, Zakázky k akci, Milníky, Poznámky, Změna termínu, Přerušení, Konstrukční projekty, Historie) jsou <strong>ve výchozím stavu sbalené</strong> – detail tak nezahltí obrazovku. Kliknutím na nadpis (šipka <Code>▸</Code>) sekci <strong>rozbalíš</strong>; jakmile to uděláš, volba se <strong>pamatuje v prohlížeči</strong> a platí u všech zakázek (rozbalená sekce tak zůstane rozbalená, dokud ji zase nesbalíš).</li>
         <li><strong>Filtr podle stavů = multi-výběr:</strong> klikni jeden stav (zobrazí jen ten) nebo víc stavů (= všechny kromě zbytku). „Po termínu" je samostatný přepínač. Nic vybráno = vše kromě archivu.</li>
@@ -164,6 +165,8 @@ export default function NapovedaPage() {
         <li><strong>Propojení:</strong> přiřazením řešitele k úkolu <strong>i nastavením zodpovědného konstruktéra za projekt</strong> (celou akci) se <strong>konstruktér propíše k zakázce</strong> – objeví se na <strong>zakázkové tabuli</strong> i v detailu zakázky.</li>
         <li><strong>Gantt:</strong> termíny úkolů posouváš tažením; zobrazují se absence. Kolize systém vždy nahlásí (uložit lze i tak).</li>
         <li><strong>Absence</strong> se zadávají v dialogu člena (klik na dlaždici).</li>
+        <li><strong>Přehled – počty:</strong> dlaždice <strong>„Akce bez konstruktéra"</strong> ukazuje akce, které nemají jediného konstruktéra napříč svými zakázkami; <strong>„Nepřiřazené úkoly"</strong> počítá rozpracované úkoly bez řešitele.</li>
+        <li><strong>🚫 Konstrukce není třeba:</strong> <strong>šéfkonstruktér, vedoucí nebo administrátor</strong> může akci v Přehledu označit tlačítkem <Code>🚫 Není třeba</Code> – akce <strong>zmizí z celého modulu Konstrukce</strong> (v ostatních modulech zůstává). Vyřazené akce najdeš dole v sekci <strong>„Konstrukce není třeba"</strong>, odkud je jde <Code>↩ Vrátit</Code>. Akci s běžícím konstrukčním projektem označit nejde (nejdřív projekt archivuj).</li>
       </UL>
 
       <H2>9. Dílna (mistr / koordinátor výroby)</H2>
@@ -175,13 +178,28 @@ export default function NapovedaPage() {
         <li><strong>Gantt:</strong> dva režimy — <em>Podle fází</em> a <em>Podle zaměstnance</em>. Hlavní akce ukazuje svůj <strong>pevný termín</strong> (kotva); podzakázky jsou <strong>sbalitelné podřádky</strong> s vlastními termíny (poslední rozbalení se pamatuje). Výrobní fáze jsou barevné pruhy uvnitř. Tlačítka „Zobrazit vše / Skrýt vše".</li>
       </UL>
 
-      <H2>10. Tisk a export do PDF</H2>
+      <H2>10. Report pro vedení (admin a vedoucí)</H2>
+      <P>
+        Karta <strong>Report</strong> v hlavičce (vidí ji jen <strong>administrátor</strong> a role <strong>Vedoucí</strong>) —
+        provozní přehled za zvolený <strong>měsíc nebo celý rok</strong> (přepínač Měsíc/Rok, šipky ◀ ▶).
+      </P>
+      <UL>
+        <li><strong>Souhrn:</strong> aktivní akce, po termínu, ve fakturaci, otevřené poptávky, projekty konstrukce, úkoly po termínu (proklikávací dlaždice).</li>
+        <li><strong>Poptávky:</strong> přijaté / objednáno / zamítnuto za období + <strong>úspěšnost objednání</strong> (objednáno / uzavřené) a rozpad otevřených dle stavu.</li>
+        <li><strong>Akce:</strong> zahájené, končící a prodloužení termínů (s důvody); seznamy akcí po termínu a ve fakturaci s počtem dní.</li>
+        <li><strong>Odpovědnosti:</strong> <em>Akce podle odpovědných</em> (kdo má kolik akcí na starost) a <em>Poptávky podle odpovědných</em> (počet, objednáno, úspěšnost — obchodní manažeři i vedení).</li>
+        <li><strong>Vytížení lidí:</strong> podíl pracovních dní pokrytých přiřazením na akci, <strong>seskupené podle oddělení</strong> (s průměrem skupiny) + dny absence.</li>
+        <li><strong>Trend:</strong> poslední měsíce (v ročním režimu všech 12) — poptávky a akce v grafu.</li>
+        <li><strong>🖨 Export do PDF</strong> vytiskne stejný report v tabulkové podobě.</li>
+      </UL>
+
+      <H2>11. Tisk a export do PDF</H2>
       <UL>
         <li>Tlačítko <strong>🖨 Export do PDF</strong> otevře čistou tiskovou verzi; PDF vytvoříš přes tisk prohlížeče (Ctrl/Cmd+P → Uložit jako PDF).</li>
         <li>Export respektuje aktivní filtry.</li>
       </UL>
 
-      <H2>11. Jak to spolu souvisí</H2>
+      <H2>12. Jak to spolu souvisí</H2>
       <P>
         Objednaná <strong>poptávka</strong> → založí <strong>zakázku</strong> (zdědí zákazníka) → se zakázkou vznikne
         <strong> konstrukční projekt</strong>. Konstruktér přiřazený k úkolu projektu se <strong>propíše zpět k zakázce</strong>.
@@ -189,12 +207,15 @@ export default function NapovedaPage() {
         po zaplacení do stavu <strong>Proplaceno</strong> = finále akce (nebo se rovnou uzavře, když se nefakturuje).
       </P>
 
-      <H2>12. Rychlý tahák</H2>
+      <H2>13. Rychlý tahák</H2>
       <UL>
         <li><strong>Přiřadit poptávku:</strong> Poptávky → Tabule → přetáhni na osobu.</li>
         <li><strong>Zakázka z poptávky:</strong> Poptávky → Objednáno → otevřít → vytvořit zakázku.</li>
         <li><strong>Pracovníci na zakázku:</strong> Zakázky → Tabule → přetáhni osoby na zakázku.</li>
         <li><strong>Posun termínu:</strong> Zakázky → Gantt → táhni pruh.</li>
+        <li><strong>Pozastavit / obnovit akci:</strong> tlačítko <Code>❚❚</Code> / <Code>▶</Code> u akce (Tabule, seznam, detail).</li>
+        <li><strong>Akce bez konstrukce:</strong> Konstrukce → Přehled → <Code>🚫 Není třeba</Code> u akce (šéfkonstruktér/vedoucí/admin).</li>
+        <li><strong>Měsíční report:</strong> karta <strong>Report</strong> v hlavičce (admin/vedoucí) → 🖨 Export do PDF.</li>
         <li><strong>Uzavřít akci:</strong> detail akce → <Code>✓ Hotovo</Code> → do fakturace / uzavřít bez fakturace. Proplacení: Zakázky → Fakturace → <Code>✓ Proplaceno</Code>.</li>
         <li><strong>Naplánovat konstrukci:</strong> Konstrukce → Plánování → přetáhni úkoly na konstruktéry.</li>
         <li><strong>Oblíbená záložka:</strong> klikni na 📌 u záložky.</li>
