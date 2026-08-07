@@ -500,8 +500,11 @@ function ZakazkaTile({
             : "border-line bg-surface"
       }`}
     >
-      {/* Rychlé akce + pauza: sloupec u pravého okraje karty (pod sebou). */}
-      <span className="absolute right-2 top-2 flex flex-col items-center gap-1">
+      {/* Sloupec u pravého okraje karty: 1) pauza, 2) zakázka k akci, 3) milník, 4) poznámka. */}
+      <span className="absolute right-2 top-2 flex flex-col items-center gap-2">
+        {!jePodzakazka && (
+          <PauzaTlacitko zakazkaId={zakazka.id} kod={zakazka.kod} stav={zakazka.stav} editable={editable} />
+        )}
         <RychleAkce
           zakazkaId={zakazka.id}
           kod={zakazka.montazTyp ? zakazka.popis || zakazka.mistoPlneni : zakazka.kod}
@@ -510,9 +513,6 @@ function ZakazkaTile({
           jenVlastniMilniky={!!zakazka.montazTyp}
           svisle
         />
-        {!jePodzakazka && (
-          <PauzaTlacitko zakazkaId={zakazka.id} kod={zakazka.kod} stav={zakazka.stav} editable={editable} />
-        )}
       </span>
 
       <button type="button" onClick={onOpen} className="mb-1 block pr-8 text-left hover:underline">

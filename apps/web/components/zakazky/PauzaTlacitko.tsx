@@ -102,7 +102,7 @@ export function PauzaTlacitko({
           disabled={busy}
           data-tip="Pozastavit akci (i zakázky k akci); lidé se uvolní pro jiné akce"
           aria-label="Pozastavit akci"
-          className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-line text-[10px] text-text-muted transition hover:border-amber-400/70 hover:text-amber-500"
+          className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-line text-[10px] text-red-400 transition hover:border-red-400/70 hover:text-red-500"
         >
           ❚❚
         </button>
@@ -116,7 +116,7 @@ export function PauzaTlacitko({
           disabled={busy}
           data-tip="Obnovit akci (i zakázky k akci); lidé se znovu přiřadí"
           aria-label="Obnovit akci"
-          className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-line text-[11px] text-text-muted transition hover:border-emerald-400/70 hover:text-emerald-500"
+          className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-line text-[11px] text-yellow-500 transition hover:border-yellow-400/70 hover:text-yellow-400"
         >
           ▶
         </button>

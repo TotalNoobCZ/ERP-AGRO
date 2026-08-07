@@ -87,15 +87,21 @@ export function RychleAkce({
 
   return (
     <>
-      <span className={svisle ? "flex flex-col items-center gap-1" : "inline-flex items-center gap-1"}>
-        <button type="button" className={btn} onClick={(e) => otevrit(e, "milnik")} data-tip="Přidat milník" aria-label="Přidat milník">
-          ◆
-        </button>
+      <span className={svisle ? "flex flex-col items-center gap-2" : "inline-flex items-center gap-2"}>
         {!jePodzakazka && (
-          <button type="button" className={btn} onClick={(e) => otevrit(e, "podzakazka")} data-tip="Přidat zakázku k akci" aria-label="Přidat zakázku k akci">
+          <button
+            type="button"
+            className={`${btn} !text-emerald-500 hover:border-emerald-400/70 hover:!text-emerald-400`}
+            onClick={(e) => otevrit(e, "podzakazka")}
+            data-tip="Přidat zakázku k akci"
+            aria-label="Přidat zakázku k akci"
+          >
             ＋
           </button>
         )}
+        <button type="button" className={btn} onClick={(e) => otevrit(e, "milnik")} data-tip="Přidat milník" aria-label="Přidat milník">
+          ◆
+        </button>
         <button type="button" className={btn} onClick={(e) => otevrit(e, "poznamka")} data-tip="Přidat poznámku" aria-label="Přidat poznámku">
           💬
         </button>
