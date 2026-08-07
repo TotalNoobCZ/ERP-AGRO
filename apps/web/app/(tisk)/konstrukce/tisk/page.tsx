@@ -41,7 +41,7 @@ export default async function KonstrukcePrintPage({
               <ul className="ml-4 list-disc text-sm">
                 {ukolyProjektu(p.id).map((u) => (
                   <li key={u.id} className={u.completed ? "text-gray-400 line-through" : ""}>
-                    {u.name}
+                    {u.name}{u.zakazkaPopis ? ` – ${u.zakazkaPopis}` : ""}
                     {u.assigneeId ? ` — ${clenById.get(u.assigneeId) ?? "?"}` : " — nepřiřazeno"}
                     {u.startDate && u.endDate ? ` (${formatDen(u.startDate)} – ${formatDen(u.endDate)})` : ""}
                   </li>
@@ -67,7 +67,7 @@ export default async function KonstrukcePrintPage({
                   <ul className="ml-4 list-disc">
                     {list.map((u) => (
                       <li key={u.id}>
-                        {u.name} <span className="text-gray-500">· {u.projectName}</span>
+                        {u.name}{u.zakazkaPopis ? ` – ${u.zakazkaPopis}` : ""} <span className="text-gray-500">· {u.projectName}</span>
                         {u.startDate && u.endDate ? ` (${formatDen(u.startDate)} – ${formatDen(u.endDate)})` : ""}
                       </li>
                     ))}

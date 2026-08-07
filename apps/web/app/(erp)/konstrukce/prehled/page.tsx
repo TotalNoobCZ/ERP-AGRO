@@ -103,7 +103,7 @@ export default async function KonstrukcePrehled() {
           {nejblizsi.map((u) => (
             <div key={u.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line p-3">
               <div className="min-w-0">
-                <p className="truncate font-medium">{u.name}</p>
+                <p className="truncate font-medium">{u.name}{u.zakazkaPopis ? ` – ${u.zakazkaPopis}` : ""}</p>
                 <p className="text-sm text-text-muted">
                   {u.projectName}{u.assigneeId ? ` · ${clenById.get(u.assigneeId) ?? "?"}` : " · nepřiřazeno"}
                 </p>
@@ -120,7 +120,7 @@ export default async function KonstrukcePrehled() {
           {nepriazene.length === 0 && <p className="text-sm text-text-muted">Vše přiřazeno. 👍</p>}
           {nepriazene.slice(0, 10).map((u) => (
             <div key={u.id} className="flex items-center justify-between gap-2 rounded-lg border border-line p-3 text-sm">
-              <span className="truncate">{u.name} <span className="text-text-muted">· {u.projectName}</span></span>
+              <span className="truncate">{u.name}{u.zakazkaPopis ? ` – ${u.zakazkaPopis}` : ""} <span className="text-text-muted">· {u.projectName}</span></span>
               {u.startDate && u.endDate && (
                 <span className="text-text-muted">{formatDen(u.startDate)} – {formatDen(u.endDate)}</span>
               )}
