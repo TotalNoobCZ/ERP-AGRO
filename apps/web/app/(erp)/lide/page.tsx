@@ -5,7 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { guardModul } from "@/lib/pristup";
 import { userColor } from "@erp/ui";
-import { ODDELENI, ODDELENI_LABELS, KAPITOLY, KAPITOLA_LABELS, ODDELENI_KAPITOLA, porovnatDlePrijmeni, type Oddeleni } from "@erp/core";
+import { ODDELENI, ODDELENI_LABELS, KAPITOLY, KAPITOLA_LABELS, ODDELENI_KAPITOLA, porovnatDlePrijmeni, prijmeni, type Oddeleni } from "@erp/core";
 import { LideHledani } from "@/components/lide/LideHledani";
 
 export const dynamic = "force-dynamic";
@@ -101,7 +101,11 @@ function Karta({ p, neaktivni = false }: { p: Zamestnanec; neaktivni?: boolean }
         {p.name.trim().charAt(0).toUpperCase()}
       </span>
       <span className="min-w-0">
-        <span className="block truncate font-semibold">{p.name}</span>
+        {/* Příjmení tučně – seznam je podle něj řazený, ať je to vidět. */}
+        <span className="block truncate">
+          {p.name.slice(0, p.name.length - prijmeni(p.name).length)}
+          <strong>{prijmeni(p.name)}</strong>
+        </span>
         <span className="block truncate text-xs text-text-muted">
           {[p.oddeleni ? ODDELENI_LABELS[p.oddeleni as Oddeleni] : null, p.pozice].filter(Boolean).join(" · ") || "—"}
         </span>
