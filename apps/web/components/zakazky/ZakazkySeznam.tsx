@@ -94,9 +94,12 @@ export function ZakazkySeznam({ uzly, editable = false }: { uzly: Uzel[]; editab
             {otevreno &&
               deti.map((d) => (
                 <div key={d.row.id} className={`ml-7 border-l-2 border-link/40 py-2 pl-5 pr-4 hover:bg-accent ${d.row.stav === "POZASTAVENO" ? "opacity-55 grayscale" : ""}`}>
-                  <Link href={`/zakazky/${d.row.id}`} className="flex items-center gap-4">
-                    <Zahlavi z={d.row} />
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <Link href={`/zakazky/${d.row.id}`} className="flex min-w-0 flex-1 items-center gap-4">
+                      <Zahlavi z={d.row} />
+                    </Link>
+                    <PauzaTlacitko zakazkaId={d.row.id} kod={d.row.kod} stav={d.row.stav} editable={editable} jePodzakazka />
+                  </div>
                   <div className="mt-1.5 pl-8">
                     <Lide lide={d.lide} />
                   </div>

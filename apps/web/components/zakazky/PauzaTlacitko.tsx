@@ -24,11 +24,14 @@ export function PauzaTlacitko({
   kod,
   stav,
   editable,
+  jePodzakazka = false,
 }: {
   zakazkaId: string;
   kod: string;
   stav: string;
   editable: boolean;
+  /** Zakázka k akci – pozastavuje se jen ona (bez kaskády na sourozence). */
+  jePodzakazka?: boolean;
 }) {
   const router = useRouter();
   const dnes = new Date().toISOString().slice(0, 10);
@@ -100,8 +103,8 @@ export function PauzaTlacitko({
             setPauzaOpen(true);
           }}
           disabled={busy}
-          data-tip="Pozastavit akci (i zakázky k akci); lidé se uvolní pro jiné akce"
-          aria-label="Pozastavit akci"
+          data-tip={jePodzakazka ? "Pozastavit tuto zakázku k akci; její lidé se uvolní pro jiné akce" : "Pozastavit akci (i zakázky k akci); lidé se uvolní pro jiné akce"}
+          aria-label="Pozastavit"
           className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-line text-[10px] text-red-400 transition hover:border-red-400/70 hover:text-red-500"
         >
           ❚❚
@@ -114,8 +117,8 @@ export function PauzaTlacitko({
             otevritObnovu();
           }}
           disabled={busy}
-          data-tip="Obnovit akci (i zakázky k akci); lidé se znovu přiřadí"
-          aria-label="Obnovit akci"
+          data-tip={jePodzakazka ? "Obnovit tuto zakázku k akci; lidé se znovu přiřadí" : "Obnovit akci (i zakázky k akci); lidé se znovu přiřadí"}
+          aria-label="Obnovit"
           className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-line text-[11px] text-yellow-500 transition hover:border-yellow-400/70 hover:text-yellow-400"
         >
           ▶
@@ -127,10 +130,12 @@ export function PauzaTlacitko({
       {pauzaOpen && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={stopo}>
           <div className="card w-full max-w-md p-6">
-            <h2 className="text-base font-semibold">⏸ Pozastavit akci <span className="font-mono">{kod}</span></h2>
+            <h2 className="text-base font-semibold">⏸ Pozastavit {jePodzakazka ? "zakázku k akci" : "akci"} <span className="font-mono">{kod}</span></h2>
             <p className="mt-1 text-sm text-text-muted">
-              Pozastaví se i všechny zakázky k akci. Lidé u akce zůstanou napsaní, ale uvolní se
-              pro jiné akce. Po obnovení se konec posune o zbývající dny.
+              {jePodzakazka
+                ? "Pozastaví se jen tato zakázka k akci (hlavní akce a ostatní zakázky běží dál). Její lidé zůstanou napsaní, ale uvolní se pro jiné akce."
+                : "Pozastaví se i všechny zakázky k akci. Lidé u akce zůstanou napsaní, ale uvolní se pro jiné akce."}{" "}
+              Po obnovení se konec posune o zbývající dny.
             </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div>
@@ -158,9 +163,11 @@ export function PauzaTlacitko({
       {obnovaOpen && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={stopo}>
           <div className="card max-h-[85vh] w-full max-w-lg overflow-y-auto p-6">
-            <h2 className="text-base font-semibold">▶ Obnovit akci <span className="font-mono">{kod}</span></h2>
+            <h2 className="text-base font-semibold">▶ Obnovit {jePodzakazka ? "zakázku k akci" : "akci"} <span className="font-mono">{kod}</span></h2>
             <p className="mt-1 text-sm text-text-muted">
-              Obnoví se i zakázky k akci; konec se posune o zbývající dny od data obnovení.
+              {jePodzakazka
+                ? "Obnoví se tato zakázka k akci; konec se posune o zbývající dny od data obnovení."
+                : "Obnoví se i zakázky k akci; konec se posune o zbývající dny od data obnovení."}
             </p>
             <div className="mt-4">
               <label className="label">Datum obnovení</label>

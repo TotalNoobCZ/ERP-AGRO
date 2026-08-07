@@ -245,7 +245,7 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <h1 className="font-mono text-2xl font-bold">{z.kod}</h1>
           <StavBadge z={stavovaZakazka} />
-          {!z.parent_id && <PauzaTlacitko zakazkaId={z.id} kod={z.kod} stav={z.stav} editable={jeEditor} />}
+          <PauzaTlacitko zakazkaId={z.id} kod={z.kod} stav={z.stav} editable={jeEditor} jePodzakazka={!!z.parent_id} />
           <span title="1 = nejvyšší, 5 = nejnižší" className="badge bg-slate-100 text-slate-500">Priorita {z.priorita}</span>
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <AkceStavAkce id={z.id} stav={z.stav} />
