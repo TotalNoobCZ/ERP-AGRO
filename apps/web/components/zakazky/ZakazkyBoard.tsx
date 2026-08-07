@@ -502,9 +502,13 @@ function ZakazkaTile({
     >
       {/* Sloupec u pravého okraje karty: 1) pauza, 2) zakázka k akci, 3) milník, 4) poznámka. */}
       <span className="absolute right-2 top-2 flex flex-col items-center gap-2">
-        {!jePodzakazka && (
-          <PauzaTlacitko zakazkaId={zakazka.id} kod={zakazka.kod} stav={zakazka.stav} editable={editable} />
-        )}
+        <PauzaTlacitko
+          zakazkaId={zakazka.id}
+          kod={zakazka.montazTyp ? zakazka.popis || zakazka.mistoPlneni : zakazka.kod}
+          stav={zakazka.stav}
+          editable={editable}
+          jePodzakazka={jePodzakazka}
+        />
         <RychleAkce
           zakazkaId={zakazka.id}
           kod={zakazka.montazTyp ? zakazka.popis || zakazka.mistoPlneni : zakazka.kod}
