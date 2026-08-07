@@ -17,6 +17,8 @@ export type Ukol = {
   projectId: string;
   projectName: string;
   name: string;
+  /** popis zakázky k akci, kterou podúkol reprezentuje (tasks.zakazka_id) */
+  zakazkaPopis: string | null;
   assigneeId: string | null;
   startDate: string | null;
   endDate: string | null;

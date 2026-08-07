@@ -43,7 +43,8 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
       .from("tasks")
       .select(
         `id, project_id, name, assignee_id, start_date, end_date, duration_days,
-         completed, order_in_member, status,
+         completed, order_in_member, status, zakazka_id,
+         zakazka:zakazky(popis),
          project:projects!inner(name, status, zakazka:zakazky!inner(deleted_at)),
          task_notes(id, body, created_at, author:profiles(name)),
          task_todos(id, body, done, position)`,
@@ -119,6 +120,8 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
     duration_days: number | null;
     completed: boolean;
     order_in_member: number | null;
+    zakazka_id: string | null;
+    zakazka: { popis: string | null } | null;
     project: { name: string } | null;
     task_notes: NoteRow[];
     task_todos: TodoRow[];
@@ -127,6 +130,7 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
     projectId: t.project_id,
     projectName: t.project?.name ?? "?",
     name: t.name,
+    zakazkaPopis: t.zakazka?.popis ?? null,
     assigneeId: t.assignee_id,
     startDate: t.start_date,
     endDate: t.end_date,

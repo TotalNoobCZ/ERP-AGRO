@@ -92,7 +92,10 @@ export default function PlanBoard({
 
   const q = query.trim().toLowerCase();
   const taskMatches = (u: Ukol) =>
-    !q || u.name.toLowerCase().includes(q) || u.projectName.toLowerCase().includes(q);
+    !q ||
+    u.name.toLowerCase().includes(q) ||
+    u.projectName.toLowerCase().includes(q) ||
+    (u.zakazkaPopis ?? "").toLowerCase().includes(q);
 
   // Nový projekt
   const [showNewProject, setShowNewProject] = useState(false);
@@ -368,7 +371,7 @@ export default function PlanBoard({
       <DragOverlay>
         {dragged && (
           <div className="w-52 rounded-md border border-line bg-surface p-2 text-sm shadow-lg">
-            <p className="font-medium">{dragged.name}</p>
+            <p className="font-medium">{dragged.name}{dragged.zakazkaPopis ? ` – ${dragged.zakazkaPopis}` : ""}</p>
             <p className="text-xs text-text-muted">{dragged.projectName}</p>
           </div>
         )}
@@ -478,9 +481,10 @@ function DraggableTask({
       onClick={onClick}
       className={`cursor-pointer rounded-md p-2 text-sm shadow-sm transition ${isDragging ? "opacity-40" : ""} ${editable && !ukol.completed ? "hover:brightness-110" : ""}`}
       style={{ backgroundColor: ukol.completed ? COLOR_TOKENS.neutral : barva, color: "#16181b" }}
-      title={ukol.name}
+      title={ukol.zakazkaPopis ? `${ukol.name} – ${ukol.zakazkaPopis}` : ukol.name}
     >
       <p className={`truncate font-semibold ${ukol.completed ? "line-through opacity-70" : ""}`}>{ukol.name}</p>
+      {ukol.zakazkaPopis && <p className="truncate text-xs opacity-80">{ukol.zakazkaPopis}</p>}
       {showProject && <p className="truncate text-xs opacity-75">{ukol.projectName}</p>}
       {ukol.startDate && ukol.endDate && !ukol.completed && (
         <p className="text-[10px] opacity-70">{formatDen(ukol.startDate)} – {formatDen(ukol.endDate)}</p>
