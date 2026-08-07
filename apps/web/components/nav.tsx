@@ -42,12 +42,14 @@ export function Nav({ name, role, colorIndex, colorHex, moduly }: NavProps) {
   }
 
   return (
-    <header className="flex items-center gap-6 border-b border-border/30 bg-surface px-6 py-3">
-      <Link href="/" className="whitespace-nowrap text-lg font-bold hover:text-link">
-        ERP Strojírenská divize
+    // Mobil: dva řádky (značka + uživatel / posuvný pás modulů), desktop: jeden.
+    <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border/30 bg-surface px-3 py-2 sm:gap-6 sm:px-6 sm:py-3">
+      <Link href="/" className="whitespace-nowrap text-base font-bold hover:text-link sm:text-lg">
+        <span className="sm:hidden">ERP</span>
+        <span className="hidden sm:inline">ERP Strojírenská divize</span>
       </Link>
 
-      <nav className="flex flex-1 gap-2">
+      <nav className="order-last -mx-3 flex w-[100vw] gap-2 overflow-x-auto px-3 pb-1 sm:order-none sm:mx-0 sm:w-auto sm:flex-1 sm:px-0 sm:pb-0">
         {MODULES.filter((m) =>
           m.adminOnly
             ? isAdmin(role)
@@ -73,7 +75,7 @@ export function Nav({ name, role, colorIndex, colorHex, moduly }: NavProps) {
                 }
               }}
               className={
-                "inline-flex items-center rounded-lg border px-4 py-2 text-sm font-semibold transition " +
+                "inline-flex shrink-0 items-center whitespace-nowrap rounded-lg border px-3 py-1.5 text-sm font-semibold transition sm:px-4 sm:py-2 " +
                 (active
                   ? "border-link bg-accent text-text shadow-sm ring-1 ring-link"
                   : "border-line text-text-muted hover:border-link hover:text-text")
@@ -86,7 +88,7 @@ export function Nav({ name, role, colorIndex, colorHex, moduly }: NavProps) {
         })}
       </nav>
 
-      <div className="flex items-center gap-3">
+      <div className="ml-auto flex items-center gap-2 sm:ml-0 sm:gap-3">
         <ThemeToggle />
         <Link
           href="/napoveda"

@@ -258,9 +258,9 @@ export default function ZakazkyBoard({
         {q && <button className="btn-ghost" onClick={() => setQuery("")}>✕ Zrušit</button>}
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex flex-col gap-4 md:flex-row">
         {/* Levá 1/3 – osoby rozdělené podle oddělení (táhnou se) */}
-        <div className="w-1/3 min-w-[220px] space-y-3">
+        <div className="w-full space-y-3 md:w-1/3 md:min-w-[220px]">
           {/* Odpovědné osoby (projekťák / vedoucí) – přetažením = odpovědná osoba. */}
           {odpovedneOsoby.length > 0 && (() => {
             const zavreno = jeSbaleno("kap:_odpovedne");

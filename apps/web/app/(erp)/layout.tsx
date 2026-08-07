@@ -26,7 +26,7 @@ export default async function ErpLayout({ children }: { children: React.ReactNod
         colorHex={profile.color_hex}
         moduly={moduly}
       />
-      <main className="flex-1 p-6">{children}</main>
+      <main className="flex-1 p-3 sm:p-6">{children}</main>
     </div>
   );
 }

@@ -134,9 +134,9 @@ export default function PoptavkyBoard({
         {q && <button className="btn-ghost" onClick={() => setQuery("")}>✕ Zrušit</button>}
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex flex-col gap-4 md:flex-row">
         {/* Levá 1/3 – dlaždice osob */}
-        <div className="w-1/3 min-w-[240px] space-y-3">
+        <div className="w-full space-y-3 md:w-1/3 md:min-w-[240px]">
           {osoby.map((o) => (
             <PersonTile
               key={o.id}
