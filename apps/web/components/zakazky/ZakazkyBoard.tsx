@@ -490,7 +490,7 @@ function ZakazkaTile({
   return (
     <div
       ref={setNodeRef}
-      className={`rounded-xl border p-3 transition ${isOver ? "ring-2 ring-link" : ""} ${
+      className={`relative rounded-xl border p-3 transition ${isOver ? "ring-2 ring-link" : ""} ${
         zakazka.stav === "POZASTAVENO" ? "opacity-55 grayscale" : ""
       } ${
         zakazka.montazTyp === "MONTAZ"
@@ -500,7 +500,22 @@ function ZakazkaTile({
             : "border-line bg-surface"
       }`}
     >
-      <button type="button" onClick={onOpen} className="mb-1 block text-left hover:underline">
+      {/* Rychlé akce + pauza: sloupec u pravého okraje karty (pod sebou). */}
+      <span className="absolute right-2 top-2 flex flex-col items-center gap-1">
+        <RychleAkce
+          zakazkaId={zakazka.id}
+          kod={zakazka.montazTyp ? zakazka.popis || zakazka.mistoPlneni : zakazka.kod}
+          editable={editable}
+          jePodzakazka={jePodzakazka}
+          jenVlastniMilniky={!!zakazka.montazTyp}
+          svisle
+        />
+        {!jePodzakazka && (
+          <PauzaTlacitko zakazkaId={zakazka.id} kod={zakazka.kod} stav={zakazka.stav} editable={editable} />
+        )}
+      </span>
+
+      <button type="button" onClick={onOpen} className="mb-1 block pr-8 text-left hover:underline">
         {zakazka.montazTyp && (
           <span
             className={`mb-1 inline-block rounded-md px-2 py-0.5 text-xs font-bold uppercase tracking-wide ${
@@ -513,24 +528,10 @@ function ZakazkaTile({
         <p className="font-bold">{zakazka.montazTyp ? zakazka.popis || zakazka.mistoPlneni : zakazka.kod}</p>
         <p className="text-xs text-text-muted">{zakazka.montazTyp ? zakazka.mistoPlneni : zakazka.popis || zakazka.mistoPlneni}</p>
       </button>
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="text-[11px] text-text-muted">
-          {formatDen(zakazka.zacatek)} – {formatDen(zakazka.konecAktualni)}
-          {zakazka.stav === "POZASTAVENO" && <span className="ml-1 font-semibold text-amber-600">· pozastaveno</span>}
-        </p>
-        <span className="inline-flex items-center gap-1">
-          <RychleAkce
-            zakazkaId={zakazka.id}
-            kod={zakazka.montazTyp ? zakazka.popis || zakazka.mistoPlneni : zakazka.kod}
-            editable={editable}
-            jePodzakazka={jePodzakazka}
-            jenVlastniMilniky={!!zakazka.montazTyp}
-          />
-          {!jePodzakazka && (
-            <PauzaTlacitko zakazkaId={zakazka.id} kod={zakazka.kod} stav={zakazka.stav} editable={editable} />
-          )}
-        </span>
-      </div>
+      <p className="mb-2 pr-8 text-[11px] text-text-muted">
+        {formatDen(zakazka.zacatek)} – {formatDen(zakazka.konecAktualni)}
+        {zakazka.stav === "POZASTAVENO" && <span className="ml-1 font-semibold text-amber-600">· pozastaveno</span>}
+      </p>
 
       {/* Odpovědná osoba – u akce editovatelná (drag), u podzakázky jen zděděná. */}
       <div className="mb-2">

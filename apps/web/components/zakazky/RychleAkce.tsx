@@ -18,12 +18,15 @@ export function RychleAkce({
   jePodzakazka = false,
   /** Montáž/demontáž má jen vlastní (pojmenované) milníky. */
   jenVlastniMilniky = false,
+  /** Ikonky pod sebou (sloupec u pravého okraje karty). */
+  svisle = false,
 }: {
   zakazkaId: string;
   kod: string;
   editable: boolean;
   jePodzakazka?: boolean;
   jenVlastniMilniky?: boolean;
+  svisle?: boolean;
 }) {
   const router = useRouter();
   const dnes = new Date().toISOString().slice(0, 10);
@@ -84,7 +87,7 @@ export function RychleAkce({
 
   return (
     <>
-      <span className="inline-flex items-center gap-1">
+      <span className={svisle ? "flex flex-col items-center gap-1" : "inline-flex items-center gap-1"}>
         <button type="button" className={btn} onClick={(e) => otevrit(e, "milnik")} data-tip="Přidat milník" aria-label="Přidat milník">
           ◆
         </button>
