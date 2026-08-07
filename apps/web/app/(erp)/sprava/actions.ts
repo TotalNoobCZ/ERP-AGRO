@@ -23,7 +23,8 @@ async function admin() {
 
 function ziskat(fd: FormData) {
   return {
-    name: String(fd.get("name") ?? ""),
+    jmeno: String(fd.get("jmeno") ?? ""),
+    prijmeni: String(fd.get("prijmeni") ?? ""),
     email: String(fd.get("email") ?? "").toLowerCase(),
     role: String(fd.get("role") ?? "viewer"),
     oddeleni: String(fd.get("oddeleni") ?? ""),
@@ -52,7 +53,9 @@ export async function vytvoritProfil(_prev: ProfilStav, fd: FormData): Promise<P
 
   const supabase = await createClient();
   const { error } = await supabase.from("profiles").insert({
-    name: d.name,
+    name: `${d.prijmeni} ${d.jmeno}`.trim(),
+    jmeno: d.jmeno,
+    prijmeni: d.prijmeni,
     email: d.email || null, // prázdný e-mail (dílna) → NULL kvůli unique
     role: d.role,
     oddeleni: d.oddeleni || null,
@@ -115,7 +118,9 @@ export async function upravitProfil(id: string, _prev: ProfilStav, fd: FormData)
   const { error } = await supabase
     .from("profiles")
     .update({
-      name: d.name,
+      name: `${d.prijmeni} ${d.jmeno}`.trim(),
+      jmeno: d.jmeno,
+      prijmeni: d.prijmeni,
       email: d.email || null, // prázdný e-mail (dílna) → NULL kvůli unique
       role: d.role,
       oddeleni: d.oddeleni || null,

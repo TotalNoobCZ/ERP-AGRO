@@ -7,10 +7,10 @@
 --  Ostatní uživatelé se zakládají přes UI (karta Správa) s rolí editor / viewer.
 -- ============================================================================
 
-insert into profiles (email, name, role, oddeleni, assignable, color_index, active)
+insert into profiles (email, name, jmeno, prijmeni, role, oddeleni, assignable, color_index, active)
 values
   -- Jakub Roháč (ZADANI.md kap. 10)
-  ('rohac@agrocs.cz', 'Jakub Roháč', 'admin', 'konstrukce', true, 0, true),
+  ('rohac@agrocs.cz', 'Roháč Jakub', 'Jakub', 'Roháč', 'admin', 'konstrukce', true, 0, true),
   -- Kryštof Harant – druhý admin
-  ('harantk@agrocs.cz', 'Kryštof Harant', 'admin', 'konstrukce', true, 1, true)
+  ('harantk@agrocs.cz', 'Harant Kryštof', 'Kryštof', 'Harant', 'admin', 'konstrukce', true, 1, true)
 on conflict (email) do nothing;

@@ -38,7 +38,10 @@ export type ProfileRow = {
   id: string;
   auth_user_id: string | null;
   email: string | null;
+  /** zobrazované jméno – skládá se jako „Příjmení Jméno" */
   name: string;
+  jmeno: string | null;
+  prijmeni: string | null;
   role: "admin" | "editor" | "vedouci" | "viewer";
   oddeleni:
     | "vyroba"

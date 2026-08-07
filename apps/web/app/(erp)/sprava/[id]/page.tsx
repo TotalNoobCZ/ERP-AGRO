@@ -20,7 +20,7 @@ export default async function UpravitProfilPage({ params }: { params: Promise<{ 
   const supabase = createAdminClient();
   const { data: p } = await supabase
     .from("profiles")
-    .select("id, name, email, role, oddeleni, assignable, sefkonstrukter, access_modules, color_index, color_hex, active, pozice, osobni_cislo, poznamka, auth_user_id")
+    .select("id, name, jmeno, prijmeni, email, role, oddeleni, assignable, sefkonstrukter, access_modules, color_index, color_hex, active, pozice, osobni_cislo, poznamka, auth_user_id")
     .eq("id", id)
     .maybeSingle();
   if (!p) notFound();
@@ -41,6 +41,8 @@ export default async function UpravitProfilPage({ params }: { params: Promise<{ 
           assignable: p.assignable,
           sefkonstrukter: p.sefkonstrukter,
           accessModules: p.access_modules,
+          jmeno: p.jmeno,
+          prijmeni: p.prijmeni,
           colorIndex: p.color_index,
           colorHex: p.color_hex,
           active: p.active,

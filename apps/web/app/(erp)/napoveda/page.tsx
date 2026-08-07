@@ -98,7 +98,7 @@ export default function NapovedaPage() {
 
       <H2>5. Správa uživatelů (jen administrátor)</H2>
       <UL>
-        <li>Nový/úprava: jméno, e-mail, role, oddělení (rozbalovátko dle kapitol), barva, aktivní.</li>
+        <li>Nový/úprava: <strong>příjmení a jméno zvlášť</strong> (zobrazuje se všude „Příjmení Jméno", iniciála v bublinách je z příjmení), e-mail, role, oddělení (rozbalovátko dle kapitol), barva, aktivní.</li>
         <li><strong>Filtr dle oddělení:</strong> nad seznamem uživatelů jsou přepínače <em>Vše</em> a jednotlivá oddělení – kliknutím zobrazíš jen uživatele daného oddělení (i s počtem).</li>
         <li><strong>E-mail je nepovinný pro kapitolu Dílna</strong> (nepřihlašuje se). „Lze přiřazovat" je automaticky u všech.</li>
         <li><strong>Šéfkonstruktér</strong> — u profilu z oddělení <strong>Konstrukce</strong> lze zaškrtnout pozici Šéfkonstruktér; smí jako jediný (kromě administrátora) <strong>odebírat konstruktéry ze zakázek</strong>.</li>

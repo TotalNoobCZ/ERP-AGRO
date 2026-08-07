@@ -76,7 +76,8 @@ export const milnikSchema = z.object({
 // Profil (Správa) – sjednocená náhrada za osobaSchema.
 export const profilSchema = z
   .object({
-    name: z.string().trim().min(1, "Zadejte jméno"),
+    jmeno: z.string().trim().min(1, "Zadejte jméno"),
+    prijmeni: z.string().trim().min(1, "Zadejte příjmení"),
     // E-mail je nepovinný – lidé z dílny se nepřihlašují (viz superRefine níže).
     email: z.string().trim().optional().or(z.literal("")),
     role: z.enum(["admin", "editor", "vedouci", "viewer"]),
