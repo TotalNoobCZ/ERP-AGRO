@@ -4,6 +4,7 @@
 // dny). Když jsou lidé akce mezitím obsazení jinde, obnovení nejdřív ukáže
 // dialog s hledáním náhrady (osobu na přiřazení jde vyměnit, období zůstává).
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { ODDELENI_LABELS, type Oddeleni } from "@erp/core";
 import { DateField } from "@/components/DateField";
@@ -121,8 +122,9 @@ export function PauzaTlacitko({
         </button>
       )}
 
-      {/* Dialog pozastavení */}
-      {pauzaOpen && (
+      {/* Dialogy jdou portálem do <body> – karta akce může být zašedlá
+          (grayscale/opacity) a CSS filtr by jinak vybledl i overlay. */}
+      {pauzaOpen && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={stopo}>
           <div className="card w-full max-w-md p-6">
             <h2 className="text-base font-semibold">⏸ Pozastavit akci <span className="font-mono">{kod}</span></h2>
@@ -148,11 +150,12 @@ export function PauzaTlacitko({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
 
       {/* Dialog obnovení (s hledáním náhrad při konfliktech) */}
-      {obnovaOpen && (
+      {obnovaOpen && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={stopo}>
           <div className="card max-h-[85vh] w-full max-w-lg overflow-y-auto p-6">
             <h2 className="text-base font-semibold">▶ Obnovit akci <span className="font-mono">{kod}</span></h2>
@@ -208,7 +211,8 @@ export function PauzaTlacitko({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );
