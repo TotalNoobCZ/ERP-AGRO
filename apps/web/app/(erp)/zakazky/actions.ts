@@ -349,6 +349,17 @@ export async function vytvoritPodzakazku(
     .maybeSingle();
   if (!parent || parent.deleted_at) return { ok: false, chyba: "Hlavní akce nenalezena." };
 
+  // Uvolni kód po dříve smazané zakázce (soft delete drží unikátní kod) –
+  // stejně jako při zakládání akce; jinak „číslo existuje", ač není vidět.
+  const { data: smazanaSKodem } = await supabase
+    .from("zakazky").select("id, kod").eq("kod", cislo.trim()).not("deleted_at", "is", null).maybeSingle();
+  if (smazanaSKodem) {
+    await supabase
+      .from("zakazky")
+      .update({ kod: `${smazanaSKodem.kod} (smazáno ${smazanaSKodem.id.slice(0, 6)})` })
+      .eq("id", smazanaSKodem.id);
+  }
+
   const { data: child, error } = await supabase
     .from("zakazky")
     .insert({

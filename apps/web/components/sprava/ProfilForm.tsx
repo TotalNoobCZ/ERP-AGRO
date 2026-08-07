@@ -29,6 +29,8 @@ import type { ProfilStav } from "@/app/(erp)/sprava/actions";
 type Init = {
   id?: string;
   name?: string;
+  jmeno?: string | null;
+  prijmeni?: string | null;
   email?: string;
   role?: string;
   oddeleni?: string | null;
@@ -77,7 +79,8 @@ export function ProfilForm({
 
   // Řízená pole – aby se po neúspěšném uložení (React 19 resetuje formulář se
   // server akcí) zadané údaje nesmazaly.
-  const [name, setName] = useState(initial?.name ?? "");
+  const [jmeno, setJmeno] = useState(initial?.jmeno ?? (initial?.name ? initial.name.trim().split(/\s+/).slice(1).join(" ") : ""));
+  const [prijmeniVal, setPrijmeniVal] = useState(initial?.prijmeni ?? (initial?.name ? (initial.name.trim().split(/\s+/)[0] ?? "") : ""));
   const [email, setEmail] = useState(initial?.email ?? "");
   const [role, setRole] = useState(initial?.role ?? "viewer");
   const [oddeleni, setOddeleni] = useState(initial?.oddeleni ?? "");
@@ -119,9 +122,14 @@ export function ProfilForm({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className="label">Jméno a příjmení</label>
-          <input name="name" className="field" value={name} onChange={(e) => setName(e.target.value)} required />
-          {ch.name && <p className="err">{ch.name}</p>}
+          <label className="label">Příjmení</label>
+          <input name="prijmeni" className="field" value={prijmeniVal} onChange={(e) => setPrijmeniVal(e.target.value)} required />
+          {ch.prijmeni && <p className="err">{ch.prijmeni}</p>}
+        </div>
+        <div>
+          <label className="label">Jméno</label>
+          <input name="jmeno" className="field" value={jmeno} onChange={(e) => setJmeno(e.target.value)} required />
+          {ch.jmeno && <p className="err">{ch.jmeno}</p>}
         </div>
         <div>
           <label className="label">

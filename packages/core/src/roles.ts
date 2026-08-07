@@ -120,13 +120,13 @@ export interface Profile {
   active: boolean;
 }
 
-/** Příjmení = poslední slovo celého jména („Radek Maršík" → „Maršík"). */
+/** Zobrazované jméno se skládá „Příjmení Jméno" → příjmení = první slovo. */
 export function prijmeni(name: string): string {
   const casti = name.trim().split(/\s+/);
-  return casti[casti.length - 1] ?? name;
+  return casti[0] ?? name;
 }
 
-/** Řazení jmen podle příjmení (české řazení), při shodě podle celého jména. */
+/** Řazení dle příjmení: name začíná příjmením → stačí české řazení celého jména. */
 export function porovnatDlePrijmeni(a: string, b: string): number {
-  return prijmeni(a).localeCompare(prijmeni(b), "cs") || a.localeCompare(b, "cs");
+  return a.localeCompare(b, "cs");
 }
