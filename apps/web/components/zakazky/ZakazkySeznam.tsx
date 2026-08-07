@@ -2,6 +2,7 @@
 // Seznam akcí. U hlavní akce se zobrazí VŠICHNI lidé (napříč jejími zakázkami),
 // šipkou se rozbalí zakázky k akci a u každé jsou její lidé.
 import Link from "next/link";
+import { formatKod } from "@erp/core";
 import { parseDay, formatCz } from "@/lib/zakazky/dates";
 import { usePersistentSet } from "@/lib/usePersistentSet";
 import { StavBadge } from "@/components/zakazky/common";
@@ -44,7 +45,7 @@ function Zahlavi({ z }: { z: ZakazkaListRow }) {
         data-tip={z.popis || z.misto_plneni || undefined}
         data-tip-pos="bottom"
       >
-        {z.kod}
+        {formatKod(z.kod)}
       </span>
       <span className="min-w-0 flex-1 truncate text-sm text-text-muted">{z.popis || z.misto_plneni}</span>
       <span className="hidden text-sm text-text-muted sm:inline">{formatCz(parseDay(z.konec_aktualni))}</span>

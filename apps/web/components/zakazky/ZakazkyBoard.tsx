@@ -17,7 +17,7 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { userColor } from "@erp/ui";
-import { ODDELENI, ODDELENI_LABELS, KAPITOLY, KAPITOLA_LABELS, ODDELENI_KAPITOLA } from "@erp/core";
+import { ODDELENI, ODDELENI_LABELS, KAPITOLY, KAPITOLA_LABELS, ODDELENI_KAPITOLA , formatKod } from "@erp/core";
 import { formatDen } from "@/lib/format";
 import { usePersistentSet } from "@/lib/usePersistentSet";
 import { pridatPracovnika, odebratPracovnika, nastavitOdpovednouOsobu, zjistitKoliziPridani, type KolizeInfo } from "@/app/(erp)/zakazky/actions";
@@ -529,7 +529,7 @@ function ZakazkaTile({
             {zakazka.montazTyp === "MONTAZ" ? "🔧 Montáž" : "🔩 Demontáž"}
           </span>
         )}
-        <p className="font-bold">{zakazka.montazTyp ? zakazka.popis || zakazka.mistoPlneni : zakazka.kod}</p>
+        <p className="font-bold">{zakazka.montazTyp ? zakazka.popis || zakazka.mistoPlneni : formatKod(zakazka.kod)}</p>
         <p className="text-xs text-text-muted">{zakazka.montazTyp ? zakazka.mistoPlneni : zakazka.popis || zakazka.mistoPlneni}</p>
       </button>
       <p className="mb-2 pr-8 text-[11px] text-text-muted">

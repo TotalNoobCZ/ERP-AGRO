@@ -15,7 +15,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { KONSTRUKCE_LABELS } from "@erp/core";
+import { KONSTRUKCE_LABELS , formatKod } from "@erp/core";
 import { COLOR_TOKENS, userColor } from "@erp/ui";
 import { formatDen } from "@/lib/format";
 import { usePersistentSet } from "@/lib/usePersistentSet";
@@ -333,7 +333,7 @@ export default function PlanBoard({
                     className="mb-2 flex w-full items-center gap-2 border-b border-line pb-1 text-left text-sm font-bold hover:text-link"
                   >
                     <span className="inline-block w-3">{zavreno ? "▸" : "▾"}</span>
-                    <span className="font-mono">{g.akceKod}</span>
+                    <span className="font-mono">{formatKod(g.akceKod)}</span>
                     <span className="font-normal text-text-muted">({g.projekty.length})</span>
                   </button>
                   {!zavreno && (
@@ -479,11 +479,11 @@ function DraggableTask({
       {...attributes}
       {...listeners}
       onClick={onClick}
-      className={`cursor-pointer rounded-md p-2 text-sm shadow-sm transition ${isDragging ? "opacity-40" : ""} ${editable && !ukol.completed ? "hover:brightness-110" : ""}`}
+      className={`cursor-pointer rounded-md p-2 text-sm shadow-sm transition ${isDragging ? "opacity-40" : ""} ${ukol.pozastaveno ? "opacity-55 grayscale" : ""} ${editable && !ukol.completed ? "hover:brightness-110" : ""}`}
       style={{ backgroundColor: ukol.completed ? COLOR_TOKENS.neutral : barva, color: "#16181b" }}
-      title={ukol.zakazkaPopis ? `${ukol.name} – ${ukol.zakazkaPopis}` : ukol.name}
+      title={`${ukol.zakazkaPopis ? `${ukol.name} – ${ukol.zakazkaPopis}` : ukol.name}${ukol.pozastaveno ? " · pozastaveno" : ""}`}
     >
-      <p className={`truncate font-semibold ${ukol.completed ? "line-through opacity-70" : ""}`}>{ukol.name}</p>
+      <p className={`truncate font-semibold ${ukol.completed ? "line-through opacity-70" : ""}`}>{formatKod(ukol.name)}</p>
       {ukol.zakazkaPopis && <p className="truncate text-xs opacity-80">{ukol.zakazkaPopis}</p>}
       {showProject && <p className="truncate text-xs opacity-75">{ukol.projectName}</p>}
       {ukol.startDate && ukol.endDate && !ukol.completed && (
@@ -602,10 +602,13 @@ function ProjectTile({
   }
 
   return (
-    <div className="rounded-xl p-3" style={{ backgroundColor: tileColor }}>
+    <div className={`rounded-xl p-3 ${projekt.pozastaveno ? "opacity-55 grayscale" : ""}`} style={{ backgroundColor: tileColor }}>
       <div className="mb-2 flex items-start justify-between gap-2">
         <button type="button" onClick={onOpen} className="min-w-0 text-left hover:underline">
-          <p className="truncate text-base font-bold text-black/85">{projekt.zakazkaKod}</p>
+          <p className="truncate text-base font-bold text-black/85">
+            {formatKod(projekt.zakazkaKod)}
+            {projekt.pozastaveno && <span className="ml-1.5 align-middle text-[10px] font-semibold uppercase text-black/60">⏸ pozastaveno</span>}
+          </p>
           <p className="truncate text-xs text-black/60">
             {owner ? owner.name : "bez zodpovědného"}
             {projekt.name !== projekt.zakazkaKod ? ` · ${projekt.name}` : ""}

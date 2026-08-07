@@ -1,5 +1,6 @@
 // Tiskový export plánu Konstrukce: projekty s úkoly + přehled podle člena.
 import { createClient } from "@/lib/supabase/server";
+import { formatKod } from "@erp/core";
 import { nactiKonstrukci } from "@/lib/konstrukce-query";
 import { PrintButton } from "@/components/PrintButton";
 import { formatDate, formatDen } from "@/lib/format";
@@ -36,7 +37,7 @@ export default async function KonstrukcePrintPage({
           {projekty.map((p) => (
             <div key={p.id} className="break-inside-avoid">
               <p className="text-sm font-semibold">
-                {p.name} <span className="font-normal text-gray-500">· {p.zakazkaKod}{p.ownerName ? ` · ${p.ownerName}` : ""}</span>
+                {p.name} <span className="font-normal text-gray-500">· {formatKod(p.zakazkaKod)}{p.ownerName ? ` · ${p.ownerName}` : ""}</span>
               </p>
               <ul className="ml-4 list-disc text-sm">
                 {ukolyProjektu(p.id).map((u) => (

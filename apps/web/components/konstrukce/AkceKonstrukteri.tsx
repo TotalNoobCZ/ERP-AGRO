@@ -4,6 +4,7 @@
 // Šéfkonstruktér/vedoucí/admin může akci označit „konstrukce není třeba" –
 // zmizí z modulu Konstrukce (sekce dole umožňuje vrácení).
 import { useState } from "react";
+import { formatKod } from "@erp/core";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { userColor } from "@erp/ui";
@@ -45,7 +46,7 @@ function Karta({ z, lide, onVyradit }: { z: AkceZak; lide: Osoba[]; onVyradit?: 
     <div className="rounded-xl border border-line bg-surface p-3">
       <div className="flex items-start justify-between gap-2">
         <Link href={`/zakazky/${z.id}`} className="block min-w-0 hover:underline">
-          <p className="font-bold">{z.kod}</p>
+          <p className="font-bold">{formatKod(z.kod)}</p>
           <p className="text-xs text-text-muted">{z.popis || z.mistoPlneni}</p>
         </Link>
         {onVyradit && (
@@ -158,7 +159,7 @@ export function AkceKonstrukteri({
             {vyrazene.map((z) => (
               <div key={z.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line p-2 text-sm">
                 <Link href={`/zakazky/${z.id}`} className="min-w-0 truncate hover:underline">
-                  <span className="font-bold">{z.kod}</span>{" "}
+                  <span className="font-bold">{formatKod(z.kod)}</span>{" "}
                   <span className="text-text-muted">· {z.popis || z.mistoPlneni}</span>
                 </Link>
                 {smiVyradit && (

@@ -1,5 +1,6 @@
 // Archiv akcí – port z Planovani/app/(app)/archiv/page.tsx.
 import Link from "next/link";
+import { formatKod } from "@erp/core";
 import { createClient } from "@/lib/supabase/server";
 import { parseDay, formatCz } from "@/lib/zakazky/dates";
 import { StavBadge } from "@/components/zakazky/common";
@@ -40,7 +41,7 @@ export default async function ArchivPage() {
         <div className="card divide-y divide-line">
           {zakazky.map((z) => (
             <Link key={z.id} href={`/zakazky/${z.id}`} className="flex items-center gap-4 px-4 py-3 hover:bg-accent">
-              <span className="font-mono text-sm font-semibold">{z.kod}</span>
+              <span className="font-mono text-sm font-semibold">{formatKod(z.kod)}</span>
               <span className="flex-1 truncate text-sm text-text-muted">{z.misto_plneni}</span>
               <span className="hidden text-xs text-text-muted sm:inline">{z.prirazeni?.[0]?.count ?? 0} os.</span>
               <span className="text-sm text-text-muted">

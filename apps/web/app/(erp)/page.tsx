@@ -11,7 +11,7 @@ import { StavBadge } from "@/components/zakazky/common";
 import { UvitaciNavod } from "@/components/UvitaciNavod";
 import { parseDay, formatCz } from "@/lib/zakazky/dates";
 import { poTerminu } from "@/lib/zakazky/orders";
-import { isAdmin, type Role, type Modul, type StavZakazky } from "@erp/core";
+import { isAdmin, type Role, type Modul, type StavZakazky , formatKod } from "@erp/core";
 
 const KARTY = [
   { href: "/poptavky/dashboard", label: "Poptávky", emoji: "📥", popis: "Poptávky, nabídky a zákazníci", adminOnly: false, vedeniOnly: false, modul: "poptavky" as Modul },
@@ -96,7 +96,7 @@ export default async function HomePage() {
             {upozorneni.neproplacene.map((z) => (
               <li key={z.id}>
                 <Link href={`/zakazky/${z.id}`} className="font-medium underline">
-                  <span className="font-mono">{z.kod}</span> · {z.popis}
+                  <span className="font-mono">{formatKod(z.kod)}</span> · {z.popis}
                 </Link>{" "}
                 <span className="text-rose-700">— ve fakturaci {z.dniVeFakturaci} dní</span>
               </li>
@@ -118,7 +118,7 @@ export default async function HomePage() {
             {upozorneni.chybejiciFakturace.map((z) => (
               <li key={z.id}>
                 <Link href={`/zakazky/${z.id}`} className="font-medium underline">
-                  <span className="font-mono">{z.kod}</span> · {z.popis}
+                  <span className="font-mono">{formatKod(z.kod)}</span> · {z.popis}
                 </Link>{" "}
                 <span className="text-amber-700">— {z.dniPoTerminu} dní po termínu</span>
               </li>
@@ -177,7 +177,7 @@ export default async function HomePage() {
                 <Link key={z.id} href={`/zakazky/${z.id}`} className="flex items-center gap-2 p-3 hover:bg-accent">
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium">
-                      <span className="font-mono">{z.kod}</span> · {z.popis || z.mistoPlneni}
+                      <span className="font-mono">{formatKod(z.kod)}</span> · {z.popis || z.mistoPlneni}
                     </span>
                     <span className="block text-xs text-text-muted">
                       {z.role} · do {formatCz(parseDay(z.konecAktualni))}

@@ -11,7 +11,7 @@ import {
   CommentForm,
   DeleteInquiryButton,
 } from "@/components/poptavky/status-changer";
-import { INQUIRY_STATUS_LABELS, type InquiryStatus } from "@erp/core";
+import { INQUIRY_STATUS_LABELS, type InquiryStatus , formatKod } from "@erp/core";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { formatPhone } from "@/lib/countries";
 
@@ -121,7 +121,7 @@ export default async function InquiryDetailPage({ params }: { params: Promise<{ 
             <span>
               Z této poptávky vznikla zakázka{" "}
               <Link href={`/zakazky/${zakazkaZPoptavky.id}`} className="font-mono font-semibold text-link hover:underline">
-                {zakazkaZPoptavky.kod}
+                {formatKod(zakazkaZPoptavky.kod)}
               </Link>
               .
             </span>

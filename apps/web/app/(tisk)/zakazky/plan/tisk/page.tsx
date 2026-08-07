@@ -4,7 +4,7 @@ import { PrintButton } from "@/components/PrintButton";
 import { parseDay, formatCz } from "@/lib/zakazky/dates";
 import { stavLabel } from "@/lib/zakazky/orders";
 import { formatDate } from "@/lib/format";
-import { MILNIK_LABELS, type StavZakazky, type TypMilniku } from "@erp/core";
+import { MILNIK_LABELS, type StavZakazky, type TypMilniku , formatKod } from "@erp/core";
 
 export const dynamic = "force-dynamic";
 
@@ -51,7 +51,7 @@ export default async function PlanPrintPage({
           return (
             <div key={z.id} className="break-inside-avoid border-b border-gray-200 pb-3">
               <p className="text-sm">
-                <span className="font-mono font-semibold">{z.kod}</span> · {z.misto_plneni} · P{z.priorita} ·{" "}
+                <span className="font-mono font-semibold">{formatKod(z.kod)}</span> · {z.misto_plneni} · P{z.priorita} ·{" "}
                 {formatCz(parseDay(z.zacatek))} – {formatCz(parseDay(z.konec_aktualni))} ·{" "}
                 {stavLabel({ konecAktualni: parseDay(z.konec_aktualni), stav: z.stav })}
               </p>

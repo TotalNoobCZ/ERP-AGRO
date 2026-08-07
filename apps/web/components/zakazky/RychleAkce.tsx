@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { MILNIK_TYPY_PREDVOLBA, MILNIK_LABELS, type TypMilniku } from "@erp/core";
+import { MILNIK_TYPY_PREDVOLBA, MILNIK_LABELS, type TypMilniku , formatKod } from "@erp/core";
 import { DateField } from "@/components/DateField";
 import { pridatMilnik, vytvoritPodzakazku, pridatPoznamku } from "@/app/(erp)/zakazky/actions";
 
@@ -113,7 +113,7 @@ export function RychleAkce({
             <div className="card w-full max-w-md p-6">
               {dialog === "milnik" && (
                 <>
-                  <h2 className="text-base font-semibold">◆ Přidat milník <span className="font-mono">{kod}</span></h2>
+                  <h2 className="text-base font-semibold">◆ Přidat milník <span className="font-mono">{formatKod(kod)}</span></h2>
                   <div className="mt-4 space-y-3">
                     {!jenVlastniMilniky && (
                       <div>
@@ -142,7 +142,7 @@ export function RychleAkce({
 
               {dialog === "podzakazka" && (
                 <>
-                  <h2 className="text-base font-semibold">＋ Zakázka k akci <span className="font-mono">{kod}</span></h2>
+                  <h2 className="text-base font-semibold">＋ Zakázka k akci <span className="font-mono">{formatKod(kod)}</span></h2>
                   <p className="mt-1 text-sm text-text-muted">Místo, termíny a prioritu zdědí od hlavní akce.</p>
                   <div className="mt-4 space-y-3">
                     <div>
@@ -159,7 +159,7 @@ export function RychleAkce({
 
               {dialog === "poznamka" && (
                 <>
-                  <h2 className="text-base font-semibold">💬 Poznámka k akci <span className="font-mono">{kod}</span></h2>
+                  <h2 className="text-base font-semibold">💬 Poznámka k akci <span className="font-mono">{formatKod(kod)}</span></h2>
                   {/* „komiksová bublina" s ocáskem */}
                   <div className="relative mt-4 rounded-2xl border border-line bg-accent/40 p-3">
                     <span className="absolute -bottom-2 left-6 h-4 w-4 rotate-45 border-b border-r border-line bg-accent/40" />

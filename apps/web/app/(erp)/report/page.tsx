@@ -1,6 +1,7 @@
 // Report pro vedení – měsíční provozní přehled napříč moduly (poptávky,
 // zakázky, fakturace, vytížení lidí, konstrukce). Jen admin a vedoucí.
 import Link from "next/link";
+import { formatKod } from "@erp/core";
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/supabase/server";
 import { nactiReport, smiVidetReport, vytizeniPodleOddeleni } from "@/lib/report";
@@ -101,7 +102,7 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
                 <ul className="space-y-1 text-text-muted">
                   {r.zakazky.prodlouzeni.slice(0, 6).map((p, i) => (
                     <li key={i}>
-                      <Link href={`/zakazky/${p.zakazkaId}`} className="font-mono text-link hover:underline">{p.kod}</Link>{" "}
+                      <Link href={`/zakazky/${p.zakazkaId}`} className="font-mono text-link hover:underline">{formatKod(p.kod)}</Link>{" "}
                       {formatCz(parseDay(p.staryKonec))} → {formatCz(parseDay(p.novyKonec))} — {p.duvod}
                     </li>
                   ))}
@@ -194,7 +195,7 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
               {r.zakazky.poTerminu.map((z) => (
                 <li key={z.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
                   <Link href={`/zakazky/${z.id}`} className="min-w-0 truncate hover:underline">
-                    <span className="font-mono font-medium">{z.kod}</span> · {z.misto}
+                    <span className="font-mono font-medium">{formatKod(z.kod)}</span> · {z.misto}
                   </Link>
                   <span className="text-red-600 dark:text-red-400">{z.dni} dní (do {formatCz(parseDay(z.konec))})</span>
                 </li>
@@ -215,7 +216,7 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
               {r.fakturace.polozky.map((f) => (
                 <li key={f.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
                   <Link href={`/zakazky/${f.id}`} className="min-w-0 truncate hover:underline">
-                    <span className="font-mono font-medium">{f.kod}</span> · {f.popis}
+                    <span className="font-mono font-medium">{formatKod(f.kod)}</span> · {f.popis}
                   </Link>
                   <span className={f.dni != null && f.dni > 30 ? "text-red-600 dark:text-red-400" : "text-text-muted"}>
                     {f.dni != null ? `${f.dni} dní ve fakturaci` : "bez data fakturace"}

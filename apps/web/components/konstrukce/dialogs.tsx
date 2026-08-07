@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { recalcDates, KONSTRUKCE_LABELS } from "@erp/core";
+import { recalcDates, KONSTRUKCE_LABELS , formatKod } from "@erp/core";
 import { userColor } from "@erp/ui";
 import { formatDen, formatDateTime } from "@/lib/format";
 import { DateField } from "@/components/DateField";
@@ -385,7 +385,7 @@ export function ProjectDialog({
         <p className="-mt-2 text-xs text-text-muted">
           Zakázka:{" "}
           <Link href={`/zakazky/${projekt.zakazkaId}`} className="font-mono text-link hover:underline">
-            {projekt.zakazkaKod}
+            {formatKod(projekt.zakazkaKod)}
           </Link>
         </p>
 
