@@ -673,6 +673,43 @@ export async function zmenitStav(
     uzivatelId: u.id, puvodni: { stav: z.stav }, nova: { stav },
   });
 
+  // Pozastavené zakázky k akci se při odchodu akce do fakturace / uzavření
+  // VYJMOU z akce a povýší na samostatnou hlavní akci – dokončí se později
+  // samostatně (zůstávají pozastavené, jejich lidé se neuvolňují).
+  if (!z.parent_id && (stav === "FAKTURACE" || stav === "PROPLACENO" || stav === "ARCHIV")) {
+    const { data: pozastavene } = await supabase
+      .from("zakazky")
+      .select("id, kod")
+      .eq("parent_id", zakazkaId)
+      .eq("stav", "POZASTAVENO")
+      .is("deleted_at", null);
+    for (const dite of pozastavene ?? []) {
+      await supabase.from("zakazky").update({ parent_id: null }).eq("id", dite.id);
+      // Konstrukce: podúkoly zakázky přesunout z projektu původní akce do
+      // vlastního projektu povýšené akce (ať ji Konstrukce dál vidí).
+      const { data: podukoly } = await supabase
+        .from("tasks").select("id").eq("zakazka_id", dite.id).eq("status", "active");
+      if (podukoly && podukoly.length > 0) {
+        const { data: proj } = await supabase
+          .from("projects")
+          .insert({ zakazka_id: dite.id, name: dite.kod, owner_id: null })
+          .select("id")
+          .single();
+        if (proj) {
+          await supabase.from("tasks").update({ project_id: proj.id }).in("id", podukoly.map((t) => t.id));
+        }
+      }
+      await zapisAudit(supabase, {
+        entita: "zakazka", entitaId: dite.id, typZmeny: "UPRAVA", uzivatelId: u.id,
+        nova: { popis: `Pozastavená zakázka vyjmuta z akce (ta přešla do stavu ${stav}) a povýšena na samostatnou akci` },
+      });
+      await zapisAudit(supabase, {
+        entita: "zakazka", entitaId: zakazkaId, typZmeny: "UPRAVA", uzivatelId: u.id,
+        nova: { popis: `Pozastavená zakázka ${dite.kod} vyjmuta z akce a povýšena na samostatnou akci` },
+      });
+    }
+  }
+
   // Uvolnění dělníků při přechodu do fakturace: akce je hotová (občas dřív).
   // Pracovníkům se přiřazení UKONČÍ k dnešnímu dni (nemažou se – zůstávají
   // v evidenci, že na akci pracovali, dají se zpětně dohledat), ale zároveň
