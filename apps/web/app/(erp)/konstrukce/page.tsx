@@ -16,6 +16,7 @@ export default async function KonstrukcePage() {
       .select("id, kod, misto_plneni")
       .is("deleted_at", null)
       .is("montaz_typ", null)
+      .is("konstrukce_netreba_at", null) // vyřazené akce se v konstrukci nenabízejí
       .neq("stav", "ARCHIV")
       .order("kod", { ascending: true }),
   ]);

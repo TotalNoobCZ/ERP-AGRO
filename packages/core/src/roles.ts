@@ -92,6 +92,17 @@ export function muzeOdebratKonstruktera(p: {
   return p.role === "admin" || !!p.sefkonstrukter;
 }
 
+/**
+ * Smí označit akci „konstrukce není třeba" (a vrátit ji zpět)?
+ * Šéfkonstruktér nebo výše postavená osoba (vedoucí, admin).
+ */
+export function muzeVyraditZKonstrukce(p: {
+  role: Role | string;
+  sefkonstrukter?: boolean | null;
+}): boolean {
+  return p.role === "admin" || p.role === "vedouci" || !!p.sefkonstrukter;
+}
+
 export interface Profile {
   id: string;
   authUserId: string | null;

@@ -7,7 +7,7 @@
 // ----------------------------------------------------------------------------
 import { revalidatePath } from "next/cache";
 import { createClient, getCurrentProfile } from "@/lib/supabase/server";
-import { canWrite, muzeOdebratKonstruktera, rangesOverlap, workdaysBetween, ABSENCE_LABELS, type AbsenceType, type Role } from "@erp/core";
+import { canWrite, muzeOdebratKonstruktera, muzeVyraditZKonstrukce, rangesOverlap, workdaysBetween, ABSENCE_LABELS, type AbsenceType, type Role } from "@erp/core";
 
 type Db = Awaited<ReturnType<typeof createClient>>;
 
@@ -597,5 +597,69 @@ export async function smazatArchiv(): Promise<KVysledek> {
   const { error: e2 } = await supabase.from("projects").delete().eq("status", "archived");
   if (e2) return { ok: false, chyba: "Smazání archivu projektů se nezdařilo." };
   refreshKonstrukce();
+  return { ok: true };
+}
+
+// ---- „Konstrukce není třeba" ------------------------------------------------
+
+async function vyrazovac() {
+  const profile = await getCurrentProfile();
+  if (!profile) return null;
+  // Vedoucí nemá canWrite, ale vyřazení akce z konstrukce mu přísluší.
+  if (!muzeVyraditZKonstrukce({ role: profile.role, sefkonstrukter: profile.sefkonstrukter })) return null;
+  return profile;
+}
+
+/**
+ * Označí akci „konstrukce není třeba" – zmizí z celého modulu Konstrukce
+ * (přehled, výběr zakázek pro projekty), v ostatních modulech zůstává.
+ * Smí šéfkonstruktér, vedoucí nebo admin. Blokováno, když akce (nebo její
+ * zakázky k akci) má aktivní konstrukční projekt.
+ */
+export async function oznacitKonstrukceNetreba(zakazkaId: string): Promise<KVysledek> {
+  const profile = await vyrazovac();
+  if (!profile) return { ok: false, chyba: "Označit akci smí jen šéfkonstruktér, vedoucí nebo administrátor." };
+  const supabase = await createClient();
+
+  const { data: rodina } = await supabase
+    .from("zakazky")
+    .select("id")
+    .or(`id.eq.${zakazkaId},parent_id.eq.${zakazkaId}`)
+    .is("deleted_at", null);
+  const ids = (rodina ?? []).map((r) => r.id);
+  if (!ids.includes(zakazkaId)) return { ok: false, chyba: "Akce nenalezena." };
+
+  const { data: projekty } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("status", "active")
+    .in("zakazka_id", ids)
+    .limit(1);
+  if (projekty && projekty.length > 0) {
+    return { ok: false, chyba: "Akce má aktivní konstrukční projekt – nejdřív ho archivuj." };
+  }
+
+  const { error } = await supabase
+    .from("zakazky")
+    .update({ konstrukce_netreba_at: new Date().toISOString(), konstrukce_netreba_by: profile.id })
+    .eq("id", zakazkaId);
+  if (error) return { ok: false, chyba: "Uložení se nezdařilo." };
+  refreshKonstrukce();
+  revalidatePath("/konstrukce/prehled");
+  return { ok: true };
+}
+
+/** Vrátí akci zpět do konstrukce (zruší označení „není třeba"). */
+export async function vratitDoKonstrukce(zakazkaId: string): Promise<KVysledek> {
+  const profile = await vyrazovac();
+  if (!profile) return { ok: false, chyba: "Vrátit akci smí jen šéfkonstruktér, vedoucí nebo administrátor." };
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("zakazky")
+    .update({ konstrukce_netreba_at: null, konstrukce_netreba_by: null })
+    .eq("id", zakazkaId);
+  if (error) return { ok: false, chyba: "Uložení se nezdařilo." };
+  refreshKonstrukce();
+  revalidatePath("/konstrukce/prehled");
   return { ok: true };
 }
