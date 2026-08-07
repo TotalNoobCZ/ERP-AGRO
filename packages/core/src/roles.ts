@@ -119,3 +119,14 @@ export interface Profile {
   tileOrder: number | null;
   active: boolean;
 }
+
+/** Příjmení = poslední slovo celého jména („Radek Maršík" → „Maršík"). */
+export function prijmeni(name: string): string {
+  const casti = name.trim().split(/\s+/);
+  return casti[casti.length - 1] ?? name;
+}
+
+/** Řazení jmen podle příjmení (české řazení), při shodě podle celého jména. */
+export function porovnatDlePrijmeni(a: string, b: string): number {
+  return prijmeni(a).localeCompare(prijmeni(b), "cs") || a.localeCompare(b, "cs");
+}

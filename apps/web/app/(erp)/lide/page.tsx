@@ -5,7 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { guardModul } from "@/lib/pristup";
 import { userColor } from "@erp/ui";
-import { ODDELENI, ODDELENI_LABELS, KAPITOLY, KAPITOLA_LABELS, ODDELENI_KAPITOLA, type Oddeleni } from "@erp/core";
+import { ODDELENI, ODDELENI_LABELS, KAPITOLY, KAPITOLA_LABELS, ODDELENI_KAPITOLA, porovnatDlePrijmeni, type Oddeleni } from "@erp/core";
 import { LideHledani } from "@/components/lide/LideHledani";
 
 export const dynamic = "force-dynamic";
@@ -30,9 +30,10 @@ export default async function LidePage({ searchParams }: { searchParams: Promise
     .from("profiles")
     .select("id, name, oddeleni, pozice, color_index, color_hex, active")
     .order("name");
-  const vsichni = ((data ?? []) as Zamestnanec[]).filter(
-    (p) => !q || p.name.toLowerCase().includes(q) || (p.pozice ?? "").toLowerCase().includes(q),
-  );
+  // Řadíme podle příjmení (poslední slovo jména), ne podle křestního.
+  const vsichni = ((data ?? []) as Zamestnanec[])
+    .filter((p) => !q || p.name.toLowerCase().includes(q) || (p.pozice ?? "").toLowerCase().includes(q))
+    .sort((a, b) => porovnatDlePrijmeni(a.name, b.name));
   const aktivni = vsichni.filter((p) => p.active);
   const neaktivni = vsichni.filter((p) => !p.active);
 
