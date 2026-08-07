@@ -2,7 +2,7 @@
 //  Sdílená dotazová logika seznamu poptávek (tabulka + tiskový export).
 //  Přepis WHERE/ORDER BY logiky z Popt-vky/app/poptavky/page.tsx na supabase-js.
 // ----------------------------------------------------------------------------
-import { INQUIRY_STATUSES, INQUIRY_CLOSED_STATUSES, INQUIRY_OPEN_DEADLINE_STATUSES, type InquiryStatus } from "@erp/core";
+import { INQUIRY_STATUSES, INQUIRY_CLOSED_STATUSES, INQUIRY_OPEN_DEADLINE_STATUSES, type InquiryStatus , porovnatDlePrijmeni } from "@erp/core";
 import type { createClient } from "@/lib/supabase/server";
 
 export type InquiryListParams = {
@@ -226,12 +226,14 @@ export async function queryPoptavkyBoard(
       .order("number", { ascending: false }),
   ]);
 
-  const osoby: BoardOsoba[] = (osobyRes.data ?? []).map((o) => ({
-    id: o.id,
-    name: o.name,
-    colorIndex: o.color_index,
-    colorHex: o.color_hex,
-  }));
+  const osoby: BoardOsoba[] = (osobyRes.data ?? [])
+    .map((o) => ({
+      id: o.id,
+      name: o.name,
+      colorIndex: o.color_index,
+      colorHex: o.color_hex,
+    }))
+    .sort((a, b) => porovnatDlePrijmeni(a.name, b.name));
 
   const poptavky: BoardPoptavka[] = (poptRes.data ?? []).map((p) => {
     const cust = p.customer as { name: string } | { name: string }[] | null;

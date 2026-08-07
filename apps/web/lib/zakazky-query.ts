@@ -2,7 +2,7 @@
 import type { createClient } from "@/lib/supabase/server";
 import { parseDay } from "@/lib/zakazky/dates";
 import { poTerminu } from "@/lib/zakazky/orders";
-import { ZAKAZKA_STAVY, type StavZakazky } from "@erp/core";
+import { ZAKAZKA_STAVY, type StavZakazky , porovnatDlePrijmeni } from "@erp/core";
 
 export type ZakazkaListParams = { q?: string; stav?: string; stavy?: string; priorita?: string };
 
@@ -139,14 +139,16 @@ export async function queryZakazkyBoard(
       .order("konec_aktualni", { ascending: true }),
   ]);
 
-  const osoby: BoardOsobaZ[] = (osobyRes.data ?? []).map((o) => ({
-    id: o.id,
-    name: o.name,
-    oddeleni: o.oddeleni,
-    role: o.role,
-    colorIndex: o.color_index,
-    colorHex: o.color_hex,
-  }));
+  const osoby: BoardOsobaZ[] = (osobyRes.data ?? [])
+    .map((o) => ({
+      id: o.id,
+      name: o.name,
+      oddeleni: o.oddeleni,
+      role: o.role,
+      colorIndex: o.color_index,
+      colorHex: o.color_hex,
+    }))
+    .sort((a, b) => porovnatDlePrijmeni(a.name, b.name));
 
   type RawZ = {
     id: string;
