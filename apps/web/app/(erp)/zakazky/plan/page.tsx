@@ -38,7 +38,8 @@ function barvaProAkci(id: string): string {
 function barvaZakazky(z: { konecAktualni: Date; stav: StavZakazky }): string {
   if (poTerminu(z)) return BARVA.potermin;
   if (z.stav === "FAKTURACE" || z.stav === "PROPLACENO") return BARVA.dokonceno;
-  if (z.stav === "POZASTAVENO") return BARVA.pozastaveno;
+  // Pozastavená akce je v plánu vybledlá (poloprůhledný pruh).
+  if (z.stav === "POZASTAVENO") return `${BARVA.pozastaveno}8c`;
   return BARVA.aktivni;
 }
 
