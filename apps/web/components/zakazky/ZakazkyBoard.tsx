@@ -24,6 +24,7 @@ import { pridatPracovnika, odebratPracovnika, nastavitOdpovednouOsobu, zjistitKo
 import { KolizeDialog } from "./KolizeDialog";
 import type { OsobaLite } from "./common";
 import { PauzaTlacitko } from "@/components/zakazky/PauzaTlacitko";
+import { RychleAkce } from "@/components/zakazky/RychleAkce";
 import type { BoardOsobaZ, BoardZakazka } from "@/lib/zakazky-query";
 
 /** Odpovědná osoba zakázky = Projekťák (oddělení) nebo role Vedoucí. */
@@ -517,9 +518,18 @@ function ZakazkaTile({
           {formatDen(zakazka.zacatek)} – {formatDen(zakazka.konecAktualni)}
           {zakazka.stav === "POZASTAVENO" && <span className="ml-1 font-semibold text-amber-600">· pozastaveno</span>}
         </p>
-        {!jePodzakazka && (
-          <PauzaTlacitko zakazkaId={zakazka.id} kod={zakazka.kod} stav={zakazka.stav} editable={editable} />
-        )}
+        <span className="inline-flex items-center gap-1">
+          <RychleAkce
+            zakazkaId={zakazka.id}
+            kod={zakazka.montazTyp ? zakazka.popis || zakazka.mistoPlneni : zakazka.kod}
+            editable={editable}
+            jePodzakazka={jePodzakazka}
+            jenVlastniMilniky={!!zakazka.montazTyp}
+          />
+          {!jePodzakazka && (
+            <PauzaTlacitko zakazkaId={zakazka.id} kod={zakazka.kod} stav={zakazka.stav} editable={editable} />
+          )}
+        </span>
       </div>
 
       {/* Odpovědná osoba – u akce editovatelná (drag), u podzakázky jen zděděná. */}
