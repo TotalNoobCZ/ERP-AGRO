@@ -274,9 +274,9 @@ export default function PlanBoard({
           </div>
         )}
       </div>
-      <div className="flex gap-4">
+      <div className="flex flex-col gap-4 md:flex-row">
         {/* Levá 1/3 – dlaždice členů */}
-        <div className="w-1/3 min-w-[260px] space-y-3">
+        <div className="w-full space-y-3 md:w-1/3 md:min-w-[260px]">
           {viditelniClenove.map((c) => (
             <MemberTile
               key={c.id}
