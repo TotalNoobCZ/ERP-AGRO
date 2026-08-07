@@ -66,3 +66,12 @@ export const MONTAZ_LABELS: Record<MontazTyp, string> = {
 /** Priorita zakázky 1–5 (1 = nejvyšší). */
 export const PRIORITY_MIN = 1;
 export const PRIORITY_MAX = 5;
+
+/**
+ * Kód zakázky pro zobrazení: šestimístné číslo se dělí mezerou po trojici
+ * („826193" → „826 193"). Jiné tvary se vrací beze změny. Jen zobrazení –
+ * ukládá se dál bez mezery.
+ */
+export function formatKod(kod: string): string {
+  return /^\d{6}$/.test(kod) ? `${kod.slice(0, 3)} ${kod.slice(3)}` : kod;
+}

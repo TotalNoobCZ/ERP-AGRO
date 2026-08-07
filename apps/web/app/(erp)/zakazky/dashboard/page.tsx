@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { StavBadge } from "@/components/zakazky/common";
 import { parseDay, formatCz, today, formatDay } from "@/lib/zakazky/dates";
 import { poTerminu } from "@/lib/zakazky/orders";
-import { MILNIK_LABELS, ZAKAZKA_STAV_LABELS, type StavZakazky, type TypMilniku } from "@erp/core";
+import { MILNIK_LABELS, ZAKAZKA_STAV_LABELS, type StavZakazky, type TypMilniku , formatKod } from "@erp/core";
 
 export const dynamic = "force-dynamic";
 
@@ -123,7 +123,7 @@ function RadekZakazky({ z }: { z: { id: string; kod: string; misto_plneni: strin
     <Link href={`/zakazky/${z.id}`} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line p-3 hover:bg-accent">
       <div className="min-w-0">
         <p className="truncate font-medium">
-          <span className="font-mono">{z.kod}</span> · {z.misto_plneni}
+          <span className="font-mono">{formatKod(z.kod)}</span> · {z.misto_plneni}
           {jePodzakazka && z.popis && <span className="font-normal text-text-muted"> — {z.popis}</span>}
         </p>
         <p className="text-sm text-text-muted">{ZAKAZKA_STAV_LABELS[z.stav]}</p>

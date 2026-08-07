@@ -8,7 +8,7 @@ import { okno, baleniDoRad } from "@/lib/zakazky/timeline";
 import { poTerminu } from "@/lib/zakazky/orders";
 import Timeline, { type TRadek, type TBar } from "@/components/zakazky/Timeline";
 import { queryDilnaZakazky, seskupitDoAkci, type DilnaZakazka } from "@/lib/dilna-query";
-import { DILNA_FAZE, DILNA_FAZE_LABELS, DILNA_FAZE_BARVY, ODDELENI_LABELS, jeDilna, type Oddeleni, type StavZakazky } from "@erp/core";
+import { DILNA_FAZE, DILNA_FAZE_LABELS, DILNA_FAZE_BARVY, ODDELENI_LABELS, jeDilna, type Oddeleni, type StavZakazky , formatKod } from "@erp/core";
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +53,7 @@ function fazoveBary(z: DilnaZakazka): TBar[] {
       lane,
       barva: DILNA_FAZE_BARVY[t],
       label: DILNA_FAZE_LABELS[t],
-      titulek: `${z.kod} · ${DILNA_FAZE_LABELS[t]}: ${formatCz(od)} – ${formatCz(doo)}`,
+      titulek: `${formatKod(z.kod)} · ${DILNA_FAZE_LABELS[t]}: ${formatCz(od)} – ${formatCz(doo)}`,
     });
     lane++;
   }
@@ -73,7 +73,7 @@ function naRadek(z: DilnaZakazka): TRadek {
     lane: 0,
     barva: BARVA_TERMIN,
     label: z.kod,
-    titulek: `${z.kod} – termín: ${formatCz(zac)} – ${formatCz(kon)}`,
+    titulek: `${formatKod(z.kod)} – termín: ${formatCz(zac)} – ${formatCz(kon)}`,
   };
   const faze = fazoveBary(z).map((b) => ({ ...b, lane: b.lane + 1 }));
   const bary = [termin, ...faze];
@@ -111,7 +111,7 @@ export default async function DilnaGanttPage({
       // Pruh hlavní akce = její vlastní (hlavní, pevně daný) termín. Podzakázky
       // jsou rozbalitelné podřádky, každá se svým vlastním termínem.
       ...naRadek(akce),
-      podradky: deti.map((d) => ({ ...naRadek(d), label: `↳ ${d.kod}` })),
+      podradky: deti.map((d) => ({ ...naRadek(d), label: `↳ ${formatKod(d.kod)}` })),
     }));
   } else {
     // Podle zaměstnance: přiřazení lidí z dílen na zakázky v okně.
@@ -163,7 +163,7 @@ export default async function DilnaGanttPage({
               : barvaProAkci(x.p.zakazka.id),
             label: x.p.zakazka.kod,
             href: `/dilna/${x.p.zakazka.id}`,
-            titulek: `${x.p.zakazka.kod} — ${x.p.zakazka.misto_plneni}`,
+            titulek: `${formatKod(x.p.zakazka.kod)} — ${x.p.zakazka.misto_plneni}`,
           })),
           znacky: [],
         };

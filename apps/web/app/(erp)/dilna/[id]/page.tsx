@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import { createClient, getCurrentProfile } from "@/lib/supabase/server";
 import { DilnaZakazkaEditor } from "@/components/dilna/DilnaZakazkaEditor";
 import { formatDen } from "@/lib/format";
-import { canWrite, DILNA_FAZE, type DilnaFaze, type Role } from "@erp/core";
+import { canWrite, DILNA_FAZE, type DilnaFaze, type Role , formatKod } from "@erp/core";
 import type { DilnaZakazka } from "@/lib/dilna-query";
 
 export const dynamic = "force-dynamic";
@@ -99,7 +99,7 @@ export default async function DilnaDetail({ params }: { params: Promise<{ id: st
             <Link href="/dilna" className="text-sm text-text-muted hover:text-text">← Dílna</Link>
           </div>
           <h1 className="mt-1 text-2xl font-bold">
-            <span className="font-mono">{z.kod}</span>{" "}
+            <span className="font-mono">{formatKod(z.kod)}</span>{" "}
             <span className="text-base font-normal text-text-muted">{z.popis || z.misto_plneni}</span>
           </h1>
           <p className="text-sm text-text-muted">

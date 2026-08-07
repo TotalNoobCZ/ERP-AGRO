@@ -19,6 +19,8 @@ export type Ukol = {
   name: string;
   /** popis zakázky k akci, kterou podúkol reprezentuje (tasks.zakazka_id) */
   zakazkaPopis: string | null;
+  /** zakázka (nebo akce projektu) je pozastavená → úkol se zobrazuje zašedle */
+  pozastaveno: boolean;
   assigneeId: string | null;
   startDate: string | null;
   endDate: string | null;
@@ -36,6 +38,8 @@ export type Projekt = {
   zakazkaKod: string;
   akceId: string;
   akceKod: string;
+  /** zakázka projektu je pozastavená → projekt se zobrazuje zašedle */
+  pozastaveno: boolean;
   ownerId: string | null;
   ownerName: string | null;
   notes: Poznamka[];

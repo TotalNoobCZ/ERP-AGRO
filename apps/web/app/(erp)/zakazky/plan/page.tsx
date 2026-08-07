@@ -7,7 +7,7 @@ import { poTerminu } from "@/lib/zakazky/orders";
 import { okno, baleniDoRad } from "@/lib/zakazky/timeline";
 import Timeline, { type TRadek } from "@/components/zakazky/Timeline";
 import PlanGantt from "@/components/zakazky/PlanGantt";
-import { canWrite, MILNIK_LABELS, ODDELENI_LABELS, ODDELENI_KAPITOLA, type Oddeleni, type Role, type StavZakazky, type TypMilniku } from "@erp/core";
+import { canWrite, MILNIK_LABELS, ODDELENI_LABELS, ODDELENI_KAPITOLA, type Oddeleni, type Role, type StavZakazky, type TypMilniku , formatKod } from "@erp/core";
 import { userColor } from "@erp/ui";
 
 export const dynamic = "force-dynamic";
@@ -137,7 +137,7 @@ export default async function PlanPage({
       }
 
       const montazPredpona = z.montaz_typ === "MONTAZ" ? "🔧 Montáž: " : z.montaz_typ === "DEMONTAZ" ? "🔩 Demontáž: " : "";
-      const nazev = z.montaz_typ ? z.popis || (z.montaz_typ === "MONTAZ" ? "Montáž" : "Demontáž") : z.kod;
+      const nazev = z.montaz_typ ? z.popis || (z.montaz_typ === "MONTAZ" ? "Montáž" : "Demontáž") : formatKod(z.kod);
       return {
         id: z.id,
         label: `${montazPredpona}${nazev}`,
@@ -246,9 +246,9 @@ export default async function PlanPage({
             barva: poTerminu({ konecAktualni: parseDay(x.p.zakazka.konec_aktualni), stav: x.p.zakazka.stav })
               ? BARVA.potermin
               : barvaProAkci(x.p.zakazka.id),
-            label: x.p.zakazka.kod,
+            label: formatKod(x.p.zakazka.kod),
             href: `/zakazky/${x.p.zakazka.id}`,
-            titulek: `${x.p.zakazka.kod} — ${x.p.zakazka.misto_plneni}`,
+            titulek: `${formatKod(x.p.zakazka.kod)} — ${x.p.zakazka.misto_plneni}`,
           })),
           znacky: [],
         };

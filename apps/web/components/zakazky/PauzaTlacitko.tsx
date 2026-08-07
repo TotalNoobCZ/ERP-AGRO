@@ -6,7 +6,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { ODDELENI_LABELS, type Oddeleni } from "@erp/core";
+import { ODDELENI_LABELS, type Oddeleni , formatKod } from "@erp/core";
 import { DateField } from "@/components/DateField";
 import {
   pauzaAkce,
@@ -130,7 +130,7 @@ export function PauzaTlacitko({
       {pauzaOpen && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={stopo}>
           <div className="card w-full max-w-md p-6">
-            <h2 className="text-base font-semibold">⏸ Pozastavit {jePodzakazka ? "zakázku k akci" : "akci"} <span className="font-mono">{kod}</span></h2>
+            <h2 className="text-base font-semibold">⏸ Pozastavit {jePodzakazka ? "zakázku k akci" : "akci"} <span className="font-mono">{formatKod(kod)}</span></h2>
             <p className="mt-1 text-sm text-text-muted">
               {jePodzakazka
                 ? "Pozastaví se jen tato zakázka k akci (hlavní akce a ostatní zakázky běží dál). Její lidé zůstanou napsaní, ale uvolní se pro jiné akce."
@@ -163,7 +163,7 @@ export function PauzaTlacitko({
       {obnovaOpen && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={stopo}>
           <div className="card max-h-[85vh] w-full max-w-lg overflow-y-auto p-6">
-            <h2 className="text-base font-semibold">▶ Obnovit {jePodzakazka ? "zakázku k akci" : "akci"} <span className="font-mono">{kod}</span></h2>
+            <h2 className="text-base font-semibold">▶ Obnovit {jePodzakazka ? "zakázku k akci" : "akci"} <span className="font-mono">{formatKod(kod)}</span></h2>
             <p className="mt-1 text-sm text-text-muted">
               {jePodzakazka
                 ? "Obnoví se tato zakázka k akci; konec se posune o zbývající dny od data obnovení."
@@ -184,7 +184,7 @@ export function PauzaTlacitko({
                   {konflikty.map((k) => (
                     <div key={k.prirazeniId} className="rounded-md border border-line bg-surface p-2 text-sm">
                       <p className="font-medium">
-                        {k.jmeno} <span className="font-normal text-text-muted">· {k.zakazkaKod} · {formatCz(parseDay(k.od))} – {formatCz(parseDay(k.do))}</span>
+                        {k.jmeno} <span className="font-normal text-text-muted">· {formatKod(k.zakazkaKod)} · {formatCz(parseDay(k.od))} – {formatCz(parseDay(k.do))}</span>
                       </p>
                       <p className="text-xs text-text-muted">{k.konflikt}</p>
                       <select

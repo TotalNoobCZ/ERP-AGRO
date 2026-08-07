@@ -5,7 +5,7 @@ import { createClient, getCurrentProfile } from "@/lib/supabase/server";
 import { parseDay, formatCz } from "@/lib/zakazky/dates";
 import { StavBadge } from "@/components/zakazky/common";
 import { FakturaceAkce } from "@/components/zakazky/FakturaceAkce";
-import { canWrite, type Role, type StavZakazky } from "@erp/core";
+import { canWrite, type Role, type StavZakazky , formatKod } from "@erp/core";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +25,7 @@ function AkceRadek({ z, editable }: { z: Row; editable: boolean }) {
     <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
       <div className="min-w-0">
         <Link href={`/zakazky/${z.id}`} className="font-mono font-semibold text-link hover:underline">
-          {z.kod}
+          {formatKod(z.kod)}
         </Link>
         {(z.popis || z.misto_plneni) && (
           <span className="ml-2 text-sm text-text-muted">{z.popis || z.misto_plneni}</span>

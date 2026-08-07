@@ -8,7 +8,7 @@ import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { celkovaSirka, offsetPx, sirkaPx, mesicniZnacky, PX_ZA_DEN, okno } from "@/lib/zakazky/timeline";
 import { parseDay, formatDay, formatCz, today, addDays } from "@/lib/zakazky/dates";
-import { ABSENCE_LABELS, type AbsenceType } from "@erp/core";
+import { ABSENCE_LABELS, type AbsenceType , formatKod } from "@erp/core";
 import { userColor } from "@erp/ui";
 import { posunoutUkol, type Kolize } from "@/app/(erp)/konstrukce/actions";
 import { KolizeDialog } from "./dialogs";
@@ -253,8 +253,8 @@ export default function Gantt({
                   }
                   return (
                     <div key={u.id} className="flex border-b border-line">
-                      <div style={{ width: LABEL_W }} className="sticky left-0 z-10 shrink-0 truncate bg-surface px-3 py-1.5 pl-8 text-xs text-text-muted" title={u.zakazkaPopis ? `${u.name} – ${u.zakazkaPopis}` : u.name}>
-                        {u.name}
+                      <div style={{ width: LABEL_W }} className={`sticky left-0 z-10 shrink-0 truncate bg-surface px-3 py-1.5 pl-8 text-xs text-text-muted ${u.pozastaveno ? "opacity-55" : ""}`} title={`${u.zakazkaPopis ? `${u.name} – ${u.zakazkaPopis}` : u.name}${u.pozastaveno ? " · pozastaveno" : ""}`}>
+                        {formatKod(u.name)}
                         {u.zakazkaPopis && <span className="opacity-70"> – {u.zakazkaPopis}</span>}
                       </div>
                       <div className="relative" style={{ width: sirka, height: LANE_H }}>
@@ -264,7 +264,7 @@ export default function Gantt({
                           style={{ left, width: Math.max(PX_ZA_DEN, width) }}
                         >
                           <div
-                            className={`relative mx-px flex h-[20px] items-center gap-1 overflow-hidden whitespace-nowrap rounded border border-black/20 px-2 text-[11px] text-black/85 shadow-[0_0_0_1px_rgba(0,0,0,0.2)] ${editable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}`}
+                            className={`relative mx-px flex h-[20px] items-center gap-1 overflow-hidden whitespace-nowrap rounded border border-black/20 px-2 text-[11px] text-black/85 shadow-[0_0_0_1px_rgba(0,0,0,0.2)] ${u.pozastaveno ? "opacity-50 grayscale" : ""} ${editable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}`}
                             style={{ backgroundColor: barva }}
                             title={`${u.name}${u.zakazkaPopis ? ` – ${u.zakazkaPopis}` : ""} — ${u.projectName} (${formatCz(od)} – ${formatCz(doo)}${u.durationDays ? `, ${u.durationDays} prac. dní` : ""})`}
                             onPointerDown={editable ? (e) => startDrag(e, u.id, "move") : undefined}
@@ -279,7 +279,7 @@ export default function Gantt({
                                 title="Táhnutím změníš začátek"
                               />
                             )}
-                            <strong className="pl-1">{u.name}</strong>
+                            <strong className="pl-1">{formatKod(u.name)}</strong>
                             {u.zakazkaPopis && <span className="opacity-80">– {u.zakazkaPopis}</span>}
                             <span className="opacity-70">· {u.projectName}</span>
                             {editable && (

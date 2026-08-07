@@ -3,6 +3,7 @@
 // (přetažení pracovníka na akci). Postup řešení: stávající akce se člověku
 // rozdělí kolem nového období a na překryv se dosadí náhradník.
 import { useState } from "react";
+import { formatKod } from "@erp/core";
 import { vyresitKolizi, type KolizeInfo } from "@/app/(erp)/zakazky/actions";
 import { type OsobaLite } from "./common";
 import { formatDen } from "@/lib/format";
@@ -42,10 +43,10 @@ export function KolizeDialog({
             <div key={k.prirazeniId} className="rounded-md border border-line p-3">
               <p className="text-sm">
                 <strong>{k.osobaJmeno}</strong> už je v období {formatDen(k.od)} – {formatDen(k.do)} na akci{" "}
-                <span className="font-mono">{k.zakazkaKod}</span>.
+                <span className="font-mono">{formatKod(k.zakazkaKod)}</span>.
               </p>
               <p className="mt-1 text-sm text-text-muted">
-                Na akci <span className="font-mono">{k.zakazkaKod}</span>{" "}
+                Na akci <span className="font-mono">{formatKod(k.zakazkaKod)}</span>{" "}
                 {k.predOd || k.poOd ? (
                   <>
                     osobě zůstane{" "}
@@ -61,7 +62,7 @@ export function KolizeDialog({
 
               {vyreseno[k.prirazeniId] ? (
                 <p className="mt-2 text-sm font-medium text-green-500">
-                  ✓ Náhradník dosazen na akci {k.zakazkaKod}.
+                  ✓ Náhradník dosazen na akci {formatKod(k.zakazkaKod)}.
                 </p>
               ) : (
                 <ResitPolozka

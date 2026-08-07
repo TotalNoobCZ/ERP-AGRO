@@ -31,7 +31,7 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
       .from("projects")
       .select(
         `id, name, zakazka_id, owner_id, status,
-         zakazka:zakazky!inner(kod, parent_id, deleted_at),
+         zakazka:zakazky!inner(kod, parent_id, deleted_at, stav),
          owner:profiles!projects_owner_id_fkey(name),
          project_notes(id, body, created_at, author:profiles(name)),
          project_todos(id, body, done, position)`,
@@ -44,8 +44,8 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
       .select(
         `id, project_id, name, assignee_id, start_date, end_date, duration_days,
          completed, order_in_member, status, zakazka_id,
-         zakazka:zakazky(popis),
-         project:projects!inner(name, status, zakazka:zakazky!inner(deleted_at)),
+         zakazka:zakazky(popis, stav),
+         project:projects!inner(name, status, zakazka:zakazky!inner(deleted_at, stav)),
          task_notes(id, body, created_at, author:profiles(name)),
          task_todos(id, body, done, position)`,
       )
@@ -79,7 +79,7 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
     name: string;
     zakazka_id: string;
     owner_id: string | null;
-    zakazka: { kod: string; parent_id: string | null } | null;
+    zakazka: { kod: string; parent_id: string | null; stav: string } | null;
     owner: { name: string } | null;
     project_notes: NoteRow[];
     project_todos: TodoRow[];
@@ -103,6 +103,7 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
       // Akce = nadřazená zakázka (parent), jinak zakázka sama.
       akceId: parentId ?? p.zakazka_id,
       akceKod: parentId ? (parentKod.get(parentId) ?? p.zakazka?.kod ?? "?") : (p.zakazka?.kod ?? "?"),
+      pozastaveno: p.zakazka?.stav === "POZASTAVENO",
       ownerId: p.owner_id,
       ownerName: p.owner?.name ?? null,
       notes: mapNotes(p.project_notes),
@@ -121,8 +122,8 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
     completed: boolean;
     order_in_member: number | null;
     zakazka_id: string | null;
-    zakazka: { popis: string | null } | null;
-    project: { name: string } | null;
+    zakazka: { popis: string | null; stav: string } | null;
+    project: { name: string; zakazka: { stav: string } | null } | null;
     task_notes: NoteRow[];
     task_todos: TodoRow[];
   }[]).map((t) => ({
@@ -131,6 +132,7 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
     projectName: t.project?.name ?? "?",
     name: t.name,
     zakazkaPopis: t.zakazka?.popis ?? null,
+    pozastaveno: t.zakazka?.stav === "POZASTAVENO" || t.project?.zakazka?.stav === "POZASTAVENO",
     assigneeId: t.assignee_id,
     startDate: t.start_date,
     endDate: t.end_date,

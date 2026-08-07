@@ -2,6 +2,7 @@
 // Interaktivní obal plánu: tažení pruhu akce = posun termínů (drag & place).
 // Po puštění se otevře dialog s náhledem nových termínů a povinným důvodem.
 import { useState } from "react";
+import { formatKod } from "@erp/core";
 import { useRouter } from "next/navigation";
 import Timeline, { type TRadek, type DragMode } from "./Timeline";
 import { posunoutAkci } from "@/app/(erp)/zakazky/actions";
@@ -87,7 +88,7 @@ export default function PlanGantt({
           <div className="card w-full max-w-md p-6">
             <h2 className="text-base font-semibold">
               {pending.mode === "move" ? "Posunout akci" : "Změnit konec akce"}{" "}
-              <span className="font-mono">{pending.kod}</span>
+              <span className="font-mono">{formatKod(pending.kod)}</span>
             </h2>
 
             <div className="mt-3 space-y-1 text-sm">

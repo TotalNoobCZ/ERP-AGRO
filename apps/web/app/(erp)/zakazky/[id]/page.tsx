@@ -24,7 +24,7 @@ import { ZalozitProjekt } from "@/components/konstrukce/ZalozitProjekt";
 import { ZalozitPodzakazku } from "@/components/zakazky/ZalozitPodzakazku";
 import { nacistLidiZakazek, sjednotitOsoby, type Osoba } from "@/lib/zakazky/lide";
 import { userColor } from "@erp/ui";
-import { DILNA_FAZE, DILNA_FAZE_LABELS, DILNA_FAZE_BARVY, jeDilnaFaze, type StavZakazky } from "@erp/core";
+import { DILNA_FAZE, DILNA_FAZE_LABELS, DILNA_FAZE_BARVY, jeDilnaFaze, type StavZakazky , formatKod } from "@erp/core";
 
 export const dynamic = "force-dynamic";
 
@@ -239,11 +239,11 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
         {rodic && (
           <p className="mt-1 text-sm text-text-muted">
             Zakázka k akci{" "}
-            <Link href={`/zakazky/${rodic.id}`} className="font-mono text-link hover:underline">{rodic.kod}</Link>
+            <Link href={`/zakazky/${rodic.id}`} className="font-mono text-link hover:underline">{formatKod(rodic.kod)}</Link>
           </p>
         )}
         <div className="mt-2 flex flex-wrap items-center gap-3">
-          <h1 className="font-mono text-2xl font-bold">{z.kod}</h1>
+          <h1 className="font-mono text-2xl font-bold">{formatKod(z.kod)}</h1>
           <StavBadge z={stavovaZakazka} />
           <PauzaTlacitko zakazkaId={z.id} kod={z.kod} stav={z.stav} editable={jeEditor} jePodzakazka={!!z.parent_id} />
           <span title="1 = nejvyšší, 5 = nejnižší" className="badge bg-slate-100 text-slate-500">Priorita {z.priorita}</span>
@@ -258,7 +258,7 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
         {rodic ? (
           rodic.odpovedna && (
             <p className="mt-1 text-sm text-text-muted">
-              Odpovědná osoba (akce {rodic.kod}): {rodic.odpovedna.name}
+              Odpovědná osoba (akce {formatKod(rodic.kod)}): {rodic.odpovedna.name}
             </p>
           )
         ) : (
@@ -364,7 +364,7 @@ export default async function ZakazkaDetail({ params }: { params: Promise<{ id: 
             {podzakazky.map((p) => (
               <Link key={p.id} href={`/zakazky/${p.id}`} className="block px-3 py-2 hover:bg-accent">
                 <div className="flex items-center gap-3 text-sm">
-                  <span className="font-mono font-semibold">{p.kod}</span>
+                  <span className="font-mono font-semibold">{formatKod(p.kod)}</span>
                   <span className="flex-1 truncate text-text-muted">{p.popis || p.misto_plneni}</span>
                   <StavBadge z={{ konecAktualni: parseDay(p.konec_aktualni), stav: p.stav }} />
                 </div>

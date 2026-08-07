@@ -1,5 +1,6 @@
 // Tiskový export seznamu akcí (stejné filtry jako seznam).
 import { createClient } from "@/lib/supabase/server";
+import { formatKod } from "@erp/core";
 import { queryZakazky, type ZakazkaListParams } from "@/lib/zakazky-query";
 import { PrintButton } from "@/components/PrintButton";
 import { parseDay, formatCz } from "@/lib/zakazky/dates";
@@ -42,7 +43,7 @@ export default async function ZakazkyPrintPage({
           {zakazky.map((z) => (
             <tr key={z.id} className="break-inside-avoid border-b border-gray-200 align-top">
               <td className="py-1 pr-2">P{z.priorita}</td>
-              <td className="py-1 pr-2 font-mono">{z.kod}</td>
+              <td className="py-1 pr-2 font-mono">{formatKod(z.kod)}</td>
               <td className="py-1 pr-2">{z.misto_plneni}</td>
               <td className="py-1 pr-2">{z.odpovedna?.name ?? "—"}</td>
               <td className="whitespace-nowrap py-1 pr-2">{formatCz(parseDay(z.konec_aktualni))}</td>

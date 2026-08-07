@@ -770,6 +770,9 @@ export async function zmenitStav(
   revalidatePath("/zakazky/fakturace");
   revalidatePath("/zakazky/tabule");
   revalidatePath("/zakazky/plan");
+  revalidatePath("/konstrukce");
+  revalidatePath("/konstrukce/gantt");
+  revalidatePath("/konstrukce/prehled");
   revalidatePath("/dilna/tabule");
 }
 
@@ -1015,6 +1018,9 @@ export async function pridatMontaz(
   revalidatePath("/zakazky");
   revalidatePath("/zakazky/tabule");
   revalidatePath("/zakazky/plan");
+  revalidatePath("/konstrukce");
+  revalidatePath("/konstrukce/gantt");
+  revalidatePath("/konstrukce/prehled");
   return { ok: true, id: child.id };
 }
 
@@ -1036,6 +1042,9 @@ export async function smazatMontaz(id: string): Promise<{ ok: boolean; chyba?: s
   revalidatePath("/zakazky");
   revalidatePath("/zakazky/tabule");
   revalidatePath("/zakazky/plan");
+  revalidatePath("/konstrukce");
+  revalidatePath("/konstrukce/gantt");
+  revalidatePath("/konstrukce/prehled");
   return { ok: true };
 }
 
@@ -1133,6 +1142,9 @@ export async function prerusitAkci(zakazkaId: string, _prev: ZakazkaStav, fd: Fo
   revalidatePath("/zakazky");
   revalidatePath("/zakazky/tabule");
   revalidatePath("/zakazky/plan");
+  revalidatePath("/konstrukce");
+  revalidatePath("/konstrukce/gantt");
+  revalidatePath("/konstrukce/prehled");
   return {};
 }
 
@@ -1160,6 +1172,9 @@ export async function obnovitAkci(zakazkaId: string, _prev: ZakazkaStav, fd: For
   revalidatePath("/zakazky");
   revalidatePath("/zakazky/tabule");
   revalidatePath("/zakazky/plan");
+  revalidatePath("/konstrukce");
+  revalidatePath("/konstrukce/gantt");
+  revalidatePath("/konstrukce/prehled");
   return {};
 }
 
@@ -1384,6 +1399,9 @@ export async function nastavitOdpovednouOsobu(zakazkaId: string, osobaId: string
   revalidatePath(`/zakazky/${zakazkaId}/upravit`);
   revalidatePath("/zakazky/tabule");
   revalidatePath("/zakazky/plan");
+  revalidatePath("/konstrukce");
+  revalidatePath("/konstrukce/gantt");
+  revalidatePath("/konstrukce/prehled");
   return { ok: true };
 }
 
@@ -1618,6 +1636,9 @@ export async function pauzaAkce(zakazkaId: string, datumOd: string, duvod: strin
   revalidatePath("/zakazky");
   revalidatePath("/zakazky/tabule");
   revalidatePath("/zakazky/plan");
+  revalidatePath("/konstrukce");
+  revalidatePath("/konstrukce/gantt");
+  revalidatePath("/konstrukce/prehled");
   return { ok: true };
 }
 
@@ -1737,5 +1758,8 @@ export async function obnovaAkce(
   revalidatePath("/zakazky");
   revalidatePath("/zakazky/tabule");
   revalidatePath("/zakazky/plan");
+  revalidatePath("/konstrukce");
+  revalidatePath("/konstrukce/gantt");
+  revalidatePath("/konstrukce/prehled");
   return { ok: true };
 }

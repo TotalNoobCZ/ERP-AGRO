@@ -1,5 +1,6 @@
 // Tiskový export reportu pro vedení (PDF přes tisk prohlížeče).
 import { Fragment } from "react";
+import { formatKod } from "@erp/core";
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/supabase/server";
 import { nactiReport, smiVidetReport, vytizeniPodleOddeleni } from "@/lib/report";
@@ -74,7 +75,7 @@ export default async function ReportTiskPage({
           <ul className="mt-1 list-inside list-disc text-gray-600">
             {r.zakazky.prodlouzeni.map((p, i) => (
               <li key={i}>
-                <span className="font-mono">{p.kod}</span>: {formatCz(parseDay(p.staryKonec))} → {formatCz(parseDay(p.novyKonec))} — {p.duvod}
+                <span className="font-mono">{formatKod(p.kod)}</span>: {formatCz(parseDay(p.staryKonec))} → {formatCz(parseDay(p.novyKonec))} — {p.duvod}
               </li>
             ))}
           </ul>
@@ -88,7 +89,7 @@ export default async function ReportTiskPage({
           <ul className="list-inside list-disc">
             {r.zakazky.poTerminu.map((z) => (
               <li key={z.id}>
-                <span className="font-mono">{z.kod}</span> · {z.misto} — <strong>{z.dni} dní</strong> (termín {formatCz(parseDay(z.konec))})
+                <span className="font-mono">{formatKod(z.kod)}</span> · {z.misto} — <strong>{z.dni} dní</strong> (termín {formatCz(parseDay(z.konec))})
               </li>
             ))}
           </ul>
@@ -102,7 +103,7 @@ export default async function ReportTiskPage({
           <ul className="list-inside list-disc">
             {r.fakturace.polozky.map((f) => (
               <li key={f.id}>
-                <span className="font-mono">{f.kod}</span> · {f.popis} — {f.dni != null ? `${f.dni} dní ve fakturaci` : "bez data fakturace"}
+                <span className="font-mono">{formatKod(f.kod)}</span> · {f.popis} — {f.dni != null ? `${f.dni} dní ve fakturaci` : "bez data fakturace"}
               </li>
             ))}
           </ul>

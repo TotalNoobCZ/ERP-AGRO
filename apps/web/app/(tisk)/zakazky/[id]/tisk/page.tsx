@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PrintButton } from "@/components/PrintButton";
 import { parseDay, formatCz } from "@/lib/zakazky/dates";
 import { formatDateTime } from "@/lib/format";
-import { MILNIK_LABELS, ZAKAZKA_STAV_LABELS, type StavZakazky, type TypMilniku } from "@erp/core";
+import { MILNIK_LABELS, ZAKAZKA_STAV_LABELS, type StavZakazky, type TypMilniku , formatKod } from "@erp/core";
 
 export const dynamic = "force-dynamic";
 
@@ -51,7 +51,7 @@ export default async function ZakazkaPrintPage({
       <PrintButton auto={sp?.print === "1"} />
       <div className="mb-6 border-b border-gray-300 pb-4">
         <p className="text-sm text-gray-500">Akce</p>
-        <h1 className="font-mono text-2xl font-bold">{z.kod}</h1>
+        <h1 className="font-mono text-2xl font-bold">{formatKod(z.kod)}</h1>
         <p className="mt-1 text-sm">
           {z.misto_plneni} · stav <strong>{ZAKAZKA_STAV_LABELS[z.stav]}</strong> · priorita {z.priorita}
         </p>
