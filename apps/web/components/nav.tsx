@@ -16,6 +16,7 @@ const MODULES = [
   { href: "/zakazky/dashboard", match: "/zakazky", label: "Zakázky", adminOnly: false, vedeniOnly: false, modul: "zakazky" as Modul },
   { href: "/konstrukce/prehled", match: "/konstrukce", label: "Konstrukce", adminOnly: false, vedeniOnly: false, modul: "konstrukce" as Modul },
   { href: "/dilna/tabule", match: "/dilna", label: "Dílna", adminOnly: false, vedeniOnly: false, modul: "dilna" as Modul },
+  { href: "/lide", match: "/lide", label: "Lidé", adminOnly: false, vedeniOnly: false, modul: "lide" as Modul },
   { href: "/report", match: "/report", label: "Report", adminOnly: false, vedeniOnly: true, modul: null },
   { href: "/sprava", match: "/sprava", label: "Správa", adminOnly: true, vedeniOnly: false, modul: null },
 ] as const;

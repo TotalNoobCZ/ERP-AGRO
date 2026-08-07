@@ -18,6 +18,7 @@ const KARTY = [
   { href: "/zakazky/dashboard", label: "Zakázky", emoji: "📋", popis: "Výrobní zakázky, plán a tabule", adminOnly: false, vedeniOnly: false, modul: "zakazky" as Modul },
   { href: "/konstrukce/prehled", label: "Konstrukce", emoji: "📐", popis: "Konstrukční plánování a Gantt", adminOnly: false, vedeniOnly: false, modul: "konstrukce" as Modul },
   { href: "/dilna/tabule", label: "Dílna", emoji: "🔧", popis: "Výroba – lidé, fáze a Gantt", adminOnly: false, vedeniOnly: false, modul: "dilna" as Modul },
+  { href: "/lide", label: "Lidé", emoji: "👥", popis: "Karty zaměstnanců", adminOnly: false, vedeniOnly: false, modul: "lide" as Modul },
   { href: "/report", label: "Report", emoji: "📊", popis: "Měsíční přehled pro vedení", adminOnly: false, vedeniOnly: true, modul: null },
   { href: "/sprava", label: "Správa", emoji: "⚙️", popis: "Uživatelé a nastavení", adminOnly: true, modul: null, vedeniOnly: false },
 ] as const;
