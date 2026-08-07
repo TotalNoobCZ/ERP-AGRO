@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ROLE_LABELS, ODDELENI, ODDELENI_LABELS, isAdmin, type Oddeleni, type Role } from "@erp/core";
+import { ROLE_LABELS, ODDELENI, ODDELENI_LABELS, isAdmin, type Oddeleni, type Role , porovnatDlePrijmeni } from "@erp/core";
 import { userColor } from "@erp/ui";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui";
 
@@ -34,7 +34,11 @@ export default async function SpravaPage({
     .order("active", { ascending: false })
     .order("name", { ascending: true });
   if (aktivniOdd) dotaz = dotaz.eq("oddeleni", aktivniOdd);
-  const { data: profily } = await dotaz;
+  const { data: profilyRaw } = await dotaz;
+  // Aktivní nahoře, uvnitř řazení dle příjmení.
+  const profily = [...(profilyRaw ?? [])].sort(
+    (a, b) => Number(b.active) - Number(a.active) || porovnatDlePrijmeni(a.name, b.name),
+  );
 
   return (
     <div className="space-y-6">

@@ -9,7 +9,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient, getCurrentProfile } from "@/lib/supabase/server";
-import { canWrite, muzeOdebratKonstruktera, type Role, type TypZmeny } from "@erp/core";
+import { canWrite, muzeOdebratKonstruktera, type Role, type TypZmeny , porovnatDlePrijmeni } from "@erp/core";
 import {
   zakazkaSchema,
   zakazkaUpravaSchema,
@@ -1696,7 +1696,9 @@ export async function seznamNahradniku(): Promise<{ id: string; name: string; od
     .eq("active", true)
     .eq("assignable", true)
     .order("name");
-  return (data ?? []) as { id: string; name: string; oddeleni: string | null }[];
+  return ((data ?? []) as { id: string; name: string; oddeleni: string | null }[]).sort((a, b) =>
+    porovnatDlePrijmeni(a.name, b.name),
+  );
 }
 
 /**

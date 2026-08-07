@@ -9,6 +9,7 @@ import Timeline, { type TRadek } from "@/components/zakazky/Timeline";
 import PlanGantt from "@/components/zakazky/PlanGantt";
 import { canWrite, MILNIK_LABELS, ODDELENI_LABELS, ODDELENI_KAPITOLA, type Oddeleni, type Role, type StavZakazky, type TypMilniku , formatKod } from "@erp/core";
 import { userColor } from "@erp/ui";
+import { porovnatDlePrijmeni } from "@erp/core";
 
 export const dynamic = "force-dynamic";
 
@@ -227,7 +228,7 @@ export default async function PlanPage({
     }
 
     radky = Array.from(podleOsoby.entries())
-      .sort((a, b) => (a[1][0]!.osoba.name).localeCompare(b[1][0]!.osoba.name, "cs"))
+      .sort((a, b) => porovnatDlePrijmeni(a[1][0]!.osoba.name, b[1][0]!.osoba.name))
       .map(([osobaId, ps]) => {
         const { prvky, pocetRad } = baleniDoRad(
           ps.map((p) => ({ od: parseDay(p.datum_od), do: parseDay(p.datum_do), p })),
