@@ -495,3 +495,46 @@ export async function addComment(id: string, text: string, author: string): Prom
   revalidatePath(`/poptavky/${id}`);
   return { ok: true };
 }
+
+
+// ---- Tlačítko „Konstrukce" na poptávce --------------------------------------
+
+/**
+ * Zapne/vypne konstrukci pro poptávku: zapnutí založí konstrukční projekt
+ * navázaný na poptávku (jen základní info – název dle předmětu, bez termínů;
+ * úkoly a rozdělení si konstruktéři doplní v Konstrukci). Vypnutí projekt
+ * archivuje (jde obnovit v archivu Konstrukce). Po vzniku zakázky z poptávky
+ * se projekt přepojí na zakázku.
+ */
+export async function prepnoutKonstrukci(
+  inquiryId: string,
+): Promise<{ ok: boolean; chyba?: string; aktivni?: boolean }> {
+  const auth = await requireWriter();
+  if (auth.error !== undefined) return { ok: false, chyba: auth.error };
+  const supabase = await createClient();
+
+  const { data: inquiry } = await supabase
+    .from("inquiries").select("id, number, subject").eq("id", inquiryId).maybeSingle();
+  if (!inquiry) return { ok: false, chyba: "Poptávka nenalezena." };
+
+  const { data: existujici } = await supabase
+    .from("projects").select("id").eq("inquiry_id", inquiryId).eq("status", "active").limit(1).maybeSingle();
+
+  if (existujici) {
+    const { error } = await supabase
+      .from("projects")
+      .update({ status: "archived", archived_by: auth.profile.id, archived_at: new Date().toISOString() })
+      .eq("id", existujici.id);
+    if (error) return { ok: false, chyba: "Vypnutí konstrukce se nezdařilo." };
+  } else {
+    const { error } = await supabase
+      .from("projects")
+      .insert({ inquiry_id: inquiryId, name: inquiry.subject, owner_id: null });
+    if (error) return { ok: false, chyba: "Zapnutí konstrukce se nezdařilo." };
+  }
+  revalidatePath(`/poptavky/${inquiryId}`);
+  revalidatePath("/konstrukce");
+  revalidatePath("/konstrukce/prehled");
+  revalidatePath("/konstrukce/gantt");
+  return { ok: true, aktivni: !existujici };
+}
