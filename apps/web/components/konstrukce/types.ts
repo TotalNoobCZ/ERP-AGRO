@@ -34,8 +34,11 @@ export type Ukol = {
 export type Projekt = {
   id: string;
   name: string;
-  zakazkaId: string;
+  /** null u projektu poptávky (viz inquiryId) */
+  zakazkaId: string | null;
   zakazkaKod: string;
+  /** projekt vzešlý z poptávky (tlačítko Konstrukce na poptávce) */
+  inquiryId: string | null;
   akceId: string;
   akceKod: string;
   /** zakázka projektu je pozastavená → projekt se zobrazuje zašedle */

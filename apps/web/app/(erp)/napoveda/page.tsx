@@ -123,6 +123,7 @@ export default function NapovedaPage() {
         <li><strong>Odložit poptávku:</strong> v detailu vyber stav <strong>Odloženo</strong>. Poptávka se skryje ze seznamu i tabule a v okně zvolíš připomenutí: <em>k datu</em>, <em>za 6 měsíců</em>, nebo <em>nepřipomínat</em>.</li>
         <li><strong>Odložené:</strong> záložka se všemi odloženými poptávkami a datem připomenutí; ty, u kterých už čas nastal, jsou zvýrazněné. Tlačítkem <Code>↩ Obnovit</Code> se poptávka vrátí zpět mezi aktivní.</li>
         <li><strong>Připomenutí:</strong> jakmile nastane datum připomenutí, odpovědné osobě se nahoře v Poptávkách ukáže upozornění „⏰ Nastal čas kontaktovat".</li>
+        <li><strong>📐 Tlačítko Konstrukce:</strong> na detailu poptávky propíše poptávku do modulu <strong>Konstrukce</strong> — založí se konstrukční projekt se základním infem (název dle předmětu, bez termínů) a konstruktéři si ho <strong>rozdělí na úkoly stejně jako u zakázek</strong>. V Konstrukci má projekt skupinu „Poptávka #číslo" a odkazuje zpět na poptávku. Opětovným kliknutím konstrukci vypneš (projekt se archivuje). <strong>Po založení zakázky z poptávky se projekt i s úkoly automaticky přepojí na zakázku.</strong></li>
         <li><strong>Objednáno:</strong> poptávky, ze kterých se tvoří zakázky.</li>
         <li><strong>Zákazníci:</strong> seznam má <strong>okamžité vyhledávání</strong> – piš do políčka nad tabulkou a filtruje se podle názvu, e-mailu, telefonu i státu (vpravo počet nalezených).</li>
         <li>Seznam má filtry a <strong>Export do PDF</strong>.</li>

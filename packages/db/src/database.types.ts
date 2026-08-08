@@ -295,7 +295,9 @@ export type AuditLogRow = {
 
 export type ProjectRow = {
   id: string;
-  zakazka_id: string;
+  /** vazba na zakázku NEBO na poptávku (inquiry_id) – právě jedna */
+  zakazka_id: string | null;
+  inquiry_id: string | null;
   name: string;
   owner_id: string | null;
   status: "active" | "archived";
@@ -431,7 +433,7 @@ export type Database = {
       >;
       projects: TableShape<
         ProjectRow,
-        "zakazka_id" | "name",
+        "name",
         [Fk<"zakazka_id", "zakazky">, Fk<"owner_id", "profiles">, Fk<"archived_by", "profiles">]
       >;
       tasks: TableShape<

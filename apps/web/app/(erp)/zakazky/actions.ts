@@ -311,11 +311,24 @@ export async function vytvoritZakazku(_prev: ZakazkaStav, fd: FormData): Promise
   if (d.parentId) {
     await pridatKonstrukcniPodukol(supabase, d.parentId, zakazka.id, d.kod);
   } else {
-    await supabase.from("projects").insert({
-      zakazka_id: zakazka.id,
-      name: d.kod,
-      owner_id: null,
-    });
+    // Poptávka s zapnutou konstrukcí: její projekt (vč. úkolů) se přepojí na
+    // novou zakázku, aby konstruktérům nic nezmizelo. Jinak nový projekt.
+    const { data: inqProjekt } = d.inquiryId
+      ? await supabase
+          .from("projects").select("id").eq("inquiry_id", d.inquiryId).eq("status", "active").limit(1).maybeSingle()
+      : { data: null };
+    if (inqProjekt) {
+      await supabase
+        .from("projects")
+        .update({ zakazka_id: zakazka.id, inquiry_id: null })
+        .eq("id", inqProjekt.id);
+    } else {
+      await supabase.from("projects").insert({
+        zakazka_id: zakazka.id,
+        name: d.kod,
+        owner_id: null,
+      });
+    }
   }
 
   await zapisAudit(supabase, {

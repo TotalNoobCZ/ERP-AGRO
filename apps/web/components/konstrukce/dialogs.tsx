@@ -384,7 +384,7 @@ export function ProjectDialog({
         </div>
         <p className="-mt-2 text-xs text-text-muted">
           Zakázka:{" "}
-          <Link href={`/zakazky/${projekt.zakazkaId}`} className="font-mono text-link hover:underline">
+          <Link href={projekt.zakazkaId ? `/zakazky/${projekt.zakazkaId}` : `/poptavky/${projekt.inquiryId}`} className="font-mono text-link hover:underline">
             {formatKod(projekt.zakazkaKod)}
           </Link>
         </p>

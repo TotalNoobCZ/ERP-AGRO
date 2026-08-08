@@ -11,7 +11,8 @@ import {
   CommentForm,
   DeleteInquiryButton,
 } from "@/components/poptavky/status-changer";
-import { INQUIRY_STATUS_LABELS, type InquiryStatus , formatKod } from "@erp/core";
+import { INQUIRY_STATUS_LABELS, type InquiryStatus, formatKod, canWrite, type Role } from "@erp/core";
+import { KonstrukceToggle } from "@/components/poptavky/KonstrukceToggle";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { formatPhone } from "@/lib/countries";
 
@@ -69,6 +70,16 @@ export default async function InquiryDetailPage({ params }: { params: Promise<{ 
     .is("deleted_at", null)
     .maybeSingle();
 
+  // Konstrukce zapnutá? (aktivní projekt navázaný na poptávku)
+  const { data: konstrukceProjekt } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("inquiry_id", inquiry.id)
+    .eq("status", "active")
+    .limit(1)
+    .maybeSingle();
+  const jeEditor = profile ? canWrite(profile.role as Role) : false;
+
   const comments = [...(inquiry.comments ?? [])].sort((a, b) =>
     b.created_at.localeCompare(a.created_at),
   );
@@ -98,6 +109,7 @@ export default async function InquiryDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
         <div className="flex gap-2">
+          <KonstrukceToggle inquiryId={inquiry.id} aktivni={!!konstrukceProjekt} editable={jeEditor} />
           <Link
             href={`/poptavky/${inquiry.id}/tisk?print=1`}
             className="btn-ghost"

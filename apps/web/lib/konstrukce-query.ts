@@ -30,14 +30,14 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
     supabase
       .from("projects")
       .select(
-        `id, name, zakazka_id, owner_id, status,
-         zakazka:zakazky!inner(kod, parent_id, deleted_at, stav),
+        `id, name, zakazka_id, inquiry_id, owner_id, status,
+         zakazka:zakazky(kod, parent_id, deleted_at, stav),
+         inquiry:inquiries(number, subject),
          owner:profiles!projects_owner_id_fkey(name),
          project_notes(id, body, created_at, author:profiles(name)),
          project_todos(id, body, done, position)`,
       )
       .eq("status", "active")
-      .is("zakazka.deleted_at", null)
       .order("created_at", { ascending: true }),
     supabase
       .from("tasks")
@@ -45,13 +45,12 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
         `id, project_id, name, assignee_id, start_date, end_date, duration_days,
          completed, order_in_member, status, zakazka_id,
          zakazka:zakazky(popis, stav),
-         project:projects!inner(name, status, zakazka:zakazky!inner(deleted_at, stav)),
+         project:projects!inner(name, status, zakazka:zakazky(deleted_at, stav)),
          task_notes(id, body, created_at, author:profiles(name)),
          task_todos(id, body, done, position)`,
       )
       .eq("status", "active")
-      .eq("project.status", "active")
-      .is("project.zakazka.deleted_at", null),
+      .eq("project.status", "active"),
     supabase.from("absences").select("id, profile_id, type, start_date, end_date"),
   ]);
 
@@ -74,16 +73,20 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
   const mapTodos = (rows: TodoRow[] | null | undefined) =>
     (rows ?? []).sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
 
-  const rawProjekty = (projektyRes.data ?? []) as unknown as {
+  const rawProjekty = ((projektyRes.data ?? []) as unknown as {
     id: string;
     name: string;
-    zakazka_id: string;
+    zakazka_id: string | null;
+    inquiry_id: string | null;
     owner_id: string | null;
-    zakazka: { kod: string; parent_id: string | null; stav: string } | null;
+    zakazka: { kod: string; parent_id: string | null; stav: string; deleted_at: string | null } | null;
+    inquiry: { number: number; subject: string } | null;
     owner: { name: string } | null;
     project_notes: NoteRow[];
     project_todos: TodoRow[];
-  }[];
+  }[])
+    // smazané zakázky filtrujeme v JS (left join kvůli projektům poptávek)
+    .filter((p) => !p.zakazka?.deleted_at);
 
   // Kódy nadřazených akcí (bez self-embed – ten PostgREST vztah nemusí znát).
   const parentIds = [...new Set(rawProjekty.map((p) => p.zakazka?.parent_id).filter((x): x is string => !!x))];
@@ -95,14 +98,20 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
 
   const projekty: Projekt[] = rawProjekty.map((p) => {
     const parentId = p.zakazka?.parent_id ?? null;
+    // Projekt poptávky: skupina i dlaždice nesou číslo/název poptávky.
+    const poptavkaKod = p.inquiry ? `#${p.inquiry.number}` : "?";
     return {
       id: p.id,
       name: p.name,
       zakazkaId: p.zakazka_id,
-      zakazkaKod: p.zakazka?.kod ?? "?",
-      // Akce = nadřazená zakázka (parent), jinak zakázka sama.
-      akceId: parentId ?? p.zakazka_id,
-      akceKod: parentId ? (parentKod.get(parentId) ?? p.zakazka?.kod ?? "?") : (p.zakazka?.kod ?? "?"),
+      zakazkaKod: p.zakazka?.kod ?? poptavkaKod,
+      inquiryId: p.inquiry_id,
+      // Akce = nadřazená zakázka (parent), jinak zakázka sama; u poptávky
+      // syntetická skupina "inq:<id>" s popiskem Poptávka #N.
+      akceId: parentId ?? p.zakazka_id ?? `inq:${p.inquiry_id}`,
+      akceKod: p.zakazka
+        ? (parentId ? (parentKod.get(parentId) ?? p.zakazka.kod) : p.zakazka.kod)
+        : `Poptávka ${poptavkaKod}`,
       pozastaveno: p.zakazka?.stav === "POZASTAVENO",
       ownerId: p.owner_id,
       ownerName: p.owner?.name ?? null,
@@ -111,7 +120,7 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
     };
   });
 
-  const ukoly: Ukol[] = ((ukolyRes.data ?? []) as unknown as {
+  const ukoly: Ukol[] = (((ukolyRes.data ?? []) as unknown as {
     id: string;
     project_id: string;
     name: string;
@@ -123,10 +132,10 @@ export async function nactiKonstrukci(supabase: Db): Promise<{
     order_in_member: number | null;
     zakazka_id: string | null;
     zakazka: { popis: string | null; stav: string } | null;
-    project: { name: string; zakazka: { stav: string } | null } | null;
+    project: { name: string; zakazka: { stav: string; deleted_at: string | null } | null } | null;
     task_notes: NoteRow[];
     task_todos: TodoRow[];
-  }[]).map((t) => ({
+  }[]).filter((t) => !t.project?.zakazka?.deleted_at)).map((t) => ({
     id: t.id,
     projectId: t.project_id,
     projectName: t.project?.name ?? "?",
